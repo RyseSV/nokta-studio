@@ -1,0 +1,17 @@
+# Secretos — NUNCA subir
+server/.env
+server/node_modules/
+server/data/db.json
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temp
+*.tmp
+*.temp

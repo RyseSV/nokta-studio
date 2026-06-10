@@ -254,11 +254,15 @@ footer{background:var(--ink);border-top:1px solid var(--line);padding:3.5rem 0 2
 .nav-links.open{transform:none}
 .nav-links a{font-size:1.3rem}
 .gallery{columns:1}
-.steps{grid-template-columns:1fr;gap:1.2rem}
-.step{display:flex;align-items:flex-start;gap:1.2rem}
-.step .dot{width:52px;height:52px;flex-shrink:0;margin-bottom:0}
+.steps{grid-template-columns:1fr;gap:0}
+.step{display:grid;grid-template-columns:52px 1fr;gap:1rem;align-items:start;padding:1.2rem 0;border-bottom:1px solid var(--lineD)}
+.step:last-child{border-bottom:none}
+.step .dot{width:52px;height:52px;flex-shrink:0;margin-bottom:0;margin-top:.2rem}
 .step .dot svg{width:24px;height:24px}
 .step-body{flex:1}
+.step-body .sn{margin-bottom:.2rem}
+.step-body h3{margin:.1rem 0 .4rem;font-size:1.1rem}
+.step-body p{font-size:.9rem}
 .foot-inner{flex-direction:column;text-align:center}
 .hero{padding:5.5rem 0 3rem}
 .hero-cta{flex-direction:column;align-items:center}

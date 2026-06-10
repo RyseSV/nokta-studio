@@ -4,5 +4,4 @@ buildCommand = "cd server && npm install"
 
 [deploy]
 startCommand = "cd server && node app.js"
-healthcheckPath = "/galeria"
 restartPolicyType = "on_failure"

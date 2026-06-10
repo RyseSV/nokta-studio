@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nokta — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1C1C1A;font-family:'Poppins',sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{background:#2E2E2B;border-radius:16px;padding:48px 40px;width:100%;max-width:380px;text-align:center}
+.logo{font-size:28px;font-weight:600;color:#F0ECE4;letter-spacing:1px;margin-bottom:4px}
+.logo span{color:#B85228}
+.sub{font-size:11px;letter-spacing:4px;color:#7A7A72;text-transform:uppercase;margin-bottom:40px}
+label{display:block;text-align:left;font-size:12px;color:#7A7A72;margin-bottom:6px;letter-spacing:.5px}
+input[type=password]{width:100%;background:#1C1C1A;border:1px solid #3a3a37;border-radius:8px;padding:12px 16px;color:#F0ECE4;font-family:'Poppins',sans-serif;font-size:14px;outline:none;transition:border .2s}
+input[type=password]:focus{border-color:#B85228}
+button{width:100%;margin-top:20px;background:#B85228;border:none;border-radius:8px;padding:13px;color:#F0ECE4;font-family:'Poppins',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .2s}
+button:hover{opacity:.85}
+.err{color:#e05a5a;font-size:12px;margin-top:12px;min-height:18px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">nokta<span>.</span></div>
+  <div class="sub">Panel administrativo</div>
+  <form id="f">
+    <label>Contraseña</label>
+    <input type="password" id="pw" placeholder="••••••••" autofocus>
+    <button type="submit">Ingresar</button>
+    <div class="err" id="err"></div>
+  </form>
+</div>
+<script>
+document.getElementById('f').onsubmit = async e => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button');
+  btn.textContent = 'Verificando...';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password: document.getElementById('pw').value }) });
+    if (r.ok) { window.location.href = '/admin'; }
+    else { document.getElementById('err').textContent = 'Contraseña incorrecta'; btn.textContent = 'Ingresar'; btn.disabled = false; }
+  } catch { document.getElementById('err').textContent = 'Error de conexión'; btn.textContent = 'Ingresar'; btn.disabled = false; }
+};
+</script>
+</body>
+</html>

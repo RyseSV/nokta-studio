@@ -1,0 +1,10 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "node app.js"
+healthcheckPath = "/galeria"
+restartPolicyType = "on_failure"
+
+[build.nixpacksPlan.phases.install]
+cmds = ["cd server && npm install"]

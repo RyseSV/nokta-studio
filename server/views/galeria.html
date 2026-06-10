@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nokta Studio — Galería privada</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1C1C1A;--card:#2E2E2B;--ember:#B85228;--cream:#F0ECE4;--muted:#7A7A72;--border:#3a3a37}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--cream);font-family:'Poppins',sans-serif;min-height:100vh}
+
+/* LOGIN */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.login-card{background:var(--card);border-radius:16px;padding:48px 40px;width:100%;max-width:380px;text-align:center}
+.logo{font-size:28px;font-weight:600;color:var(--cream);letter-spacing:1px;margin-bottom:4px}
+.logo span{color:var(--ember)}
+.logo-sub{font-size:11px;letter-spacing:4px;color:var(--muted);text-transform:uppercase;margin-bottom:40px}
+.field label{display:block;text-align:left;font-size:12px;color:var(--muted);margin-bottom:6px;letter-spacing:.5px}
+.field input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--cream);font-family:'Poppins',sans-serif;font-size:14px;outline:none;transition:border .2s;text-transform:uppercase;letter-spacing:2px}
+.field input:focus{border-color:var(--ember)}
+.btn-acceder{width:100%;margin-top:20px;background:var(--ember);border:none;border-radius:8px;padding:13px;color:#fff;font-family:'Poppins',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .2s}
+.btn-acceder:hover{opacity:.85}
+.btn-acceder:disabled{opacity:.5;cursor:default}
+.login-err{color:#e05a5a;font-size:12px;margin-top:12px;min-height:18px}
+.login-info{font-size:12px;color:var(--muted);margin-top:20px;line-height:1.6}
+
+/* GALLERY */
+#gallery-screen{display:none}
+
+/* NAVBAR */
+.navbar{background:var(--bg);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.nav-logo{font-size:20px;font-weight:600;color:var(--cream)}.nav-logo span{color:var(--ember)}
+.nav-btns{display:flex;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:opacity .2s}
+.btn:hover{opacity:.85}
+.btn-primary{background:var(--ember);color:#fff}
+.btn-outline{background:transparent;border:1px solid var(--ember);color:var(--ember)}
+.btn-ghost{background:var(--card);color:var(--cream)}
+
+/* HERO */
+.hero{padding:32px 24px 20px;border-bottom:1px solid var(--border)}
+.hero-name{font-size:22px;font-weight:600;margin-bottom:4px}
+.hero-meta{font-size:13px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.badge-days{background:rgba(230,168,23,.15);color:#E6A817;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.hero-stats{display:flex;gap:24px}
+.stat{text-align:center}.stat-val{font-size:20px;font-weight:600}.stat-lab{font-size:11px;color:var(--muted);letter-spacing:.5px}
+
+/* TOOLBAR */
+.toolbar{padding:12px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+.fav-count{font-size:13px;color:var(--muted);margin-right:auto}
+.fav-count span{color:var(--ember);font-weight:600}
+.grid-btns{display:flex;gap:6px}
+.grid-btn{background:var(--card);border:1px solid var(--border);color:var(--muted);width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:13px;transition:all .15s}
+.grid-btn.active{border-color:var(--ember);color:var(--ember)}
+
+/* GRID */
+.photo-grid{padding:20px 24px;display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}
+.photo-grid.cols-2{grid-template-columns:repeat(2,1fr)}
+.photo-grid.cols-4{grid-template-columns:repeat(4,1fr)}
+.photo-item{position:relative;aspect-ratio:1;overflow:hidden;border-radius:8px;cursor:pointer;background:var(--card)}
+.photo-item img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
+.photo-item:hover img{transform:scale(1.03)}
+.photo-overlay{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background .2s;display:flex;align-items:flex-end;justify-content:flex-end;padding:8px}
+.photo-item:hover .photo-overlay{background:rgba(0,0,0,.3)}
+.photo-actions{display:flex;gap:6px;opacity:0;transition:opacity .2s}
+.photo-item:hover .photo-actions{opacity:1}
+.photo-btn{background:rgba(0,0,0,.6);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.photo-btn:hover{background:var(--ember)}
+.fav-indicator{position:absolute;top:8px;left:8px;font-size:16px;opacity:0;transition:opacity .15s}
+.photo-item.favorita .fav-indicator{opacity:1}
+
+/* LIGHTBOX */
+#lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:200;flex-direction:column;align-items:center;justify-content:center}
+#lightbox.open{display:flex}
+.lb-img{max-width:90vw;max-height:80vh;object-fit:contain;border-radius:4px}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.1);border:none;color:#fff;width:48px;height:48px;border-radius:50%;cursor:pointer;font-size:20px;transition:background .15s}
+.lb-nav:hover{background:var(--ember)}
+#lb-prev{left:20px}#lb-next{right:20px}
+.lb-close{position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:28px;cursor:pointer}
+.lb-info{position:absolute;bottom:0;left:0;right:0;padding:16px 24px;background:linear-gradient(transparent,rgba(0,0,0,.8));display:flex;align-items:center;justify-content:space-between}
+.lb-counter{font-size:13px;color:rgba(255,255,255,.6)}
+.lb-actions{display:flex;gap:10px}
+
+/* LOADING */
+.loading{text-align:center;padding:60px;color:var(--muted);font-size:13px}
+.spinner{display:inline-block;width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--ember);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:80px 20px;color:var(--muted)}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
+
+@media(max-width:600px){
+  .photo-grid{grid-template-columns:repeat(2,1fr)}
+  .photo-grid.cols-4{grid-template-columns:repeat(2,1fr)}
+  .hero-stats{gap:16px}
+  .navbar{padding:0 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="logo">nokta<span>.</span></div>
+    <div class="logo-sub">Galería privada</div>
+    <div class="field">
+      <label>Código de acceso</label>
+      <input type="text" id="codigo-input" placeholder="NK-2025-XX-0000" maxlength="20" oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <button class="btn-acceder" id="btn-acceder" onclick="acceder()">Acceder</button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-info">Ingresá el código que te envió Nokta Studio para ver tus fotos.</div>
+  </div>
+</div>
+
+<!-- GALLERY SCREEN -->
+<div id="gallery-screen">
+  <nav class="navbar">
+    <div class="nav-logo">nokta<span>.</span></div>
+    <div class="nav-btns">
+      <button class="btn btn-outline" id="btn-dl-favs" onclick="descargarFavoritas()">♥ Descargar favoritas</button>
+      <button class="btn btn-primary" onclick="descargarTodo()">⬇ Descargar todo</button>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-name" id="hero-nombre">—</div>
+    <div class="hero-meta">
+      <span id="hero-tipo">—</span>
+      <span id="hero-fecha">—</span>
+      <span class="badge-days" id="hero-days" style="display:none"></span>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-val" id="stat-total">0</div><div class="stat-lab">FOTOS</div></div>
+      <div class="stat"><div class="stat-val" id="stat-favs" style="color:var(--ember)">0</div><div class="stat-lab">FAVORITAS</div></div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="fav-count"><span id="fav-sel-count">0</span> favoritas seleccionadas</div>
+    <div class="grid-btns">
+      <button class="grid-btn" onclick="setGrid(2)" title="2 columnas">▦</button>
+      <button class="grid-btn active" onclick="setGrid(3)" title="3 columnas">⊞</button>
+      <button class="grid-btn" onclick="setGrid(4)" title="4 columnas">⊟</button>
+    </div>
+  </div>
+
+  <div class="photo-grid" id="photo-grid"></div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox">
+  <button class="lb-close" onclick="closeLB()">✕</button>
+  <button class="lb-nav" id="lb-prev" onclick="lbNav(-1)">‹</button>
+  <img class="lb-img" id="lb-img" src="" alt="">
+  <button class="lb-nav" id="lb-next" onclick="lbNav(1)">›</button>
+  <div class="lb-info">
+    <span class="lb-counter" id="lb-counter"></span>
+    <div class="lb-actions">
+      <button class="btn btn-ghost" id="lb-fav-btn" onclick="toggleFavLB()">♡ Favorita</button>
+      <a id="lb-dl" class="btn btn-primary" download>⬇ Descargar</a>
+    </div>
+  </div>
+</div>
+
+<script>
+let clienteData = null;
+let fotos = [];
+let favoritas = new Set();
+let lbIndex = 0;
+let gridCols = 3;
+
+// ── Pre-fill code from URL param ─────────────────────────
+const urlCode = new URLSearchParams(location.search).get('codigo');
+if (urlCode) { document.getElementById('codigo-input').value = urlCode.toUpperCase(); acceder(); }
+
+// ── LOGIN ─────────────────────────────────────────────────
+async function acceder() {
+  const codigo = document.getElementById('codigo-input').value.trim();
+  if (!codigo) return;
+  const btn = document.getElementById('btn-acceder');
+  btn.textContent = 'Verificando...'; btn.disabled = true;
+  document.getElementById('login-err').textContent = '';
+  try {
+    const r = await fetch('/api/galeria/' + encodeURIComponent(codigo));
+    const data = await r.json();
+    if (!r.ok) { document.getElementById('login-err').textContent = data.error || 'Código no válido'; btn.textContent = 'Acceder'; btn.disabled = false; return; }
+    clienteData = data;
+    favoritas = new Set(data.favoritos || []);
+    await registrarVisita(codigo);
+    mostrarGaleria();
+  } catch { document.getElementById('login-err').textContent = 'Error de conexión'; btn.textContent = 'Acceder'; btn.disabled = false; }
+}
+
+async function registrarVisita(codigo) {
+  await fetch('/api/galeria/' + codigo + '/visita', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+}
+
+// ── SHOW GALLERY ──────────────────────────────────────────
+async function mostrarGaleria() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('gallery-screen').style.display = 'block';
+
+  const tipoLabels = { boda:'Boda', xvanios:'XV Años', corporativo:'Corporativo', deportivo:'Deportivo', graduacion:'Graduación', otro:'Evento' };
+  document.getElementById('hero-nombre').textContent = clienteData.nombre;
+  document.getElementById('hero-tipo').textContent = tipoLabels[clienteData.tipo] || clienteData.tipo;
+  document.getElementById('hero-fecha').textContent = clienteData.expira ? new Date(clienteData.expira).toLocaleDateString('es', { day:'2-digit', month:'long', year:'numeric' }) : '';
+  if (clienteData.diasRestantes !== null) {
+    const d = document.getElementById('hero-days');
+    d.textContent = clienteData.diasRestantes > 0 ? `${clienteData.diasRestantes} días restantes` : 'Último día';
+    d.style.display = 'inline';
+  }
+
+  // Load photos
+  const grid = document.getElementById('photo-grid');
+  grid.innerHTML = '<div class="loading"><div class="spinner"></div><div>Cargando fotos...</div></div>';
+  try {
+    const r = await fetch('/api/galeria/' + clienteData.codigo + '/fotos');
+    fotos = await r.json();
+  } catch { fotos = []; }
+
+  document.getElementById('stat-total').textContent = fotos.length;
+  updateFavCount();
+
+  if (!fotos.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">📷</div><div>Las fotos aún no han sido subidas.</div><div style="font-size:12px;margin-top:8px;color:var(--muted)">Pronto estarán disponibles.</div></div>';
+    return;
+  }
+  renderGrid();
+}
+
+function renderGrid() {
+  const grid = document.getElementById('photo-grid');
+  grid.className = `photo-grid ${gridCols === 2 ? 'cols-2' : gridCols === 4 ? 'cols-4' : ''}`;
+  grid.innerHTML = fotos.map((f, i) => {
+    const isFav = favoritas.has(f.public_id);
+    return `<div class="photo-item ${isFav ? 'favorita' : ''}" id="pi-${i}">
+      <img src="${f.thumb}" alt="foto ${i+1}" loading="lazy" onclick="openLB(${i})">
+      <div class="photo-overlay">
+        <div class="photo-actions">
+          <button class="photo-btn" onclick="event.stopPropagation();toggleFav(${i})" title="${isFav?'Quitar favorita':'Agregar a favoritas'}">${isFav ? '❤️' : '🤍'}</button>
+          <a class="photo-btn" href="${f.url}" download onclick="event.stopPropagation()" title="Descargar">⬇</a>
+        </div>
+      </div>
+      <div class="fav-indicator">❤️</div>
+    </div>`;
+  }).join('');
+}
+
+function setGrid(n) {
+  gridCols = n;
+  document.querySelectorAll('.grid-btn').forEach((b, i) => b.classList.toggle('active', [2,3,4][i] === n));
+  renderGrid();
+}
+
+// ── FAVORITES ─────────────────────────────────────────────
+async function toggleFav(i) {
+  const id = fotos[i].public_id;
+  if (favoritas.has(id)) favoritas.delete(id); else favoritas.add(id);
+  const el = document.getElementById('pi-' + i);
+  el.classList.toggle('favorita', favoritas.has(id));
+  el.querySelector('.photo-btn').textContent = favoritas.has(id) ? '❤️' : '🤍';
+  updateFavCount();
+  await saveFavs();
+}
+
+async function saveFavs() {
+  await fetch('/api/galeria/' + clienteData.codigo + '/favoritos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ favoritos: [...favoritas] }) });
+}
+
+function updateFavCount() {
+  const n = favoritas.size;
+  document.getElementById('stat-favs').textContent = n;
+  document.getElementById('fav-sel-count').textContent = n;
+  document.getElementById('btn-dl-favs').style.opacity = n ? '1' : '.5';
+}
+
+// ── LIGHTBOX ──────────────────────────────────────────────
+function openLB(i) {
+  lbIndex = i; renderLB();
+  document.getElementById('lightbox').classList.add('open');
+  document.addEventListener('keydown', lbKey);
+}
+function closeLB() { document.getElementById('lightbox').classList.remove('open'); document.removeEventListener('keydown', lbKey); }
+function lbKey(e) { if (e.key === 'ArrowRight') lbNav(1); else if (e.key === 'ArrowLeft') lbNav(-1); else if (e.key === 'Escape') closeLB(); }
+function lbNav(d) { lbIndex = (lbIndex + d + fotos.length) % fotos.length; renderLB(); }
+function renderLB() {
+  const f = fotos[lbIndex];
+  document.getElementById('lb-img').src = f.url;
+  document.getElementById('lb-dl').href = f.url;
+  document.getElementById('lb-counter').textContent = `${lbIndex + 1} / ${fotos.length}`;
+  const isFav = favoritas.has(f.public_id);
+  const btn = document.getElementById('lb-fav-btn');
+  btn.textContent = isFav ? '❤️ Favorita' : '♡ Favorita';
+  btn.style.color = isFav ? 'var(--ember)' : '';
+}
+function toggleFavLB() { toggleFav(lbIndex); renderLB(); }
+
+// ── DOWNLOADS ─────────────────────────────────────────────
+async function descargarTodo() {
+  const btn = document.querySelector('.btn-primary');
+  btn.textContent = 'Preparando ZIP...'; btn.disabled = true;
+  try {
+    const r = await fetch('/api/galeria/' + clienteData.codigo + '/zip?tipo=todo');
+    const { url } = await r.json();
+    if (url) { window.open(url, '_blank'); await registrarDescarga('todo'); }
+    else alert('No hay fotos aún en esta galería.');
+  } catch { alert('Error al generar el ZIP.'); }
+  btn.textContent = '⬇ Descargar todo'; btn.disabled = false;
+}
+
+async function descargarFavoritas() {
+  if (!favoritas.size) { alert('No tenés fotos marcadas como favoritas.'); return; }
+  const btn = document.getElementById('btn-dl-favs');
+  btn.textContent = 'Preparando...'; btn.disabled = true;
+  try {
+    const ids = [...favoritas].join(',');
+    const r = await fetch(`/api/galeria/${clienteData.codigo}/zip?tipo=favoritas&ids=${encodeURIComponent(ids)}`);
+    const { url } = await r.json();
+    if (url) { window.open(url, '_blank'); await registrarDescarga('favoritas'); }
+  } catch { alert('Error al generar el ZIP.'); }
+  btn.textContent = '♥ Descargar favoritas'; btn.disabled = false;
+}
+
+async function registrarDescarga(tipo) {
+  await fetch('/api/galeria/' + clienteData.codigo + '/descarga', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tipo }) });
+}
+</script>
+</body>
+</html>

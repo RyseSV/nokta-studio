@@ -1033,11 +1033,24 @@ function previewDoc(){
     </table>`;
 }
 
-function imprimirDoc(){
+async function imprimirDoc(){
   const tipo=document.getElementById('doc-tipo').value;
+  const nombre=document.getElementById('doc-nombre').value;
+  const servicios=Array.from(document.querySelectorAll('.svc-row')).map(r=>({descripcion:r.querySelector('.svc-desc').value,monto:parseFloat(r.querySelector('.svc-monto').value)||0}));
+  const total=servicios.reduce((s,sv)=>s+sv.monto,0);
+  const datos={ tipo, clienteNombre:nombre, empresa:document.getElementById('doc-empresa').value, telefono:document.getElementById('doc-tel').value, email:document.getElementById('doc-email').value, fechaEmision:document.getElementById('doc-fecha-em').value, fechaValidez:document.getElementById('doc-fecha-val').value, servicios, total, notas:document.getElementById('doc-notas').value };
   const w=window.open('','_blank','width=900,height=750');
-  w.document.write(buildDocHTML(tipo, null));
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><div style="width:36px;height:36px;border:3px solid #f0ebe5;border-top-color:#B85228;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px"></div><p style="color:#888;font-size:13px">Guardando y generando PDF...</p></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style></body></html>`);
   w.document.close();
+  try {
+    const res=await api('/api/documentos',{method:'POST',body:JSON.stringify(datos)});
+    w.document.open();
+    w.document.write(buildDocHTML(tipo, res.numero));
+    w.document.close();
+  } catch(e){
+    w.close();
+    alert('Error al guardar el documento: '+e.message);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════

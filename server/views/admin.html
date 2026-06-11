@@ -375,7 +375,7 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
       </div>
       <div class="section-card" id="doc-preview-card" style="display:none">
         <div id="doc-preview-html"></div>
-        <button class="btn btn-primary btn-sm" style="margin-top:16px" onclick="window.print()">🖨 Imprimir / PDF</button>
+        <button class="btn btn-primary btn-sm" style="margin-top:16px" onclick="imprimirDoc()">🖨 Imprimir / PDF</button>
       </div>
     </div>
   </div>
@@ -880,7 +880,7 @@ async function eliminarGasto(id){ if(!confirm('¿Eliminar?')) return; await api(
 // ═══════════════════════════════════════════════════════════
 // DOCUMENTOS
 // ═══════════════════════════════════════════════════════════
-function docTab(tipo,btn){ document.getElementById('doc-tipo').value=tipo; document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active'); }
+function docTab(tipo,btn){ document.getElementById('doc-tipo').value=tipo; document.querySelectorAll('#page-documentos .tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active'); if(document.getElementById('doc-preview-card').style.display!=='none') previewDoc(); }
 function initDocForm(){ addSvcLine(); document.getElementById('doc-fecha-em').value=new Date().toISOString().split('T')[0]; }
 function addSvcLine(){
   const c=document.getElementById('svc-lines');
@@ -912,25 +912,110 @@ async function loadHistorialDoc(){
   document.getElementById('doc-historial-list').innerHTML=fil.length?fil.map(d=>`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${d.numero}</span><span class="text-muted">${d.clienteNombre}</span><span>$${parseFloat(d.total||0).toFixed(2)}</span></div>`).join(''):
     '<div class="empty">Sin documentos</div>';
 }
-function previewDoc(){
+function buildDocHTML(tipo, numero){
   const nombre=document.getElementById('doc-nombre').value;
-  const tipo=document.getElementById('doc-tipo').value;
+  const empresa=document.getElementById('doc-empresa').value;
+  const tel=document.getElementById('doc-tel').value;
+  const email=document.getElementById('doc-email').value;
+  const fechaEm=document.getElementById('doc-fecha-em').value;
+  const fechaVal=document.getElementById('doc-fecha-val').value;
+  const notas=document.getElementById('doc-notas').value;
   const servicios=Array.from(document.querySelectorAll('.svc-row')).map(r=>({descripcion:r.querySelector('.svc-desc').value,monto:parseFloat(r.querySelector('.svc-monto').value)||0}));
   const total=servicios.reduce((s,sv)=>s+sv.monto,0);
+  const titulo=tipo==='cotizacion'?'Cotización':'Recibo de Pago';
+  const numLabel=numero||(tipo==='cotizacion'?'NK-COT-###':'NK-REC-###');
+  const logoUrl=location.origin+'/img/logo/nokta_lockup_color_transparent.png';
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${titulo} ${numLabel}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Poppins',sans-serif;color:#1C1C1A;background:#fff;padding:48px 56px;max-width:820px;margin:0 auto}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px}
+    .logo img{height:48px;width:auto}
+    .doc-meta{text-align:right}
+    .doc-tipo{font-size:22px;font-weight:700;color:#1C1C1A;margin-bottom:4px}
+    .doc-num{font-size:13px;color:#B85228;font-weight:600;letter-spacing:1px}
+    .doc-date{font-size:12px;color:#888;margin-top:2px}
+    .divider{border:none;border-top:2px solid #B85228;margin:24px 0}
+    .divider-light{border:none;border-top:1px solid #e8e4df;margin:20px 0}
+    .section-label{font-size:10px;letter-spacing:2px;color:#B85228;font-weight:600;margin-bottom:10px;text-transform:uppercase}
+    .client-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;margin-bottom:8px}
+    .field{font-size:13px;color:#1C1C1A}
+    .field span{color:#888;font-size:11px;display:block;letter-spacing:1px;text-transform:uppercase;margin-bottom:1px}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    thead tr{border-bottom:2px solid #B85228}
+    th{font-size:11px;letter-spacing:1px;color:#888;text-transform:uppercase;padding:8px 0;text-align:left;font-weight:500}
+    th:last-child{text-align:right}
+    td{padding:10px 0;font-size:13px;border-bottom:1px solid #f0ebe5}
+    td:last-child{text-align:right}
+    .total-row td{border-top:2px solid #B85228;border-bottom:none;padding-top:14px;font-weight:700;font-size:15px}
+    .total-row td:last-child{color:#B85228;font-size:17px}
+    .notas{margin-top:28px;padding:16px;background:#faf8f5;border-left:3px solid #B85228;border-radius:0 6px 6px 0;font-size:12px;color:#555;line-height:1.6}
+    .notas strong{display:block;font-size:11px;letter-spacing:1px;color:#B85228;text-transform:uppercase;margin-bottom:4px}
+    .footer{margin-top:48px;padding-top:14px;border-top:1px solid #e8e4df;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#bbb}
+    @media print{body{padding:20px 28px}@page{margin:12mm 14mm}}
+  </style></head><body>
+  <div class="header">
+    <div class="logo"><img src="${logoUrl}" alt="Nokta Studio" onerror="this.outerHTML='<div style=\\'font-size:22px;font-weight:700\\'>nokta<span style=\\'color:#B85228\\'>.</span></div><div style=\\'font-size:9px;letter-spacing:3px;color:#888;margin-top:2px\\'>NOKTA STUDIO</div>'"></div>
+    <div class="doc-meta">
+      <div class="doc-tipo">${titulo}</div>
+      <div class="doc-num">${numLabel}</div>
+      <div class="doc-date">Emisión: ${fechaEm||'—'}${fechaVal?'&nbsp;&nbsp;·&nbsp;&nbsp;Válido hasta: '+fechaVal:''}</div>
+    </div>
+  </div>
+  <hr class="divider">
+  <div class="section-label">Cliente</div>
+  <div class="client-grid">
+    <div class="field"><span>Nombre</span>${nombre||'—'}</div>
+    ${empresa?`<div class="field"><span>Empresa</span>${empresa}</div>`:''}
+    ${tel?`<div class="field"><span>Teléfono</span>${tel}</div>`:''}
+    ${email?`<div class="field"><span>Email</span>${email}</div>`:''}
+  </div>
+  <hr class="divider-light">
+  <div class="section-label">Servicios</div>
+  <table>
+    <thead><tr><th>Descripción</th><th style="text-align:right">Monto</th></tr></thead>
+    <tbody>
+      ${servicios.map(s=>`<tr><td>${s.descripcion||'—'}</td><td>$${s.monto.toFixed(2)}</td></tr>`).join('')}
+      <tr class="total-row"><td>Total</td><td>$${total.toFixed(2)}</td></tr>
+    </tbody>
+  </table>
+  ${notas?`<div class="notas"><strong>Notas y condiciones</strong>${notas}</div>`:''}
+  <div class="footer">
+    <span>Nokta Studio</span>
+    <span>Generado el ${new Date().toLocaleDateString('es',{day:'2-digit',month:'long',year:'numeric'})}</span>
+  </div>
+  <script>window.onload=()=>{window.print();}<\/script>
+  </body></html>`;
+}
+
+function previewDoc(){
+  const tipo=document.getElementById('doc-tipo').value;
   const card=document.getElementById('doc-preview-card');
   card.style.display='block';
+  const nombre=document.getElementById('doc-nombre').value;
+  const empresa=document.getElementById('doc-empresa').value;
+  const fechaEm=document.getElementById('doc-fecha-em').value;
+  const servicios=Array.from(document.querySelectorAll('.svc-row')).map(r=>({descripcion:r.querySelector('.svc-desc').value,monto:parseFloat(r.querySelector('.svc-monto').value)||0}));
+  const total=servicios.reduce((s,sv)=>s+sv.monto,0);
+  const titulo=tipo==='cotizacion'?'Cotización':'Recibo de Pago';
   document.getElementById('doc-preview-html').innerHTML=`
-    <div style="font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:4px">NOKTA STUDIO</div>
-    <div style="font-size:18px;font-weight:600;margin-bottom:16px">${tipo==='cotizacion'?'Cotización':'Recibo de pago'}</div>
-    <div style="font-size:13px;margin-bottom:4px"><b>Cliente:</b> ${nombre}</div>
-    ${document.getElementById('doc-empresa').value?`<div style="font-size:13px;margin-bottom:4px"><b>Empresa:</b> ${document.getElementById('doc-empresa').value}</div>`:''}
-    <div style="font-size:13px;margin-bottom:16px"><b>Fecha:</b> ${document.getElementById('doc-fecha-em').value}</div>
-    <table style="width:100%;font-size:13px;border-collapse:collapse">
-      <tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:6px 0;color:var(--muted)">Servicio</th><th style="text-align:right;color:var(--muted)">Monto</th></tr>
-      ${servicios.map(s=>`<tr><td style="padding:6px 0">${s.descripcion}</td><td style="text-align:right">$${s.monto.toFixed(2)}</td></tr>`).join('')}
-      <tr style="border-top:1px solid var(--ember)"><td style="padding:10px 0;font-weight:600">TOTAL</td><td style="text-align:right;font-weight:600;color:var(--ember)">$${total.toFixed(2)}</td></tr>
-    </table>
-    ${document.getElementById('doc-notas').value?`<div style="margin-top:12px;font-size:12px;color:var(--muted)">${document.getElementById('doc-notas').value}</div>`:''}`;
+    <div style="font-size:10px;letter-spacing:2px;color:#B85228;font-weight:600;margin-bottom:6px">${titulo.toUpperCase()}</div>
+    <div style="font-size:15px;font-weight:600;margin-bottom:14px;color:#1C1C1A">${nombre||'(sin nombre)'}</div>
+    ${empresa?`<div style="font-size:12px;color:#888;margin-bottom:4px">${empresa}</div>`:''}
+    <div style="font-size:12px;color:#888;margin-bottom:14px">${fechaEm||''}</div>
+    <table style="width:100%;font-size:12px;border-collapse:collapse">
+      <tr style="border-bottom:2px solid #B85228"><th style="text-align:left;padding:6px 0;font-size:10px;letter-spacing:1px;color:#888;text-transform:uppercase;font-weight:500">Servicio</th><th style="text-align:right;font-size:10px;letter-spacing:1px;color:#888;text-transform:uppercase;font-weight:500">Monto</th></tr>
+      ${servicios.map(s=>`<tr><td style="padding:7px 0;border-bottom:1px solid #f0ebe5">${s.descripcion||'—'}</td><td style="text-align:right;border-bottom:1px solid #f0ebe5">$${s.monto.toFixed(2)}</td></tr>`).join('')}
+      <tr><td style="padding:10px 0;font-weight:700;border-top:2px solid #B85228">TOTAL</td><td style="text-align:right;font-weight:700;color:#B85228;font-size:15px;border-top:2px solid #B85228">$${total.toFixed(2)}</td></tr>
+    </table>`;
+}
+
+function imprimirDoc(){
+  const tipo=document.getElementById('doc-tipo').value;
+  const w=window.open('','_blank','width=900,height=750');
+  w.document.write(buildDocHTML(tipo, null));
+  w.document.close();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1206,20 +1291,29 @@ async function genReporte(tipo){
     </table>`;
   }
 
+  const logoUrl=location.origin+'/img/logo/nokta_lockup_color_transparent.png';
   const w=window.open('','_blank','width=900,height=700');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${titulo}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <style>body{font-family:'Poppins',sans-serif;color:#1C1C1A;padding:40px 48px;max-width:900px;margin:0 auto}
-  h1{font-size:20px;font-weight:600;margin-bottom:4px} .sub{font-size:13px;color:#888;margin-bottom:8px}
-  .divider{border:none;border-top:1px solid #ddd;margin:20px 0}
-  @media print{body{padding:20px}}</style></head><body>
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
-    <div><div style="font-size:13px;letter-spacing:2px;color:#B85228;font-weight:500">NOKTA STUDIO</div><h1>${titulo}</h1></div>
-    <div style="text-align:right;font-size:12px;color:#888">${now.toLocaleString('es',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Poppins',sans-serif;color:#1C1C1A;background:#fff;padding:48px 56px;max-width:900px;margin:0 auto}
+  .rpt-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
+  .rpt-logo img{height:44px;width:auto}
+  .rpt-title{font-size:20px;font-weight:700;color:#1C1C1A;margin-bottom:2px}
+  .rpt-sub{font-size:12px;color:#888}
+  h3{font-size:11px;letter-spacing:2px;color:#B85228;font-weight:600;text-transform:uppercase;margin-bottom:10px}
+  table{width:100%;border-collapse:collapse}
+  thead tr{border-bottom:2px solid #B85228}
+  th{font-size:11px;letter-spacing:1px;color:#888;text-transform:uppercase;padding:8px 0;text-align:left;font-weight:500}
+  td{padding:8px 0;font-size:13px;border-bottom:1px solid #f0ebe5}
+  .footer{margin-top:48px;padding-top:14px;border-top:1px solid #e8e4df;font-size:11px;color:#bbb;text-align:center}
+  @media print{body{padding:20px 28px}@page{margin:12mm 14mm}}</style></head><body>
+  <div class="rpt-header">
+    <div class="rpt-logo"><img src="${logoUrl}" alt="Nokta Studio" onerror="this.outerHTML='<div style=\\'font-size:22px;font-weight:700\\'>nokta<span style=\\'color:#B85228\\'>.</span></div>'"></div>
+    <div style="text-align:right"><div class="rpt-title">${titulo}</div><div class="rpt-sub">${now.toLocaleString('es',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>
   </div>
-  <hr style="border:none;border-top:2px solid #B85228;margin-bottom:24px">
+  <hr style="border:none;border-top:2px solid #B85228;margin-bottom:28px">
   ${cuerpo}
-  <div style="margin-top:48px;padding-top:16px;border-top:1px solid #eee;font-size:11px;color:#bbb;text-align:center">Generado por Nokta Studio · ${now.toLocaleString('es')}</div>
+  <div class="footer">Generado por Nokta Studio · ${now.toLocaleString('es')}</div>
   <script>window.onload=()=>{window.print();}<\/script></body></html>`);
   w.document.close();
 }

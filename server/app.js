@@ -48,6 +48,7 @@ mongoose.connect(process.env.MONGODB_URI)
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/img', express.static(path.join(__dirname, '../img')));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'nokta_secret',
   resave: false,

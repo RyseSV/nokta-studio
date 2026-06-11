@@ -6,6 +6,8 @@ const mongoose = require('mongoose');
 const cloudinary = require('cloudinary').v2;
 const path = require('path');
 const os = require('os');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -46,9 +48,17 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // ── Express setup ───────────────────────────────────────────
 const app = express();
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/img', express.static(path.join(__dirname, '../img')));
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Demasiados intentos. Espera 15 minutos.' },
+  skipSuccessfulRequests: true,
+});
 app.use(session({
   secret: process.env.SESSION_SECRET || 'nokta_secret',
   resave: false,
@@ -136,7 +146,7 @@ app.get('/galeria', (req, res) => {
 // AUTH API
 // ══════════════════════════════════════════════════════════════
 
-app.post('/api/admin/login', (req, res) => {
+app.post('/api/admin/login', loginLimiter, (req, res) => {
   if (req.body.password === process.env.ADMIN_PASSWORD) {
     req.session.admin = true;
     res.json({ ok: true });

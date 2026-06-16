@@ -296,17 +296,22 @@ footer{background:var(--ink);border-top:1px solid var(--line);padding:3.5rem 0 2
 .lb-counter{position:absolute;bottom:1.4rem;left:50%;transform:translateX(-50%);color:var(--stone);font-size:.82rem;letter-spacing:.2em;text-transform:uppercase}
 @media(max-width:680px){.lb-arrow{width:40px;height:40px}.lb-prev{left:.5rem}.lb-next{right:.5rem}}
 /* FAQ */
-.faqs{display:flex;flex-direction:column;gap:.8rem;max-width:800px;margin:0 auto}
-.faq-item{border:1px solid var(--line);border-radius:16px;overflow:hidden;transition:border-color .3s,background .3s;background:rgba(240,236,228,.02)}
-.faq-item.open{border-color:var(--ember);background:rgba(184,82,40,.05)}
-.faq-q{width:100%;background:none;border:0;color:var(--cream);font-family:'Poppins',sans-serif;font-size:1rem;font-weight:500;text-align:left;padding:1.4rem 1.6rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:1.2rem;transition:color .25s}
+.faqs{display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:960px;margin:0 auto}
+.faq-item{border:1px solid var(--line);border-radius:20px;overflow:hidden;transition:border-color .35s,box-shadow .35s,transform .25s;background:rgba(240,236,228,.025);cursor:pointer}
+.faq-item:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.25)}
+.faq-item.open{border-color:var(--ember);box-shadow:0 0 0 1px var(--ember),0 12px 40px rgba(184,82,40,.15);transform:translateY(-2px)}
+.faq-q{width:100%;background:none;border:0;color:var(--cream);font-family:'Poppins',sans-serif;font-size:.98rem;font-weight:500;text-align:left;padding:1.5rem 1.6rem 1.4rem;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;transition:color .25s;line-height:1.4}
 .faq-q:hover{color:var(--ember)}
-.faq-icon{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--ember);display:flex;align-items:center;justify-content:center;color:var(--ember);font-size:1.2rem;font-weight:300;transition:transform .35s,background .3s;flex-shrink:0;line-height:1}
-.faq-item.open .faq-icon{transform:rotate(45deg);background:var(--ember);color:var(--cream)}
-.faq-a{max-height:0;overflow:hidden;transition:max-height .45s cubic-bezier(.4,0,.2,1)}
-.faq-item.open .faq-a{max-height:300px}
-.faq-a-inner{padding:0 1.6rem 1.5rem 1.6rem;border-top:1px solid rgba(184,82,40,.2);margin-top:0}
-.faq-a-inner p{padding-top:1.1rem;color:var(--creamT);font-weight:300;line-height:1.8;font-size:.95rem}
+.faq-num{font-size:.75rem;font-weight:700;color:var(--ember);letter-spacing:.12em;display:block;margin-bottom:.35rem;opacity:.7}
+.faq-q-text{display:flex;flex-direction:column}
+.faq-icon{width:32px;height:32px;border-radius:50%;border:1.5px solid rgba(184,82,40,.4);display:flex;align-items:center;justify-content:center;color:var(--ember);font-size:1.3rem;font-weight:300;transition:transform .4s cubic-bezier(.34,1.56,.64,1),background .3s,border-color .3s;flex-shrink:0;margin-top:.1rem;line-height:1}
+.faq-item.open .faq-icon{transform:rotate(45deg);background:var(--ember);border-color:var(--ember);color:#fff}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.4,0,.2,1)}
+.faq-item.open .faq-a{max-height:260px}
+.faq-a-inner{padding:0 1.6rem 1.6rem}
+.faq-a-inner::before{content:'';display:block;height:1px;background:linear-gradient(90deg,var(--ember),transparent);margin-bottom:1rem;opacity:.4}
+.faq-a-inner p{color:var(--creamT);font-weight:300;line-height:1.8;font-size:.92rem}
+@media(max-width:680px){.faqs{grid-template-columns:1fr}.faq-q{font-size:.95rem;padding:1.2rem 1.3rem}.faq-a-inner{padding:0 1.3rem 1.3rem}}
 /* Testimonios */
 .testimonios{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4rem}
 .testi{border:1px solid var(--line);border-radius:18px;padding:2rem 1.8rem;background:rgba(240,236,228,.02);transition:.35s;display:flex;flex-direction:column}
@@ -466,7 +471,11 @@ footer{background:var(--ink);border-top:1px solid var(--line);padding:3.5rem 0 2
 <!-- ABOUT -->
 <!-- CONTADOR -->
 <div class="counter-strip rev" id="counter-strip">
-  <div class="wrap counts" style="grid-template-columns:repeat(2,1fr);max-width:500px;margin:0 auto">
+  <div class="wrap counts">
+    <div class="count-item">
+      <div class="count-n" data-target="0"><span class="val">0</span></div>
+      <div class="count-lbl">Eventos</div>
+    </div>
     <div class="count-item">
       <div class="count-n" data-target="3"><span class="val">0</span><span class="sym">+</span></div>
       <div class="count-lbl">Clientes</div>
@@ -483,23 +492,23 @@ footer{background:var(--ink);border-top:1px solid var(--line);padding:3.5rem 0 2
   <div class="head rev" style="text-align:center"><p class="kick">FAQ</p><h2>Preguntas <em>frecuentes</em></h2></div>
   <div class="faqs">
     <div class="faq-item rev">
-      <button class="faq-q">¿Cuánto tiempo tarda la entrega?<span class="faq-icon">+</span></button>
+      <button class="faq-q"><span class="faq-q-text"><span class="faq-num">01</span>¿Cuánto tiempo tarda la entrega?</span><span class="faq-icon">+</span></button>
       <div class="faq-a"><div class="faq-a-inner"><p>Para sesiones fotográficas, entre 5 y 10 días hábiles. Para videos editados, entre 7 y 15 días según la complejidad del proyecto. Siempre te avisamos el estado de tu entrega.</p></div></div>
     </div>
     <div class="faq-item rev">
-      <button class="faq-q">¿Qué incluye cada paquete?<span class="faq-icon">+</span></button>
+      <button class="faq-q"><span class="faq-q-text"><span class="faq-num">02</span>¿Qué incluye cada paquete?</span><span class="faq-icon">+</span></button>
       <div class="faq-a"><div class="faq-a-inner"><p>Cada paquete detalla exactamente qué cubre: cantidad de fotos, duración de video, edición incluida y tiempo de entrega. Podés verlo en la sección de Paquetes. Si necesitás algo personalizado, hablamos.</p></div></div>
     </div>
     <div class="faq-item rev">
-      <button class="faq-q">¿Trabajan fuera de San Salvador?<span class="faq-icon">+</span></button>
+      <button class="faq-q"><span class="faq-q-text"><span class="faq-num">03</span>¿Trabajan fuera de San Salvador?</span><span class="faq-icon">+</span></button>
       <div class="faq-a"><div class="faq-a-inner"><p>Sí. Cubrimos todo El Salvador. Dependiendo de la distancia puede aplicar un costo de traslado adicional. Consultanos sin compromiso.</p></div></div>
     </div>
     <div class="faq-item rev">
-      <button class="faq-q">¿Cómo es el proceso de pago?<span class="faq-icon">+</span></button>
+      <button class="faq-q"><span class="faq-q-text"><span class="faq-num">04</span>¿Cómo es el proceso de pago?</span><span class="faq-icon">+</span></button>
       <div class="faq-a"><div class="faq-a-inner"><p>Se solicita un adelanto del 50% para reservar la fecha y el resto se cancela al entregar el trabajo. Aceptamos transferencia, depósito o efectivo.</p></div></div>
     </div>
     <div class="faq-item rev">
-      <button class="faq-q">¿Puedo reservar con anticipación?<span class="faq-icon">+</span></button>
+      <button class="faq-q"><span class="faq-q-text"><span class="faq-num">05</span>¿Puedo reservar con anticipación?</span><span class="faq-icon">+</span></button>
       <div class="faq-a"><div class="faq-a-inner"><p>¡Sí! Recomendamos reservar con al menos 2 a 4 semanas de anticipación, especialmente en temporadas altas (bodas, graduaciones, fin de año). El adelanto asegura tu fecha.</p></div></div>
     </div>
   </div>

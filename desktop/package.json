@@ -1,0 +1,64 @@
+{
+  "name": "nokta-studio-desktop",
+  "version": "1.0.0",
+  "description": "Nokta Studio — Panel de administración",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64",
+    "build-portable": "electron-builder --win portable --x64"
+  },
+  "build": {
+    "appId": "com.noktastudio.admin",
+    "productName": "Nokta Studio",
+    "directories": {
+      "output": "C:\\Users\\gaboe\\Desktop\\nokta-build"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "RyseSV",
+      "repo": "nokta-studio"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "assets/**/*",
+      "server/**/*",
+      "!server/node_modules/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "server/node_modules",
+        "to": "server/node_modules",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "assets/icon.png",
+      "signAndEditExecutable": false,
+      "sign": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Nokta Studio",
+      "installerHeader": "assets/installer-header.bmp",
+      "installerSidebar": "assets/installer-sidebar.bmp",
+      "uninstallerSidebar": "assets/installer-sidebar.bmp"
+    }
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3",
+    "jimp": "^1.6.1",
+    "png-to-ico": "^3.0.1"
+  }
+}

@@ -20,8 +20,10 @@ body{background:var(--bg);color:var(--cream);font-family:'Poppins',sans-serif;di
 .sb-link .icon{font-size:16px;width:20px;text-align:center}
 .badge{background:var(--ember);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:auto}
 .sb-bottom{margin-top:auto;padding:20px;display:flex;align-items:center;gap:10px;border-top:1px solid var(--border)}
-.avatar{width:34px;height:34px;border-radius:50%;background:var(--ember);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;flex-shrink:0}
-.sb-user{font-size:12px;line-height:1.4}.sb-user span{color:var(--muted);font-size:11px;display:block}
+.avatar{width:34px;height:34px;border-radius:50%;background:#2E2E2B;border:1px solid rgba(240,236,228,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.avatar img{width:24px;height:auto;object-fit:contain;display:block}
+.sb-user{font-size:12px;line-height:1.4;min-width:0;flex:1;overflow:hidden}.sb-user span{color:var(--muted);font-size:10px;display:block;letter-spacing:.3px;text-transform:uppercase}
+.sb-nombre-text{color:var(--cream)!important;font-size:12px!important;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .logout-btn{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px}
 /* MAIN */
 .main{margin-left:220px;flex:1;padding:32px;min-height:100vh}
@@ -199,9 +201,16 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
   <div class="sb-link" onclick="nav('analiticas')"><span class="icon">📊</span> Analíticas</div>
   <div class="sb-link" onclick="nav('equipo')"><span class="icon">👥</span> Mi equipo</div>
   <div class="sb-link" onclick="nav('reportes')"><span class="icon">📋</span> Reportes</div>
+  <div class="sb-section" id="sb-admin-section" style="display:none">Administración</div>
+  <div class="sb-link" onclick="nav('usuarios')" id="sb-usuarios" style="display:none"><span class="icon">🔑</span> Usuarios</div>
   <div class="sb-bottom">
-    <div class="avatar">G</div>
-    <div class="sb-user">Gabo<span>Nokta Studio</span></div>
+    <div class="avatar" id="sb-avatar">
+      <img src="/img/logo/icon_enso_white.png" alt="nokta" onerror="this.style.display='none'">
+    </div>
+    <div class="sb-user" id="sb-user-info">
+      <span class="sb-nombre-text" id="sb-nombre">—</span>
+      <span id="sb-rol">Nokta Studio</span>
+    </div>
     <button class="logout-btn" onclick="logout()" title="Cerrar sesión">⏻</button>
   </div>
 </nav>
@@ -447,6 +456,18 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
   <div class="report-card"><div><div style="font-weight:500">Reporte de galerías</div><div class="text-muted" style="font-size:12px;margin-top:3px">Galerías activas, expiradas y descargadas</div></div><button class="btn btn-outline" onclick="genReporte('galerias')">📥 Generar PDF</button></div>
 </section>
 
+<!-- ═══════════════ USUARIOS ═══════════════ -->
+<section class="page" id="page-usuarios">
+  <div class="page-header">
+    <div class="page-title">Usuarios</div>
+    <button class="btn btn-primary" onclick="openUsuarioModal()">＋ Nuevo usuario</button>
+  </div>
+  <div class="table-card">
+    <table><thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Creado</th><th></th></tr></thead>
+    <tbody id="usuarios-tbody"></tbody></table>
+  </div>
+</section>
+
 </main>
 
 <!-- ═══ SLIDE PANEL (evento / trabajo detail) ═══ -->
@@ -562,6 +583,32 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
   </div>
 </div>
 
+<!-- ═══ MODAL usuario ═══ -->
+<div class="modal-overlay" id="modal-usuario">
+  <div class="modal">
+    <div class="modal-title" id="modal-usuario-title">Nuevo usuario</div>
+    <form onsubmit="guardarUsuario(event)">
+      <input type="hidden" id="u-id">
+      <div class="form-grid">
+        <div class="form-group"><label>Nombre completo *</label><input id="u-nombre" required placeholder="Nombre del miembro"></div>
+        <div class="form-group"><label>Usuario *</label><input id="u-username" required placeholder="sin espacios" autocomplete="off"></div>
+        <div class="form-group"><label>Contraseña *</label><input type="password" id="u-password" placeholder="Dejar vacío para no cambiar" autocomplete="new-password"></div>
+        <div class="form-group"><label>Rol *</label>
+          <select id="u-role">
+            <option value="editor">Editor — acceso normal</option>
+            <option value="admin">Admin — acceso total</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions" style="margin-top:20px">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal('modal-usuario')">Cancelar</button>
+        <button type="button" class="btn btn-danger btn-sm" id="u-delete-btn" style="display:none;margin-left:auto" onclick="eliminarUsuario()">🗑 Eliminar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- ═══ REPORTE PRINT ═══ -->
 <div id="reporte-print" style="display:none"></div>
 
@@ -596,11 +643,97 @@ function loadSection(id){
   else if(id==='galerias') loadGalerias();
   else if(id==='analiticas') loadAnaliticas();
   else if(id==='equipo') loadEquipo();
+  else if(id==='usuarios') loadUsuarios();
   else if(id==='nuevo-trabajo') fillClientesDatalist();
   else if(id==='documentos') { fillClientesDatalist2(); initDocForm(); }
 }
 
 async function logout(){ await fetch('/api/admin/logout',{method:'POST'}); location.href='/admin'; }
+
+// ═══════════════════════════════════════════════════════════
+// INIT — cargar sesión del usuario actual
+// ═══════════════════════════════════════════════════════════
+let currentUser = null;
+async function initSession(){
+  try {
+    const me = await api('/api/admin/me');
+    currentUser = me;
+    document.getElementById('sb-nombre').textContent = me.nombre || me.username || '—';
+    document.getElementById('sb-rol').textContent = me.role === 'admin' ? 'Administrador' : 'Editor';
+    if(me.role === 'admin'){
+      document.getElementById('sb-admin-section').style.display = '';
+      document.getElementById('sb-usuarios').style.display = '';
+    }
+  } catch(e){ console.warn('No se pudo cargar sesión', e); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// USUARIOS
+// ═══════════════════════════════════════════════════════════
+let allUsuarios = [];
+
+async function loadUsuarios(){
+  allUsuarios = await api('/api/usuarios');
+  const tbody = document.getElementById('usuarios-tbody');
+  const roles = { admin:'Administrador', editor:'Editor' };
+  tbody.innerHTML = allUsuarios.length
+    ? allUsuarios.map(u=>`
+      <tr onclick="openUsuarioModal('${u._id}')">
+        <td><b>${u.nombre||'—'}</b></td>
+        <td style="font-family:monospace;font-size:12px">@${u.username}</td>
+        <td><span class="pill ${u.role==='admin'?'pill-blue':'pill-green'}">${roles[u.role]||u.role}</span></td>
+        <td>${u.creado?fmtFecha(u.creado):'—'}</td>
+        <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openUsuarioModal('${u._id}')">Editar</button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="empty">No hay usuarios</td></tr>';
+}
+
+function openUsuarioModal(id){
+  const u = id ? allUsuarios.find(x=>x._id===id) : null;
+  document.getElementById('modal-usuario-title').textContent = u ? 'Editar usuario' : 'Nuevo usuario';
+  document.getElementById('u-id').value = u?._id || '';
+  document.getElementById('u-nombre').value = u?.nombre || '';
+  document.getElementById('u-username').value = u?.username || '';
+  document.getElementById('u-password').value = '';
+  document.getElementById('u-password').placeholder = u ? 'Dejar vacío para no cambiar' : 'Contraseña *';
+  document.getElementById('u-role').value = u?.role || 'editor';
+  document.getElementById('u-delete-btn').style.display = (u && u.role !== 'admin') ? '' : 'none';
+  openModal('modal-usuario');
+}
+
+async function guardarUsuario(e){
+  e.preventDefault();
+  const id = document.getElementById('u-id').value;
+  const datos = {
+    nombre: document.getElementById('u-nombre').value,
+    username: document.getElementById('u-username').value.trim().toLowerCase(),
+    password: document.getElementById('u-password').value,
+    role: document.getElementById('u-role').value,
+  };
+  if(!id && !datos.password){ toast('La contraseña es requerida','err'); return; }
+  if(id && !datos.password) delete datos.password;
+  const r = id
+    ? await api('/api/usuarios/'+id,{method:'PUT',body:JSON.stringify(datos)})
+    : await api('/api/usuarios',{method:'POST',body:JSON.stringify(datos)});
+  if(r.ok||r.usuario){
+    toast('✓ Usuario guardado');
+    closeModal('modal-usuario');
+    loadUsuarios();
+    // If editing own profile, refresh sidebar immediately
+    if(id && currentUser && id === currentUser._id) initSession();
+  } else toast(r.error||'Error al guardar','err');
+}
+
+async function eliminarUsuario(){
+  const id = document.getElementById('u-id').value;
+  if(!confirm('¿Eliminar este usuario?')) return;
+  const r = await api('/api/usuarios/'+id,{method:'DELETE'});
+  if(r.ok){ toast('Usuario eliminado'); closeModal('modal-usuario'); loadUsuarios(); }
+  else toast(r.error||'Error','err');
+}
+
+// Ejecutar al cargar la página
+initSession();
 
 // ═══════════════════════════════════════════════════════════
 // FETCH HELPERS
@@ -1378,7 +1511,7 @@ async function genReporte(tipo){
 // ═══════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════
-function fmtFecha(f){ if(!f) return '—'; const d=new Date(f+'T12:00:00'); return d.toLocaleDateString('es',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtFecha(f){ if(!f) return '—'; const d=f.includes('T')?new Date(f):new Date(f+'T12:00:00'); return isNaN(d)?'—':d.toLocaleDateString('es',{day:'2-digit',month:'short',year:'numeric'}); }
 function fmtDateTime(f){ if(!f) return '—'; return new Date(f).toLocaleString('es',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
 function openPanel(){ document.getElementById('panel-overlay').classList.add('open'); document.getElementById('side-panel').classList.add('open'); }
 function closePanel(){ document.getElementById('panel-overlay').classList.remove('open'); document.getElementById('side-panel').classList.remove('open'); }

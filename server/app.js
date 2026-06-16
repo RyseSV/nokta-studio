@@ -4,6 +4,7 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo').default || require('connect-mongo');
 const mongoose = require('mongoose');
 const cloudinary = require('cloudinary').v2;
+const bcrypt = require('bcryptjs');
 const path = require('path');
 const os = require('os');
 const helmet = require('helmet');
@@ -24,6 +25,25 @@ const clienteSchema = new mongoose.Schema({
   reactivaciones: [Object]
 }, { strict: false });
 
+const usuarioSchema = new mongoose.Schema({
+  username: { type: String, unique: true },
+  nombre: String,
+  password: String,
+  role: { type: String, default: 'editor' },
+  creado: String,
+}, { strict: false });
+const Usuario = mongoose.model('Usuario', usuarioSchema);
+
+// ── Seed admin user on first run ─────────────────────────────
+async function seedAdmin() {
+  const exists = await Usuario.findOne({ role: 'admin' });
+  if (!exists) {
+    const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'Nokta2026!', 10);
+    await Usuario.create({ username: 'admin', nombre: 'Administrador', password: hash, role: 'admin', creado: new Date().toISOString() });
+    console.log('  Admin user creado ✓');
+  }
+}
+
 const trabajoSchema = new mongoose.Schema({ id: { type: String, unique: true } }, { strict: false });
 const gastoSchema   = new mongoose.Schema({ id: { type: String, unique: true } }, { strict: false });
 const cotSchema     = new mongoose.Schema({ id: { type: String, unique: true } }, { strict: false });
@@ -43,7 +63,7 @@ const Evento     = mongoose.model('Evento',     eventoSchema);
 
 // ── Connect MongoDB ─────────────────────────────────────────
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('  MongoDB conectado ✓'))
+  .then(async () => { console.log('  MongoDB conectado ✓'); await seedAdmin(); })
   .catch(err => { console.error('MongoDB error:', err); process.exit(1); });
 
 // ── Express setup ───────────────────────────────────────────
@@ -69,8 +89,12 @@ app.use(session({
 
 // ── Auth middleware ─────────────────────────────────────────
 function requireAdmin(req, res, next) {
-  if (req.session.admin) return next();
+  if (req.session.userId) return next();
   res.status(401).json({ error: 'No autorizado' });
+}
+function requireSuperAdmin(req, res, next) {
+  if (req.session.role === 'admin') return next();
+  res.status(403).json({ error: 'Acceso denegado' });
 }
 
 // ── Generate client code ────────────────────────────────────
@@ -134,7 +158,7 @@ async function checkAlerts() {
 // ══════════════════════════════════════════════════════════════
 
 app.get('/admin', (req, res) => {
-  if (!req.session.admin) return res.sendFile(path.join(__dirname, 'views', 'login-admin.html'));
+  if (!req.session.userId) return res.sendFile(path.join(__dirname, 'views', 'login-admin.html'));
   res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
@@ -146,18 +170,75 @@ app.get('/galeria', (req, res) => {
 // AUTH API
 // ══════════════════════════════════════════════════════════════
 
-app.post('/api/admin/login', loginLimiter, (req, res) => {
-  if (req.body.password === process.env.ADMIN_PASSWORD) {
-    req.session.admin = true;
-    res.json({ ok: true });
-  } else {
-    res.status(401).json({ error: 'Contraseña incorrecta' });
-  }
+app.post('/api/admin/login', loginLimiter, async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const user = await Usuario.findOne({ username: username?.trim().toLowerCase() });
+    if (!user || !(await bcrypt.compare(password, user.password)))
+      return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+    req.session.userId = user._id.toString();
+    req.session.username = user.username;
+    req.session.nombre = user.nombre;
+    req.session.role = user.role;
+    res.json({ ok: true, role: user.role, nombre: user.nombre });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/admin/logout', (req, res) => {
   req.session.destroy();
   res.json({ ok: true });
+});
+
+
+app.get('/api/admin/me', requireAdmin, (req, res) => {
+  res.json({ _id: req.session.userId, username: req.session.username, nombre: req.session.nombre, role: req.session.role });
+});
+
+// ══════════════════════════════════════════════════════════════
+// USUARIOS API (solo admin)
+// ══════════════════════════════════════════════════════════════
+
+app.get('/api/usuarios', requireAdmin, requireSuperAdmin, async (req, res) => {
+  try {
+    const users = await Usuario.find({}, '-password').lean();
+    res.json(users);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/usuarios', requireAdmin, requireSuperAdmin, async (req, res) => {
+  try {
+    const { username, nombre, password, role } = req.body;
+    if (!username || !password) return res.status(400).json({ error: 'Faltan campos' });
+    const hash = await bcrypt.hash(password, 10);
+    const u = await Usuario.create({ username: username.trim().toLowerCase(), nombre, password: hash, role: role || 'editor', creado: new Date().toISOString() });
+    res.json({ ok: true, usuario: { _id: u._id, username: u.username, nombre: u.nombre, role: u.role } });
+  } catch (err) {
+    if (err.code === 11000) return res.status(400).json({ error: 'El usuario ya existe' });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/usuarios/:id', requireAdmin, requireSuperAdmin, async (req, res) => {
+  try {
+    const update = { nombre: req.body.nombre, role: req.body.role };
+    if (req.body.password) update.password = await bcrypt.hash(req.body.password, 10);
+    await Usuario.updateOne({ _id: req.params.id }, { $set: update });
+    // If editing own profile, refresh session data so sidebar updates immediately
+    if (req.session.userId === req.params.id) {
+      req.session.nombre = req.body.nombre;
+      req.session.role = req.body.role;
+    }
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/usuarios/:id', requireAdmin, requireSuperAdmin, async (req, res) => {
+  try {
+    const u = await Usuario.findById(req.params.id);
+    if (u?.role === 'admin') return res.status(400).json({ error: 'No puedes eliminar al admin' });
+    await Usuario.deleteOne({ _id: req.params.id });
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ══════════════════════════════════════════════════════════════
@@ -478,11 +559,9 @@ function getLanIP() {
 }
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-  const ip = getLanIP();
-  console.log(`\n  ┌──────────────────────────────────────────────┐`);
-  console.log(`  │  Nokta Studio ✓                               │`);
-  console.log(`  │  PC    → http://localhost:${PORT}/admin          │`);
-  console.log(`  │  Móvil → http://${ip}:${PORT}/admin         │`);
-  console.log(`  └──────────────────────────────────────────────┘\n`);
+const HOST = process.env.NODE_ENV === 'production' && !process.send ? '0.0.0.0' : '127.0.0.1';
+const server = app.listen(PORT, HOST, () => {
+  const actualPort = server.address().port;
+  if (process.send) process.send({ type: 'ready', port: actualPort });
+  console.log(`Nokta server running on http://${HOST}:${actualPort}/admin`);
 });

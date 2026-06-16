@@ -555,6 +555,37 @@ menu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>menu.classL
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
 document.querySelectorAll('.rev').forEach((el,i)=>{el.style.transitionDelay=(i%4*0.08)+'s';io.observe(el);});
 document.getElementById('yr').textContent=new Date().getFullYear();
+// FAQ acordeón
+document.querySelectorAll('.faq-q').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const item=btn.parentElement;
+    const isOpen=item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
+    if(!isOpen)item.classList.add('open');
+  });
+});
+// Contador animado
+(function(){
+  const items=document.querySelectorAll('.count-item');
+  if(!items.length)return;
+  const io2=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(!e.isIntersecting)return;
+      const el=e.target.querySelector('.count-n');
+      const target=+el.dataset.target;
+      const val=el.querySelector('.val');
+      let start=0;const dur=1600;const step=16;
+      const timer=setInterval(()=>{
+        start+=step;const p=Math.min(start/dur,1);
+        const eased=1-Math.pow(1-p,3);
+        val.textContent=Math.round(eased*target);
+        if(p>=1)clearInterval(timer);
+      },step);
+      io2.unobserve(e.target);
+    });
+  },{threshold:.4});
+  items.forEach(i=>io2.observe(i));
+})();
 // filters
 document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{
   document.querySelector('.pill.active').classList.remove('active');p.classList.add('active');

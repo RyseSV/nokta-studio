@@ -82,6 +82,12 @@ document.getElementById('f').onsubmit = async e => {
     btn.textContent = 'Ingresar'; btn.disabled = false;
   }
 };
+
+// Forzar limpieza de campos — Chromium ignora autocomplete="off"
+window.addEventListener('load', () => {
+  document.getElementById('usr').value = '';
+  document.getElementById('pw').value = '';
+});
 </script>
 </body>
 </html>

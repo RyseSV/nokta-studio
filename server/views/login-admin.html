@@ -82,6 +82,11 @@ document.getElementById('f').onsubmit = async e => {
     btn.textContent = 'Ingresar'; btn.disabled = false;
   }
 };
+
+window.addEventListener('load', () => {
+  document.getElementById('usr').value = '';
+  document.getElementById('pw').value = '';
+});
 </script>
 </body>
 </html>

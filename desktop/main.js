@@ -1,5 +1,9 @@
+const _fs0 = require('fs');
+const _logFile = 'C:\\Temp\\nokta-crash.txt';
+try { _fs0.mkdirSync('C:\\Temp', { recursive: true }); } catch {}
+_fs0.writeFileSync(_logFile, `STARTED ${new Date().toISOString()}\n`);
 process.on('uncaughtException', (err) => {
-  require('fs').appendFileSync('C:\\Temp\\nokta-crash.txt', `ERR: ${err.stack}\n`);
+  _fs0.appendFileSync(_logFile, `ERR: ${err.stack}\n`);
 });
 
 const { app, BrowserWindow, Tray, Menu, nativeImage, shell, ipcMain, dialog } = require('electron');
@@ -37,8 +41,15 @@ let serverPort = null;
 // ── Start embedded Express server ───────────────────────────
 function startServer() {
   return new Promise((resolve, reject) => {
-    const serverPath = path.join(__dirname, 'server', 'app.js');
-    const envPath = path.join(__dirname, 'server', '.env');
+    // In packaged app, server is in extraResources (outside asar)
+    // In dev, server is relative to __dirname
+    const serverBase = app.isPackaged
+      ? path.join(process.resourcesPath, 'server')
+      : path.join(__dirname, 'server');
+    const serverPath = path.join(serverBase, 'app.js');
+    const envPath = path.join(serverBase, '.env');
+
+    _fs0.appendFileSync(_logFile, `serverPath: ${serverPath}\n`);
 
     serverProcess = fork(serverPath, [], {
       env: {
@@ -46,7 +57,7 @@ function startServer() {
         DOTENV_CONFIG_PATH: envPath,
         NODE_ENV: 'production',
       },
-      cwd: path.join(__dirname, 'server'),
+      cwd: serverBase,
       silent: false,
     });
 
@@ -145,6 +156,7 @@ function setAutoLaunch() {
 
 // ── App events ───────────────────────────────────────────────
 const gotLock = app.requestSingleInstanceLock();
+_fs0.appendFileSync(_logFile, `userData: ${app.getPath('userData')}\ngotLock: ${gotLock}\n`);
 if (!gotLock) {
   app.quit();
 } else {
@@ -153,11 +165,13 @@ if (!gotLock) {
   });
 
   app.whenReady().then(async () => {
+    _fs0.appendFileSync(_logFile, 'app ready\n');
     const port = await startServer();
+    _fs0.appendFileSync(_logFile, `server ready on port ${port}\n`);
     createWindow(port);
+    _fs0.appendFileSync(_logFile, 'window created\n');
     createTray(port);
     setAutoLaunch();
-    // Check for updates silently in background (only in packaged app)
     if (app.isPackaged) autoUpdater.checkForUpdatesAndNotify();
   });
 }

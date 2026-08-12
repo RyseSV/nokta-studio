@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win --x64",
+    "build": "electron-builder --win --x64 && node scripts/embed-icon.js",
     "build-portable": "electron-builder --win portable --x64"
   },
   "build": {
@@ -23,11 +23,14 @@
       "main.js",
       "preload.js",
       "assets/**/*",
-      "server/**/*",
-      "!server/node_modules/**/*",
       "package.json"
     ],
     "extraResources": [
+      {
+        "from": "server",
+        "to": "server",
+        "filter": ["**/*", "!node_modules/**/*"]
+      },
       {
         "from": "server/node_modules",
         "to": "server/node_modules",
@@ -35,8 +38,15 @@
       }
     ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
-      "icon": "assets/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
       "signAndEditExecutable": false,
       "sign": false
     },
@@ -53,7 +63,7 @@
   },
   "dependencies": {
     "electron-store": "^8.2.0",
-    "electron-updater": "^6.3.9"
+    "electron-updater": "^6.8.9"
   },
   "devDependencies": {
     "electron": "^31.7.7",

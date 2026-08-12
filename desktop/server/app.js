@@ -71,7 +71,7 @@ const app = express();
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/img', express.static(path.join(__dirname, '../img')));
+app.use('/img', express.static(path.join(__dirname, '../../img')));
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -559,10 +559,10 @@ function getLanIP() {
   return 'tu-ip-local';
 }
 
-const PORT = process.env.PORT || 3000;
-const HOST = process.env.NODE_ENV === 'production' && !process.send ? '0.0.0.0' : '127.0.0.1';
-const server = app.listen(PORT, HOST, () => {
+const PORT = process.env.PORT || 0;
+const server = app.listen(PORT, '127.0.0.1', () => {
   const actualPort = server.address().port;
+  // Signal the port to the Electron main process
   if (process.send) process.send({ type: 'ready', port: actualPort });
-  console.log(`Nokta server running on http://${HOST}:${actualPort}/admin`);
+  console.log(`Nokta server running on http://127.0.0.1:${actualPort}/admin`);
 });

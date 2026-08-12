@@ -66,7 +66,7 @@ document.getElementById('f').onsubmit = async e => {
     const r = await fetch('/api/admin/login', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ username: usr, password: pw })
+      body: JSON.stringify({ username: usr, password: pw, remember: rem })
     });
     if (r.ok) {
       if (rem) localStorage.setItem('nk_creds', JSON.stringify({ u: usr, p: pw }));

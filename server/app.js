@@ -222,8 +222,10 @@ app.post('/api/usuarios', requireAdmin, requireSuperAdmin, async (req, res) => {
 
 app.put('/api/usuarios/:id', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
-    const update = { nombre: req.body.nombre, role: req.body.role };
+    const update = { nombre: req.body.nombre, role: req.body.role, icono: req.body.icono };
     if (req.body.password) update.password = await bcrypt.hash(req.body.password, 10);
+    // Clear foto if user explicitly reset to an icon (no foto sent)
+    if (req.body.foto === null) update.foto = null;
     await Usuario.updateOne({ _id: req.params.id }, { $set: update });
     // If editing own profile, refresh session data so sidebar updates immediately
     if (req.session.userId === req.params.id) {

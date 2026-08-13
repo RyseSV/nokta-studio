@@ -1567,9 +1567,15 @@ function renderQuincenasTabla(t){
   const MESES_L = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`;
 
-  const totalPagado = quincenas.filter(r=>r.estado==='pagado').reduce((s,r)=>s+parseFloat(r.monto||0),0);
-  const totalPendiente = quincenas.filter(r=>r.estado!=='pagado'&&r.estado!=='oculta').reduce((s,r)=>s+parseFloat(r.monto||montoQ),0);
-  const retrasadas = quincenas.filter(r=>r.estado==='retrasado').length;
+  // Build full list (stored + generated) to calculate totals accurately
+  const allRecs = [];
+  periodos.forEach(p => [1,2].forEach(q => {
+    const rec = quincenas.find(r=>r.periodo===p&&r.q===q) || { periodo:p, q, monto:montoQ, estado:'pendiente', fechaPago:null };
+    if(rec.estado!=='oculta') allRecs.push(rec);
+  }));
+  const totalPagado = allRecs.filter(r=>r.estado==='pagado').reduce((s,r)=>s+parseFloat(r.monto||0),0);
+  const totalPendiente = allRecs.filter(r=>r.estado!=='pagado').reduce((s,r)=>s+parseFloat(r.monto||montoQ),0);
+  const retrasadas = allRecs.filter(r=>r.estado==='retrasado').length;
 
   let rows = '';
   periodos.forEach(p => {

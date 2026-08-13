@@ -72,6 +72,7 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/img', express.static(path.join(__dirname, '../img')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -398,6 +399,18 @@ app.put('/api/trabajos/:id', requireAdmin, async (req, res) => {
     t.saldo = m - a;
     await t.save();
     res.json({ ok: true, trabajo: t });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.patch('/api/trabajos/:id/quincenas', requireAdmin, async (req, res) => {
+  try {
+    const t = await Trabajo.findOneAndUpdate(
+      { id: req.params.id },
+      { $set: { quincenas: req.body.quincenas } },
+      { new: true }
+    );
+    if (!t) return res.status(404).json({ error: 'No encontrado' });
+    res.json({ ok: true, quincenas: t.quincenas });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

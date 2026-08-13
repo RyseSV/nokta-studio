@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nokta Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="/public/chart.umd.min.js"></script>
 <style>
 :root{--bg:#1C1C1A;--sb:#111110;--card:#2E2E2B;--ember:#B85228;--cream:#F0ECE4;--muted:#7A7A72;--green:#4CAF7D;--yellow:#E6A817;--red:#E05A5A;--border:#3a3a37}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -271,24 +271,121 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
 <section class="page" id="page-nuevo-trabajo">
   <div class="page-header"><div class="page-title">Nuevo trabajo</div></div>
   <div class="section-card">
-    <form id="form-trabajo" onsubmit="guardarTrabajo(event)">
-      <div class="form-grid">
-        <div class="form-group"><label>Cliente *</label><input id="t-cliente" list="clientes-list" placeholder="Nombre del cliente" required><datalist id="clientes-list"></datalist></div>
-        <div class="form-group"><label>Tipo de servicio *</label>
-          <select id="t-servicio">
-            <option>Fotografía de evento</option><option>Video de evento</option><option>Redes sociales</option><option>Edición de video</option><option>Paquete completo</option>
+    <form id="form-trabajo" onsubmit="guardarTrabajo(event)" autocomplete="off">
+
+      <!-- Cliente + Servicio siempre visibles -->
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="form-group" style="position:relative">
+          <label>Cliente *</label>
+          <input id="t-cliente-input" placeholder="Buscar cliente..." autocomplete="off"
+            oninput="filtrarClientes(this.value)" onfocus="mostrarDropClientes()">
+          <input type="hidden" id="t-cliente-id">
+          <input type="hidden" id="t-cliente-nombre">
+          <div id="t-cliente-drop" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:200;background:#2E2E2B;border:1px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,.4)"></div>
+        </div>
+        <div class="form-group">
+          <label>Tipo de servicio *</label>
+          <select id="t-servicio" onchange="onServicioChange()">
+            <option value="">— Seleccionar tipo —</option>
+            <optgroup label="Eventos">
+              <option>Fotografía de eventos</option><option>Fotografía corporativa</option>
+              <option>Fotografía de producto</option><option>Fotografía gastronómica</option>
+              <option>Retratos</option><option>Cobertura audiovisual</option><option>Foto + Video</option>
+            </optgroup>
+            <optgroup label="Paquetes mensuales">
+              <option>Marketing digital</option><option>Gestión de redes</option>
+              <option>Community management</option><option>Paquete completo</option>
+            </optgroup>
+            <optgroup label="Edición de video">
+              <option>Edición de video</option><option>Motion graphics</option><option>Reels sueltos</option>
+            </optgroup>
+            <optgroup label="Branding / Identidad">
+              <option>Identidad visual</option><option>Branding</option>
+            </optgroup>
+            <optgroup label="Desarrollo web">
+              <option>Diseño y desarrollo web</option>
+            </optgroup>
           </select>
         </div>
-        <div class="form-group"><label>Fecha del evento *</label><input type="date" id="t-fecha" required></div>
-        <div class="form-group"><label>Hora inicio</label><input type="time" id="t-hora-inicio"></div>
-        <div class="form-group"><label>Hora fin</label><input type="time" id="t-hora-fin"></div>
-        <div class="form-group"><label>Lugar</label><input id="t-lugar" placeholder="Dirección o nombre del local"></div>
-        <div class="form-group"><label>Monto total ($) *</label><input type="number" id="t-monto" min="0" step="0.01" required oninput="calcSaldo()"></div>
-        <div class="form-group"><label>Anticipo recibido ($)</label><input type="number" id="t-anticipo" min="0" step="0.01" value="0" oninput="calcSaldo()"></div>
-        <div class="form-group"><label>Saldo pendiente ($)</label><input type="number" id="t-saldo" readonly style="opacity:.6"></div>
       </div>
-      <div class="form-group" style="margin-top:16px"><label>Notas</label><textarea id="t-notas" placeholder="Detalles adicionales..."></textarea></div>
-      <div class="form-actions">
+
+      <!-- Grupo A: Eventos -->
+      <div id="grp-A" style="display:none">
+        <div class="form-grid">
+          <div class="form-group"><label>Fecha del evento *</label><input type="date" id="tA-fecha"></div>
+          <div class="form-group"><label>Hora inicio</label><input type="time" id="tA-hora-inicio"></div>
+          <div class="form-group"><label>Hora fin</label><input type="time" id="tA-hora-fin"></div>
+          <div class="form-group"><label>Lugar</label><input id="tA-lugar" placeholder="Dirección o nombre del local"></div>
+          <div class="form-group"><label>Monto total ($) *</label><input type="number" id="tA-monto" min="0" step="0.01" oninput="calcSaldoGrp('A')"></div>
+          <div class="form-group"><label>Anticipo ($)</label><input type="number" id="tA-anticipo" min="0" step="0.01" value="0" oninput="calcSaldoGrp('A')"></div>
+          <div class="form-group"><label>Saldo pendiente ($)</label><input type="number" id="tA-saldo" readonly style="opacity:.6"></div>
+        </div>
+      </div>
+
+      <!-- Grupo B: Paquetes mensuales -->
+      <div id="grp-B" style="display:none">
+        <div class="form-grid">
+          <div class="form-group"><label>Nombre de empresa</label><input id="tB-empresa" placeholder="Empresa del cliente"></div>
+          <div class="form-group"><label>Pago mensual ($) *</label><input type="number" id="tB-pago" min="0" step="0.01"></div>
+          <div class="form-group"><label>Fecha de inicio del contrato *</label><input type="date" id="tB-inicio"></div>
+          <div class="form-group"><label>Día de cobro mensual</label><input type="number" id="tB-dia-cobro" min="1" max="31" placeholder="Ej: 5"></div>
+          <div class="form-group"><label>Estado del contrato</label>
+            <select id="tB-estado-contrato">
+              <option value="activo">Activo</option>
+              <option value="pausado">Pausado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grupo C: Edición de video -->
+      <div id="grp-C" style="display:none">
+        <div class="form-grid">
+          <div class="form-group"><label>Cantidad de piezas</label><input type="number" id="tC-piezas" min="1" value="1"></div>
+          <div class="form-group"><label>Formato</label>
+            <select id="tC-formato">
+              <option value="vertical">Vertical</option>
+              <option value="horizontal">Horizontal</option>
+              <option value="ambos">Ambos</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Monto total ($) *</label><input type="number" id="tC-monto" min="0" step="0.01" oninput="calcSaldoGrp('C')"></div>
+          <div class="form-group"><label>Anticipo ($)</label><input type="number" id="tC-anticipo" min="0" step="0.01" value="0" oninput="calcSaldoGrp('C')"></div>
+          <div class="form-group"><label>Saldo pendiente ($)</label><input type="number" id="tC-saldo" readonly style="opacity:.6"></div>
+          <div class="form-group"><label>Fecha de entrega estimada</label><input type="date" id="tC-entrega"></div>
+        </div>
+      </div>
+
+      <!-- Grupo D: Branding -->
+      <div id="grp-D" style="display:none">
+        <div class="form-grid">
+          <div class="form-group"><label>Nombre de empresa</label><input id="tD-empresa" placeholder="Empresa del cliente"></div>
+          <div class="form-group"><label>Monto total ($) *</label><input type="number" id="tD-monto" min="0" step="0.01" oninput="calcSaldoGrp('D')"></div>
+          <div class="form-group"><label>Anticipo ($)</label><input type="number" id="tD-anticipo" min="0" step="0.01" value="0" oninput="calcSaldoGrp('D')"></div>
+          <div class="form-group"><label>Saldo pendiente ($)</label><input type="number" id="tD-saldo" readonly style="opacity:.6"></div>
+          <div class="form-group"><label>Fecha de entrega estimada</label><input type="date" id="tD-entrega"></div>
+        </div>
+        <div class="form-group" style="margin-top:12px"><label>Alcance del proyecto</label><textarea id="tD-alcance" placeholder="Describe qué incluye..."></textarea></div>
+      </div>
+
+      <!-- Grupo E: Desarrollo web -->
+      <div id="grp-E" style="display:none">
+        <div class="form-grid">
+          <div class="form-group"><label>Nombre de empresa</label><input id="tE-empresa" placeholder="Empresa del cliente"></div>
+          <div class="form-group"><label>Monto total ($) *</label><input type="number" id="tE-monto" min="0" step="0.01" oninput="calcSaldoGrp('E')"></div>
+          <div class="form-group"><label>Anticipo ($)</label><input type="number" id="tE-anticipo" min="0" step="0.01" value="0" oninput="calcSaldoGrp('E')"></div>
+          <div class="form-group"><label>Saldo pendiente ($)</label><input type="number" id="tE-saldo" readonly style="opacity:.6"></div>
+          <div class="form-group"><label>Fecha de entrega estimada</label><input type="date" id="tE-entrega"></div>
+        </div>
+        <div class="form-group" style="margin-top:12px"><label>Alcance del proyecto</label><textarea id="tE-alcance" placeholder="Describe qué incluye..."></textarea></div>
+      </div>
+
+      <div id="t-notas-wrap" style="display:none;margin-top:16px">
+        <div class="form-group"><label>Notas</label><textarea id="t-notas" placeholder="Detalles adicionales..."></textarea></div>
+      </div>
+
+      <div class="form-actions" style="margin-top:20px">
         <button type="submit" class="btn btn-primary">Guardar trabajo</button>
         <button type="button" class="btn btn-ghost" onclick="clearTrabajoForm()">Limpiar</button>
       </div>
@@ -302,8 +399,12 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
   <div class="filters">
     <select id="fil-mes-t" onchange="loadTrabajos()"><option value="">Todos los meses</option></select>
     <select id="fil-svc-t" onchange="loadTrabajos()">
-      <option value="">Todos los servicios</option>
-      <option>Fotografía de evento</option><option>Video de evento</option><option>Redes sociales</option><option>Edición de video</option><option>Paquete completo</option>
+      <option value="">Todos los grupos</option>
+      <option value="A">Eventos</option>
+      <option value="B">Paquetes mensuales</option>
+      <option value="C">Edición de video</option>
+      <option value="D">Branding / Identidad</option>
+      <option value="E">Desarrollo web</option>
     </select>
     <select id="fil-estado-t" onchange="loadTrabajos()">
       <option value="">Todos los estados</option><option value="pendiente">Pendiente</option><option value="pagado">Pagado</option>
@@ -313,6 +414,26 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
     <table><thead><tr><th>Cliente</th><th>Servicio</th><th>Fecha</th><th>Monto</th><th>Anticipo</th><th>Saldo</th><th>Estado</th></tr></thead>
     <tbody id="trabajos-tbody"></tbody></table>
   </div>
+</section>
+
+<!-- ═══════════════ TRABAJO DETALLE ═══════════════ -->
+<section class="page" id="page-trabajo-detalle">
+  <div class="page-header" style="display:flex;align-items:center;gap:16px">
+    <button class="btn btn-ghost btn-sm" onclick="nav('trabajos')" style="padding:6px 14px;font-size:13px">← Volver</button>
+    <div class="page-title" id="td-title">Trabajo</div>
+    <div style="margin-left:auto;display:flex;gap:8px" id="td-actions"></div>
+  </div>
+  <div id="td-body" style="display:grid;grid-template-columns:320px 1fr;gap:24px;align-items:start"></div>
+</section>
+
+<!-- ═══════════════ CLIENTE DETALLE ═══════════════ -->
+<section class="page" id="page-cliente-detalle">
+  <div class="page-header" style="display:flex;align-items:center;gap:16px">
+    <button class="btn btn-ghost btn-sm" onclick="nav('clientes')" style="padding:6px 14px;font-size:13px">← Volver</button>
+    <div class="page-title" id="cd-title">Cliente</div>
+    <div style="margin-left:auto;display:flex;gap:8px" id="cd-actions"></div>
+  </div>
+  <div id="cd-body" style="display:grid;grid-template-columns:280px 1fr;gap:24px;align-items:start"></div>
 </section>
 
 <!-- ═══════════════ GASTOS ═══════════════ -->
@@ -394,7 +515,7 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
 <section class="page" id="page-clientes">
   <div class="page-header"><div class="page-title">Clientes</div></div>
   <div class="table-card">
-    <table><thead><tr><th>Nombre</th><th>Tipo</th><th>Trabajos</th><th>Último trabajo</th><th>Total facturado</th><th></th></tr></thead>
+    <table><thead><tr><th>Nombre</th><th>Tipo</th><th>Trabajos</th><th>Último trabajo</th><th>Total generado</th><th>Por cobrar</th><th></th></tr></thead>
     <tbody id="clientes-tbody"></tbody></table>
   </div>
 </section>
@@ -589,6 +710,17 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
     <div class="modal-title" id="modal-usuario-title">Nuevo usuario</div>
     <form onsubmit="guardarUsuario(event)">
       <input type="hidden" id="u-id">
+      <div style="display:flex;justify-content:center;gap:20px;margin-bottom:20px">
+        <div onclick="selectIcono('dark')" id="u-icono-dark"
+          style="width:64px;height:64px;border-radius:50%;overflow:hidden;cursor:pointer;border:3px solid transparent;transition:border .2s">
+          <img src="/img/logo/avatar_dark (1).png" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        <div onclick="selectIcono('cream')" id="u-icono-cream"
+          style="width:64px;height:64px;border-radius:50%;overflow:hidden;cursor:pointer;border:3px solid transparent;transition:border .2s">
+          <img src="/img/logo/avatar_cream.png" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        <input type="hidden" id="u-icono" value="dark">
+      </div>
       <div class="form-grid">
         <div class="form-group"><label>Nombre completo *</label><input id="u-nombre" required placeholder="Nombre del miembro"></div>
         <div class="form-group"><label>Usuario *</label><input id="u-username" required placeholder="sin espacios" autocomplete="off"></div>
@@ -606,6 +738,67 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
         <button type="button" class="btn btn-danger btn-sm" id="u-delete-btn" style="display:none;margin-left:auto" onclick="eliminarUsuario()">🗑 Eliminar</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ═══ MODAL cliente rápido ═══ -->
+<div class="modal-overlay" id="modal-cliente-rapido">
+  <div class="modal">
+    <div class="modal-title">Nuevo cliente</div>
+    <form onsubmit="crearClienteRapido(event)">
+      <div class="form-group"><label>Nombre *</label><input id="nc-rapido-nombre" required placeholder="Nombre del cliente"></div>
+      <div class="form-group" style="margin-top:12px"><label>WhatsApp</label><input id="nc-rapido-wa" placeholder="7000-0000" type="tel"></div>
+      <div class="form-actions" style="margin-top:20px">
+        <button type="submit" class="btn btn-primary">Crear y seleccionar</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal('modal-cliente-rapido')">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ MODAL AGREGAR QUINCENA ═══ -->
+<div class="modal-overlay" id="modal-agregar-quincena">
+  <div class="modal" style="max-width:340px">
+    <div class="modal-title">Agregar quincena</div>
+    <div class="form-group" style="margin-top:4px">
+      <label>Mes (YYYY-MM)</label>
+      <input type="month" id="aq-periodo" style="width:100%">
+    </div>
+    <div class="form-group" style="margin-top:12px">
+      <label>Quincena</label>
+      <select id="aq-q" style="width:100%">
+        <option value="1">Primera quincena (días 1 al 15)</option>
+        <option value="2">Segunda quincena (días 15 al 30)</option>
+      </select>
+    </div>
+    <div class="form-group" style="margin-top:12px">
+      <label>Monto ($)</label>
+      <input type="text" id="aq-monto" style="width:100%">
+    </div>
+    <div class="form-actions" style="margin-top:20px">
+      <button class="btn btn-primary" onclick="confirmarAgregarQuincena()">＋ Agregar</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-agregar-quincena')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL PAGO QUINCENA ═══ -->
+<div class="modal-overlay" id="modal-pago-quincena">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-title">Registrar pago</div>
+    <div id="mpq-desc" style="font-size:13px;color:var(--muted);margin-bottom:16px"></div>
+    <div class="form-group">
+      <label>Monto recibido ($)</label>
+      <input type="number" id="mpq-monto" step="0.01" min="0">
+    </div>
+    <div class="form-group" style="margin-top:12px">
+      <label>Fecha de pago</label>
+      <input type="date" id="mpq-fecha">
+    </div>
+    <div class="form-actions" style="margin-top:20px">
+      <button class="btn btn-primary" onclick="confirmarPagoQuincena()">✓ Confirmar pago</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-pago-quincena')">Cancelar</button>
+    </div>
   </div>
 </div>
 
@@ -644,7 +837,7 @@ function loadSection(id){
   else if(id==='analiticas') loadAnaliticas();
   else if(id==='equipo') loadEquipo();
   else if(id==='usuarios') loadUsuarios();
-  else if(id==='nuevo-trabajo') fillClientesDatalist();
+  else if(id==='nuevo-trabajo') { if(!allClientes.length) api('/api/clientes').then(cs=>{ allClientes=cs; }); }
   else if(id==='documentos') { fillClientesDatalist2(); initDocForm(); }
 }
 
@@ -660,6 +853,9 @@ async function initSession(){
     currentUser = me;
     document.getElementById('sb-nombre').textContent = me.nombre || me.username || '—';
     document.getElementById('sb-rol').textContent = me.role === 'admin' ? 'Administrador' : 'Editor';
+    const avatarEl = document.getElementById('sb-avatar');
+    const iconSrc = me.icono === 'cream' ? '/img/logo/avatar_cream.png' : '/img/logo/avatar_dark (1).png';
+    avatarEl.innerHTML = `<img src="${iconSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
     if(me.role === 'admin'){
       document.getElementById('sb-admin-section').style.display = '';
       document.getElementById('sb-usuarios').style.display = '';
@@ -677,14 +873,17 @@ async function loadUsuarios(){
   const tbody = document.getElementById('usuarios-tbody');
   const roles = { admin:'Administrador', editor:'Editor' };
   tbody.innerHTML = allUsuarios.length
-    ? allUsuarios.map(u=>`
-      <tr onclick="openUsuarioModal('${u._id}')">
-        <td><b>${u.nombre||'—'}</b></td>
-        <td style="font-family:monospace;font-size:12px">@${u.username}</td>
-        <td><span class="pill ${u.role==='admin'?'pill-blue':'pill-green'}">${roles[u.role]||u.role}</span></td>
-        <td>${u.creado?fmtFecha(u.creado):'—'}</td>
-        <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openUsuarioModal('${u._id}')">Editar</button></td>
-      </tr>`).join('')
+    ? allUsuarios.map(u=>{
+        const iconSrc = u.icono === 'cream' ? '/img/logo/avatar_cream.png' : '/img/logo/avatar_dark (1).png';
+        const avatar = `<img src="${iconSrc}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px">`;
+        return `<tr onclick="openUsuarioModal('${u._id}')">
+          <td style="display:flex;align-items:center">${avatar}<b>${u.nombre||'—'}</b></td>
+          <td style="font-family:monospace;font-size:12px">@${u.username}</td>
+          <td><span class="pill ${u.role==='admin'?'pill-blue':'pill-green'}">${roles[u.role]||u.role}</span></td>
+          <td>${u.creado?fmtFecha(u.creado):'—'}</td>
+          <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openUsuarioModal('${u._id}')">Editar</button></td>
+        </tr>`;
+      }).join('')
     : '<tr><td colspan="5" class="empty">No hay usuarios</td></tr>';
 }
 
@@ -698,7 +897,14 @@ function openUsuarioModal(id){
   document.getElementById('u-password').placeholder = u ? 'Dejar vacío para no cambiar' : 'Contraseña *';
   document.getElementById('u-role').value = u?.role || 'editor';
   document.getElementById('u-delete-btn').style.display = (u && u.role !== 'admin') ? '' : 'none';
+  selectIcono(u?.icono || 'dark');
   openModal('modal-usuario');
+}
+
+function selectIcono(val){
+  document.getElementById('u-icono').value = val;
+  document.getElementById('u-icono-dark').style.borderColor = val==='dark' ? '#B85228' : 'transparent';
+  document.getElementById('u-icono-cream').style.borderColor = val==='cream' ? '#B85228' : 'transparent';
 }
 
 async function guardarUsuario(e){
@@ -709,6 +915,7 @@ async function guardarUsuario(e){
     username: document.getElementById('u-username').value.trim().toLowerCase(),
     password: document.getElementById('u-password').value,
     role: document.getElementById('u-role').value,
+    icono: document.getElementById('u-icono').value,
   };
   if(!id && !datos.password){ toast('La contraseña es requerida','err'); return; }
   if(id && !datos.password) delete datos.password;
@@ -716,11 +923,11 @@ async function guardarUsuario(e){
     ? await api('/api/usuarios/'+id,{method:'PUT',body:JSON.stringify(datos)})
     : await api('/api/usuarios',{method:'POST',body:JSON.stringify(datos)});
   if(r.ok||r.usuario){
+    const userId = id || r.usuario?._id;
     toast('✓ Usuario guardado');
     closeModal('modal-usuario');
-    loadUsuarios();
-    // If editing own profile, refresh sidebar immediately
-    if(id && currentUser && id === currentUser._id) initSession();
+    await loadUsuarios();
+    await initSession();
   } else toast(r.error||'Error al guardar','err');
 }
 
@@ -767,15 +974,44 @@ async function loadDashboard(){
 
   const mes=parseInt(document.getElementById('dash-mes').value);
   const year=new Date().getFullYear();
-  const tMes=allTrabajos.filter(t=>{ const d=new Date(t.fecha); return d.getMonth()===mes && d.getFullYear()===year; });
-  const tPrev=allTrabajos.filter(t=>{ const d=new Date(t.fecha); return d.getMonth()===(mes===0?11:mes-1) && d.getFullYear()===year; });
+  const periodoMes=`${year}-${String(mes+1).padStart(2,'0')}`;
+  const periodoPrev=`${year}-${String((mes===0?12:mes)).padStart(2,'0')}`;
+
+  // Ingresos reales del mes: quincenas pagadas en este mes para B, monto de trabajos de otros grupos
+  function ingresosDelPeriodo(periodo){
+    let total=0;
+    allTrabajos.forEach(t=>{
+      const g=t.grupo||SVC_GRUPO[t.servicio]||'';
+      if(g==='B'){
+        // Suma solo las quincenas pagadas del periodo
+        (t.quincenas||[]).filter(q=>q.periodo===periodo&&q.estado==='pagado').forEach(q=>{
+          total+=parseFloat(q.monto||0);
+        });
+      } else {
+        const d=new Date(t.fecha||t.fechaInicio||'');
+        const dp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        if(dp===periodo) total+=parseFloat(t.monto||0);
+      }
+    });
+    return total;
+  }
+
+  const tMes=allTrabajos.filter(t=>{ const d=new Date(t.fecha||t.fechaInicio||''); return d.getMonth()===mes && d.getFullYear()===year; });
+  const tPrev=allTrabajos.filter(t=>{ const d=new Date(t.fecha||t.fechaInicio||''); return d.getMonth()===(mes===0?11:mes-1) && d.getFullYear()===year; });
   const gMes=allGastos.filter(g=>{ const d=new Date(g.fecha); return d.getMonth()===mes && d.getFullYear()===year; });
 
-  const ingresos=tMes.reduce((s,t)=>s+(parseFloat(t.monto)||0),0);
-  const ingresosPrev=tPrev.reduce((s,t)=>s+(parseFloat(t.monto)||0),0);
+  const ingresos=ingresosDelPeriodo(periodoMes);
+  const ingresosPrev=ingresosDelPeriodo(periodoPrev);
   const gastosTot=gMes.reduce((s,g)=>s+(parseFloat(g.monto)||0),0);
   const ganancia=ingresos-gastosTot;
-  const pendiente=tMes.filter(t=>t.estado==='pendiente').reduce((s,t)=>s+(parseFloat(t.saldo)||0),0);
+
+  // Pendiente: quincenas no pagadas del mes actual para B, saldo para otros
+  const pendiente=allTrabajos.reduce((s,t)=>{
+    const g=t.grupo||SVC_GRUPO[t.servicio]||'';
+    if(g==='B') return s+(t.quincenas||[]).filter(q=>q.periodo===periodoMes&&q.estado!=='pagado'&&q.estado!=='oculta').reduce((a,q)=>a+parseFloat(q.monto||0),0);
+    const d=new Date(t.fecha||''); const dp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    return dp===periodoMes&&t.estado==='pendiente'?s+(parseFloat(t.saldo)||0):s;
+  },0);
   const pendienteCount=tMes.filter(t=>t.estado==='pendiente').length;
 
   document.getElementById('d-ingresos').textContent='$'+ingresos.toFixed(2);
@@ -798,9 +1034,10 @@ async function loadDashboard(){
   const labels=[],data=[];
   for(let i=3;i>=0;i--){
     const m=(mes-i+12)%12;
+    const y=m>mes?year-1:year;
     labels.push(meses[m]);
-    const sum=allTrabajos.filter(t=>new Date(t.fecha).getMonth()===m && new Date(t.fecha).getFullYear()===year).reduce((s,t)=>s+(parseFloat(t.monto)||0),0);
-    data.push(sum);
+    const p=`${y}-${String(m+1).padStart(2,'0')}`;
+    data.push(ingresosDelPeriodo(p));
   }
   if(chartBar) chartBar.destroy();
   chartBar=new Chart(document.getElementById('chart-bar'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:'rgba(184,82,40,.7)',borderRadius:6,borderSkipped:false}]},options:{plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#7A7A72'}},y:{grid:{color:'#3a3a37'},ticks:{color:'#7A7A72',callback:v=>'$'+v}}}}});
@@ -826,6 +1063,7 @@ async function loadDashboard(){
 // ═══════════════════════════════════════════════════════════
 async function loadCalendario(){
   allEventos = await api('/api/eventos');
+  if(!allTrabajos.length) allTrabajos = await api('/api/trabajos');
   renderCalendario();
 }
 function calPrev(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendario(); }
@@ -845,7 +1083,23 @@ function renderCalendario(){
     const cell=document.createElement('div');
     cell.className='cal-cell'+(dateStr===todayStr?' today':'');
     const evs=allEventos.filter(e=>e.fecha===dateStr);
-    cell.innerHTML=`<div class="cal-num">${d}</div>`+evs.map(e=>`<div class="cal-event" onclick="openEvento('${e.id}')">${e.titulo||e.tipo}</div>`).join('');
+    // Quincenas: pendientes/retrasadas aparecen el día 1 o 15; pagadas en su fechaPago
+    const qEvs=[];
+    allTrabajos.forEach(t=>{
+      const g=t.grupo||SVC_GRUPO[t.servicio]||'';
+      if(g!=='B') return;
+      (t.quincenas||[]).forEach(q=>{
+        let qDate='';
+        if(q.estado==='pagado' && q.fechaPago) qDate=q.fechaPago.slice(0,10);
+        else if(q.estado!=='pagado') qDate=`${q.periodo}-${q.q===1?'01':'15'}`;
+        if(qDate===dateStr){
+          const color=q.estado==='pagado'?'var(--green)':q.estado==='retrasado'?'#e55':'var(--yellow)';
+          const label=q.estado==='pagado'?'✓':'$';
+          qEvs.push(`<div class="cal-event" style="background:${color};color:${q.estado==='pagado'?'#000':'#000'};cursor:pointer" onclick="openTrabajo('${t.id}')">${label} ${t.cliente} Q${q.q}</div>`);
+        }
+      });
+    });
+    cell.innerHTML=`<div class="cal-num">${d}</div>`+evs.map(e=>`<div class="cal-event" onclick="openEvento('${e.id}')">${e.titulo||e.tipo}</div>`).join('')+qEvs.join('');
     grid.appendChild(cell);
   }
 }
@@ -932,13 +1186,172 @@ function updateBadge(alertas){
 // TRABAJOS
 // ═══════════════════════════════════════════════════════════
 function calcSaldo(){ const m=parseFloat(document.getElementById('t-monto').value)||0; const a=parseFloat(document.getElementById('t-anticipo').value)||0; document.getElementById('t-saldo').value=(m-a).toFixed(2); }
+// ── Grupos de servicio ────────────────────────────────────────
+const SVC_GRUPO = {
+  'Fotografía de eventos':'A','Fotografía corporativa':'A','Fotografía de producto':'A',
+  'Fotografía gastronómica':'A','Retratos':'A','Cobertura audiovisual':'A','Foto + Video':'A',
+  'Marketing digital':'B','Gestión de redes':'B','Community management':'B','Paquete completo':'B',
+  'Edición de video':'C','Motion graphics':'C','Reels sueltos':'C',
+  'Identidad visual':'D','Branding':'D',
+  'Diseño y desarrollo web':'E',
+  // legado
+  'Fotografía de evento':'A','Video de evento':'A','Redes sociales':'B',
+};
+const GRUPO_NOMBRES = { A:'Eventos', B:'Paquetes mensuales', C:'Edición de video', D:'Branding / Identidad', E:'Desarrollo web' };
+
+function onServicioChange(){
+  const svc = document.getElementById('t-servicio').value;
+  const g = SVC_GRUPO[svc] || '';
+  ['A','B','C','D','E'].forEach(x => document.getElementById('grp-'+x).style.display = x===g ? '' : 'none');
+  document.getElementById('t-notas-wrap').style.display = g ? '' : 'none';
+}
+
+function calcSaldoGrp(g){
+  const m = parseFloat(document.getElementById('t'+g+'-monto')?.value) || 0;
+  const a = parseFloat(document.getElementById('t'+g+'-anticipo')?.value) || 0;
+  const s = document.getElementById('t'+g+'-saldo');
+  if (s) s.value = Math.max(0, m - a).toFixed(2);
+}
+
+// ── Combobox cliente ──────────────────────────────────────────
+function filtrarClientes(q){
+  const drop = document.getElementById('t-cliente-drop');
+  drop.style.display = '';
+  const matches = (allClientes||[]).filter(c => c.nombre.toLowerCase().includes(q.toLowerCase())).slice(0, 8);
+  renderClienteDrop(matches);
+}
+function mostrarDropClientes(){
+  const drop = document.getElementById('t-cliente-drop');
+  drop.style.display = '';
+  renderClienteDrop((allClientes||[]).slice(0, 8));
+}
+function renderClienteDrop(list){
+  const drop = document.getElementById('t-cliente-drop');
+  drop.innerHTML = list.map(c =>
+    `<div onclick="seleccionarCliente('${c._id}','${(c.nombre||'').replace(/'/g,"\\'")}')"
+      style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)"
+      onmouseover="this.style.background='var(--sb)'" onmouseout="this.style.background=''">
+      ${c.nombre} <span style="color:var(--muted);font-size:11px">${c.codigo||''}</span>
+    </div>`
+  ).join('') +
+  `<div onclick="abrirCrearCliente()"
+    style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--ember);font-weight:500"
+    onmouseover="this.style.background='var(--sb)'" onmouseout="this.style.background=''">＋ Nuevo cliente</div>`;
+}
+function seleccionarCliente(id, nombre){
+  document.getElementById('t-cliente-input').value = nombre;
+  document.getElementById('t-cliente-id').value = id;
+  document.getElementById('t-cliente-nombre').value = nombre;
+  document.getElementById('t-cliente-drop').style.display = 'none';
+}
+function abrirCrearCliente(){
+  document.getElementById('t-cliente-drop').style.display = 'none';
+  document.getElementById('nc-rapido-nombre').value = document.getElementById('t-cliente-input').value;
+  document.getElementById('nc-rapido-wa').value = '';
+  openModal('modal-cliente-rapido');
+}
+async function crearClienteRapido(e){
+  e.preventDefault();
+  const nombre = document.getElementById('nc-rapido-nombre').value;
+  const wa = document.getElementById('nc-rapido-wa').value;
+  const r = await api('/api/clientes', { method:'POST', body: JSON.stringify({ nombre, whatsapp: wa, tipo:'otro', dias:0 }) });
+  if (r.ok && r.cliente) {
+    allClientes = await api('/api/clientes');
+    seleccionarCliente(r.cliente._id, r.cliente.nombre);
+    closeModal('modal-cliente-rapido');
+    toast('✓ Cliente creado');
+  } else toast(r.error || 'Error al crear cliente', 'err');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#t-cliente-input') && !e.target.closest('#t-cliente-drop')) {
+    const drop = document.getElementById('t-cliente-drop');
+    if (drop) drop.style.display = 'none';
+  }
+});
+
+// ── Guardar / limpiar trabajo ─────────────────────────────────
 async function guardarTrabajo(e){
   e.preventDefault();
-  const datos={ cliente: document.getElementById('t-cliente').value, servicio: document.getElementById('t-servicio').value, fecha: document.getElementById('t-fecha').value, horaInicio: document.getElementById('t-hora-inicio').value, horaFin: document.getElementById('t-hora-fin').value, lugar: document.getElementById('t-lugar').value, monto: document.getElementById('t-monto').value, anticipo: document.getElementById('t-anticipo').value, notas: document.getElementById('t-notas').value, estado: 'pendiente' };
-  await api('/api/trabajos',{method:'POST',body:JSON.stringify(datos)});
-  clearTrabajoForm(); alert('✓ Trabajo registrado'); nav('trabajos');
+  const svc = document.getElementById('t-servicio').value;
+  const g = SVC_GRUPO[svc];
+  if (!g) { toast('Selecciona un tipo de servicio','err'); return; }
+  const clienteNombre = document.getElementById('t-cliente-nombre').value || document.getElementById('t-cliente-input').value;
+  if (!clienteNombre) { toast('Selecciona un cliente','err'); return; }
+  const datos = {
+    cliente: clienteNombre,
+    clienteId: document.getElementById('t-cliente-id').value || undefined,
+    servicio: svc,
+    grupo: g,
+    grupoNombre: GRUPO_NOMBRES[g],
+    notas: document.getElementById('t-notas').value,
+    estado: 'pendiente',
+  };
+  if (g === 'A') {
+    datos.fecha = document.getElementById('tA-fecha').value;
+    datos.horaInicio = document.getElementById('tA-hora-inicio').value;
+    datos.horaFin = document.getElementById('tA-hora-fin').value;
+    datos.lugar = document.getElementById('tA-lugar').value;
+    datos.monto = document.getElementById('tA-monto').value;
+    datos.anticipo = document.getElementById('tA-anticipo').value;
+    datos.saldo = document.getElementById('tA-saldo').value;
+    if (!datos.fecha || !datos.monto) { toast('Completa fecha y monto','err'); return; }
+  } else if (g === 'B') {
+    datos.empresa = document.getElementById('tB-empresa').value;
+    datos.pagoMensual = document.getElementById('tB-pago').value;
+    datos.fechaInicio = document.getElementById('tB-inicio').value;
+    datos.diaCobro = document.getElementById('tB-dia-cobro').value;
+    datos.estadoContrato = document.getElementById('tB-estado-contrato').value;
+    datos.monto = datos.pagoMensual;
+    datos.fecha = datos.fechaInicio;
+    if (!datos.pagoMensual || !datos.fechaInicio) { toast('Completa pago mensual y fecha de inicio','err'); return; }
+  } else if (g === 'C') {
+    datos.cantPiezas = document.getElementById('tC-piezas').value;
+    datos.formato = document.getElementById('tC-formato').value;
+    datos.monto = document.getElementById('tC-monto').value;
+    datos.anticipo = document.getElementById('tC-anticipo').value;
+    datos.saldo = document.getElementById('tC-saldo').value;
+    datos.fechaEntrega = document.getElementById('tC-entrega').value;
+    datos.fecha = datos.fechaEntrega || new Date().toISOString().slice(0,10);
+    if (!datos.monto) { toast('Completa el monto','err'); return; }
+  } else if (g === 'D') {
+    datos.empresa = document.getElementById('tD-empresa').value;
+    datos.alcance = document.getElementById('tD-alcance').value;
+    datos.monto = document.getElementById('tD-monto').value;
+    datos.anticipo = document.getElementById('tD-anticipo').value;
+    datos.saldo = document.getElementById('tD-saldo').value;
+    datos.fechaEntrega = document.getElementById('tD-entrega').value;
+    datos.fecha = datos.fechaEntrega || new Date().toISOString().slice(0,10);
+    if (!datos.monto) { toast('Completa el monto','err'); return; }
+  } else if (g === 'E') {
+    datos.empresa = document.getElementById('tE-empresa').value;
+    datos.alcance = document.getElementById('tE-alcance').value;
+    datos.monto = document.getElementById('tE-monto').value;
+    datos.anticipo = document.getElementById('tE-anticipo').value;
+    datos.saldo = document.getElementById('tE-saldo').value;
+    datos.fechaEntrega = document.getElementById('tE-entrega').value;
+    datos.fecha = datos.fechaEntrega || new Date().toISOString().slice(0,10);
+    if (!datos.monto) { toast('Completa el monto','err'); return; }
+  }
+  const r = await api('/api/trabajos', { method:'POST', body: JSON.stringify(datos) });
+  if (r.ok) { clearTrabajoForm(); toast('✓ Trabajo registrado'); nav('trabajos'); }
+  else toast(r.error || 'Error al guardar','err');
 }
-function clearTrabajoForm(){ document.getElementById('form-trabajo').reset(); document.getElementById('t-saldo').value='0.00'; }
+
+function clearTrabajoForm(){
+  document.getElementById('form-trabajo').reset();
+  document.getElementById('t-cliente-id').value = '';
+  document.getElementById('t-cliente-nombre').value = '';
+  const drop = document.getElementById('t-cliente-drop');
+  if (drop) drop.style.display = 'none';
+  ['A','B','C','D','E'].forEach(g => {
+    document.getElementById('grp-'+g).style.display = 'none';
+    const s = document.getElementById('t'+g+'-saldo');
+    if (s) s.value = '';
+    const a = document.getElementById('t'+g+'-anticipo');
+    if (a) a.value = '0';
+  });
+  document.getElementById('t-notas-wrap').style.display = 'none';
+}
 
 async function loadTrabajos(){
   allTrabajos = await api('/api/trabajos');
@@ -948,29 +1361,410 @@ async function loadTrabajos(){
   const est=document.getElementById('fil-estado-t').value;
   let fil=allTrabajos;
   if(mes) fil=fil.filter(t=>{const d=new Date(t.fecha);return d.getMonth()+'_'+d.getFullYear()===mes;});
-  if(svc) fil=fil.filter(t=>t.servicio===svc);
+  if(svc) fil=fil.filter(t=>(t.grupo||SVC_GRUPO[t.servicio]||'')===svc);
   if(est) fil=fil.filter(t=>t.estado===est);
   const tbody=document.getElementById('trabajos-tbody');
-  tbody.innerHTML=fil.length?fil.map(t=>`<tr onclick="openTrabajo('${t.id}')"><td>${t.cliente}</td><td>${t.servicio}</td><td>${fmtFecha(t.fecha)}</td><td>$${parseFloat(t.monto||0).toFixed(2)}</td><td>$${parseFloat(t.anticipo||0).toFixed(2)}</td><td style="color:var(--yellow)">$${parseFloat(t.saldo||0).toFixed(2)}</td><td><span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span></td></tr>`).join(''):
+  tbody.innerHTML=fil.length?fil.map(t=>{
+    const g=t.grupo||SVC_GRUPO[t.servicio]||'';
+    const badge=g?`<span style="font-size:10px;color:var(--muted)"> · ${GRUPO_NOMBRES[g]||g}</span>`:'';
+    return `<tr onclick="openTrabajo('${t.id}')"><td>${t.cliente}</td><td>${t.servicio}${badge}</td><td>${fmtFecha(t.fecha)}</td><td>$${parseFloat(t.monto||0).toFixed(2)}</td><td>$${parseFloat(t.anticipo||0).toFixed(2)}</td><td style="color:var(--yellow)">$${parseFloat(t.saldo||0).toFixed(2)}</td><td><span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span></td></tr>`;
+  }).join(''):
     '<tr><td colspan="7" class="empty">No hay trabajos</td></tr>';
 }
-function openTrabajo(id){
+let _panelTrabajoId = null;
+async function openTrabajo(id){
   const t=allTrabajos.find(t=>t.id===id); if(!t) return;
-  document.getElementById('panel-title').textContent=t.cliente;
-  document.getElementById('panel-body').innerHTML=`
-    <div class="panel-field"><label>SERVICIO</label><span>${t.servicio}</span></div>
-    <div class="panel-field" style="margin-top:12px"><label>FECHA</label><span>${fmtFecha(t.fecha)}</span></div>
-    <div class="panel-field" style="margin-top:12px"><label>HORARIO</label><span>${t.horaInicio||'—'} ${t.horaFin?'→ '+t.horaFin:''}</span></div>
-    <div class="panel-field" style="margin-top:12px"><label>LUGAR</label><span>${t.lugar||'—'}</span></div>
-    <div class="panel-field" style="margin-top:12px"><label>MONTO TOTAL</label><span class="fw-6">$${parseFloat(t.monto||0).toFixed(2)}</span></div>
-    <div class="panel-field" style="margin-top:12px"><label>ANTICIPO</label><span>$${parseFloat(t.anticipo||0).toFixed(2)}</span></div>
-    <div class="panel-field" style="margin-top:12px"><label>SALDO PENDIENTE</label><span style="color:var(--yellow)">$${parseFloat(t.saldo||0).toFixed(2)}</span></div>
-    <div class="panel-field" style="margin-top:12px"><label>ESTADO</label><span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span></div>
-    ${t.notas?`<div class="panel-field" style="margin-top:12px"><label>NOTAS</label><span>${t.notas}</span></div>`:''}`;
-  document.getElementById('panel-actions').innerHTML=`
-    ${t.estado!=='pagado'?`<button class="btn btn-primary btn-sm" onclick="marcarPagado('${t.id}')">✓ Marcar pagado</button>`:''}
+  _panelTrabajoId = id;
+  const g = t.grupo || SVC_GRUPO[t.servicio] || '';
+  if(g==='B' && !(t.quincenas||[]).length){
+    allTrabajos = await api('/api/trabajos');
+    const fresh = allTrabajos.find(x=>x.id===id);
+    if(fresh) Object.assign(t, fresh);
+    if(!(t.quincenas||[]).length) await _autoGenerarQuincenas(t);
+  }
+
+  document.getElementById('td-title').textContent = t.cliente;
+  document.getElementById('td-actions').innerHTML = `
+    ${g!=='B'&&t.estado!=='pagado'?`<button class="btn btn-primary btn-sm" onclick="marcarPagado('${t.id}')">✓ Marcar pagado</button>`:''}
     <button class="btn btn-danger btn-sm" onclick="eliminarTrabajo('${t.id}')">🗑 Eliminar</button>`;
-  openPanel();
+
+  const pf = (label, val) => val ? `
+    <div style="padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">${label}</div>
+      <div style="font-size:14px">${val}</div>
+    </div>` : '';
+
+  let infoFields = `
+    <div style="padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">SERVICIO</div>
+      <div style="font-size:14px;font-weight:600">${t.servicio} <span style="font-size:11px;color:var(--muted);font-weight:400">${GRUPO_NOMBRES[g]||''}</span></div>
+    </div>`;
+
+  if(g==='A'){
+    infoFields += pf('FECHA', fmtFecha(t.fecha)) + pf('HORARIO', t.horaInicio?(t.horaInicio+(t.horaFin?' → '+t.horaFin:'')):'') + pf('LUGAR', t.lugar);
+    infoFields += `
+      <div style="padding:14px 0;border-bottom:1px solid var(--border)">
+        <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">MONTO TOTAL</div>
+        <div style="font-size:22px;font-weight:700">$${parseFloat(t.monto||0).toFixed(2)}</div>
+      </div>
+      ${pf('ANTICIPO', '$'+parseFloat(t.anticipo||0).toFixed(2))}
+      <div style="padding:14px 0;border-bottom:1px solid var(--border)">
+        <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">SALDO PENDIENTE</div>
+        <div style="font-size:18px;font-weight:600;color:var(--yellow)">$${parseFloat(t.saldo||0).toFixed(2)}</div>
+      </div>`;
+  } else if(g==='B'){
+    const pm = parseFloat(t.pagoMensual)||0;
+    infoFields += pf('EMPRESA', t.empresa);
+    infoFields += `
+      <div style="padding:14px 0;border-bottom:1px solid var(--border)">
+        <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">PAGO MENSUAL</div>
+        <div style="font-size:22px;font-weight:700">$${pm.toFixed(2)}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">$${(pm/2).toFixed(2)} por quincena</div>
+      </div>`;
+    infoFields += pf('INICIO CONTRATO', fmtFecha(t.fechaInicio)) + pf('ESTADO CONTRATO', t.estadoContrato);
+  } else if(g==='C'){
+    infoFields += pf('PIEZAS', t.cantPiezas) + pf('FORMATO', t.formato) + pf('ENTREGA ESTIMADA', fmtFecha(t.fechaEntrega));
+    infoFields += `<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">MONTO TOTAL</div><div style="font-size:22px;font-weight:700">$${parseFloat(t.monto||0).toFixed(2)}</div></div>${pf('SALDO', '$'+parseFloat(t.saldo||0).toFixed(2))}`;
+  } else {
+    infoFields += pf('EMPRESA', t.empresa) + pf('ENTREGA ESTIMADA', fmtFecha(t.fechaEntrega)) + pf('ALCANCE', t.alcance);
+    infoFields += `<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">MONTO TOTAL</div><div style="font-size:22px;font-weight:700">$${parseFloat(t.monto||0).toFixed(2)}</div></div>${pf('SALDO', '$'+parseFloat(t.saldo||0).toFixed(2))}`;
+  }
+
+  infoFields += `
+    <div style="padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">ESTADO</div>
+      <span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span>
+    </div>
+    ${t.notas?pf('NOTAS', t.notas):''}`;
+
+  document.getElementById('td-body').innerHTML = `
+    <div class="section-card">${infoFields}</div>
+    <div>${g==='B' ? renderQuincenasTabla(t) : '<div class="section-card" style="color:var(--muted);font-size:14px;padding:32px;text-align:center">Sin pagos por quincena para este tipo de servicio.</div>'}</div>`;
+
+  animateStatNums();
+
+  // Mostrar página sin tocar sidebar
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-trabajo-detalle').classList.add('active');
+}
+
+function _generarPeriodos(fechaInicio){
+  const hoy = new Date();
+  const inicio = fechaInicio ? new Date(fechaInicio) : new Date();
+  const periodos = [];
+  let cur = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+  const fin = new Date(hoy.getFullYear(), hoy.getMonth()+2, 1);
+  while(cur < fin){ periodos.push(`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`); cur.setMonth(cur.getMonth()+1); }
+  return periodos;
+}
+
+async function _autoGenerarQuincenas(t){
+  const pm = parseFloat(t.pagoMensual)||0;
+  const montoQ = pm/2;
+  const periodos = _generarPeriodos(t.fechaInicio);
+  const existing = t.quincenas || [];
+  const qs = [];
+  periodos.forEach(p => [1,2].forEach(q => {
+    const found = existing.find(r=>r.periodo===p&&r.q===q);
+    if(found) qs.push(found);
+    else qs.push({ periodo:p, q, monto:montoQ, estado:'pendiente', fechaPago:null });
+  }));
+  const res = await api('/api/trabajos/'+t.id+'/quincenas',{method:'PATCH',body:JSON.stringify({quincenas:qs})});
+  t.quincenas = res.quincenas || qs;
+}
+
+function animateStatNums(){
+  const duration = 600;
+  const startTime = performance.now();
+  const easeOut = t => 1 - Math.pow(1-t, 3);
+  const els = [...document.querySelectorAll('.stat-num[data-val]')];
+  const items = els.map(el=>({
+    el,
+    target: parseFloat(el.dataset.val)||0,
+    start: parseFloat(el.dataset.current||'0')||0,
+    prefix: el.dataset.prefix||'',
+    isInt: !el.dataset.val.includes('.')
+  }));
+  items.forEach(i=>{ i.el.dataset.current = i.target; });
+  const step = now => {
+    const p = Math.min((now-startTime)/duration, 1);
+    const e = easeOut(p);
+    items.forEach(({el,start,target,prefix,isInt})=>{
+      const val = start + (target-start)*e;
+      el.textContent = prefix + (isInt ? Math.round(val) : val.toFixed(2));
+    });
+    if(p<1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function renderQuincenasTabla(t){
+  const pm = parseFloat(t.pagoMensual)||0;
+  const montoQ = pm/2;
+  const hoy = new Date();
+  const quincenas = t.quincenas || [];
+  const periodos = _generarPeriodos(t.fechaInicio);
+  const MESES_L = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`;
+
+  const totalPagado = quincenas.filter(r=>r.estado==='pagado').reduce((s,r)=>s+parseFloat(r.monto||0),0);
+  const totalPendiente = quincenas.filter(r=>r.estado!=='pagado'&&r.estado!=='oculta').reduce((s,r)=>s+parseFloat(r.monto||montoQ),0);
+  const retrasadas = quincenas.filter(r=>r.estado==='retrasado').length;
+
+  let rows = '';
+  periodos.forEach(p => {
+    [1,2].forEach(q => {
+      const rec = quincenas.find(r=>r.periodo===p&&r.q===q) || { periodo:p, q, monto:montoQ, estado:'pendiente', fechaPago:null };
+      if(rec.estado==='oculta') return;
+      const [yr,mn] = p.split('-');
+      const mesNombre = MESES_L[parseInt(mn)-1];
+      const esActual = p===mesActual;
+      const estadoColor = rec.estado==='pagado'?'var(--green)':rec.estado==='retrasado'?'#e55':'var(--yellow)';
+      const estadoLabel = rec.estado==='pagado'?'Pagado':rec.estado==='retrasado'?'Retrasado':'Pendiente';
+      rows += `<tr style="${esActual?'background:rgba(255,255,255,0.04)':''}">
+        <td style="padding:12px 16px;font-weight:500">${mesNombre} ${yr}</td>
+        <td style="padding:12px 16px;color:var(--muted);font-size:13px">${q===1?'1 al 15':'15 al 30'}</td>
+        <td style="padding:12px 16px">
+          <input type="text" value="${parseFloat(rec.monto||montoQ).toFixed(2)}"
+            style="width:90px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:14px;font-weight:600;color:var(--fg);text-align:right"
+            onblur="cambiarMontoQ('${t.id}','${p}',${q},this.value)">
+        </td>
+        <td style="padding:12px 16px">
+          <span style="font-size:12px;font-weight:600;color:${estadoColor}">${estadoLabel}</span>
+          ${rec.fechaPago?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtFecha(rec.fechaPago)}</div>`:''}
+        </td>
+        <td style="padding:12px 16px;text-align:right;white-space:nowrap">
+          ${rec.estado!=='pagado'?`
+            <button class="btn btn-sm" style="padding:5px 14px;font-size:12px;background:var(--green);color:#000;border-radius:6px" onclick="abrirPagoQuincena('${t.id}','${p}',${q},${parseFloat(rec.monto||montoQ)})">Pagado</button>
+            <button class="btn btn-sm" style="padding:5px 14px;font-size:12px;background:#e55;color:#fff;border-radius:6px;margin-left:6px" onclick="marcarRetrasadoQ('${t.id}','${p}',${q})">Retrasado</button>`:''}
+          ${rec.estado==='pagado'?`
+            <button class="btn btn-sm" style="padding:5px 14px;font-size:12px;background:var(--ember);color:#fff;border-radius:6px" onclick="generarFacturaQ('${t.id}','${p}',${q})">📄 Factura</button>
+            <button class="btn btn-sm" style="padding:5px 14px;font-size:12px;background:var(--bg2);color:var(--fg);border:1px solid var(--border);border-radius:6px;margin-left:6px" onclick="editarPagadoQ('${t.id}','${p}',${q},${parseFloat(rec.monto||montoQ)})">✎ Editar</button>`:''}
+          <button class="btn btn-sm" style="padding:5px 10px;background:transparent;border:1px solid #e55;border-radius:6px;margin-left:6px;line-height:0;cursor:pointer" onclick="eliminarPagoQ('${t.id}','${p}',${q})" title="Eliminar quincena"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+        </td>
+      </tr>`;
+    });
+  });
+
+  return `<div class="section-card" style="padding:0;overflow:hidden">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:1px solid var(--border)">
+      <div style="padding:20px 24px;border-right:1px solid var(--border)">
+        <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">TOTAL COBRADO</div>
+        <div class="stat-num" data-val="${totalPagado.toFixed(2)}" data-prefix="$" style="font-size:24px;font-weight:700;color:var(--green)">$${totalPagado.toFixed(2)}</div>
+      </div>
+      <div style="padding:20px 24px;border-right:1px solid var(--border)">
+        <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">POR COBRAR</div>
+        <div class="stat-num" data-val="${totalPendiente.toFixed(2)}" data-prefix="$" style="font-size:24px;font-weight:700;color:var(--yellow)">$${totalPendiente.toFixed(2)}</div>
+      </div>
+      <div style="padding:20px 24px">
+        <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">RETRASADAS</div>
+        <div class="stat-num" data-val="${retrasadas}" data-prefix="" style="font-size:24px;font-weight:700;color:${retrasadas?'#e55':'var(--fg)'}">${retrasadas}</div>
+      </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="border-bottom:1px solid var(--border)">
+        <th style="padding:10px 16px;text-align:left;font-size:11px;letter-spacing:.06em;color:var(--muted);font-weight:500">MES</th>
+        <th style="padding:10px 16px;text-align:left;font-size:11px;letter-spacing:.06em;color:var(--muted);font-weight:500">PERIODO</th>
+        <th style="padding:10px 16px;text-align:left;font-size:11px;letter-spacing:.06em;color:var(--muted);font-weight:500">MONTO</th>
+        <th style="padding:10px 16px;text-align:left;font-size:11px;letter-spacing:.06em;color:var(--muted);font-weight:500">ESTADO</th>
+        <th style="padding:10px 16px;text-align:right;font-size:11px;letter-spacing:.06em;color:var(--muted);font-weight:500">ACCIONES</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="padding:12px 16px;border-top:1px solid var(--border)">
+      <button class="btn btn-ghost btn-sm" style="font-size:12px" onclick="abrirAgregarQuincena('${t.id}')">＋ Agregar quincena</button>
+    </div>
+  </div>`;
+}
+
+let _aqCtx = {};
+function abrirAgregarQuincena(trabajoId){
+  const t = allTrabajos.find(t=>t.id===trabajoId); if(!t) return;
+  _aqCtx = { trabajoId };
+  const hoy = new Date();
+  const pm = parseFloat(t.pagoMensual)||0;
+  document.getElementById('aq-periodo').value = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('aq-q').value = '1';
+  document.getElementById('aq-monto').value = (pm/2).toFixed(2);
+  openModal('modal-agregar-quincena');
+}
+async function confirmarAgregarQuincena(){
+  const { trabajoId } = _aqCtx;
+  const t = allTrabajos.find(t=>t.id===trabajoId); if(!t) return;
+  const periodo = document.getElementById('aq-periodo').value;
+  const q = parseInt(document.getElementById('aq-q').value);
+  const monto = parseFloat(document.getElementById('aq-monto').value)||0;
+  if(!periodo){ toast('Ingresa un periodo válido'); return; }
+  const existe = (t.quincenas||[]).find(r=>r.periodo===periodo&&r.q===q);
+  if(existe && existe.estado!=='oculta'){ toast('Esa quincena ya existe'); return; }
+  closeModal('modal-agregar-quincena');
+  await _actualizarQuincena(trabajoId, periodo, q, { estado:'pendiente', monto, fechaPago: null });
+  openTrabajo(trabajoId);
+}
+
+function renderQuincenasPanel(t){
+  const pm = parseFloat(t.pagoMensual)||0;
+  const montoQ = pm/2;
+  const hoy = new Date();
+  const quincenas = t.quincenas || [];
+  const periodos = _generarPeriodos(t.fechaInicio);
+  const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`;
+  let rows = '';
+  periodos.forEach(p => {
+    [1,2].forEach(q => {
+      const rec = quincenas.find(r=>r.periodo===p&&r.q===q) || { periodo:p, q, monto:montoQ, estado:'pendiente', fechaPago:null };
+      const [yr,mn] = p.split('-');
+      const label = `${MESES[parseInt(mn)-1]} ${yr} · ${q===1?'1–15':'15–30'}`;
+      const esActual = p===mesActual;
+      const estadoColor = rec.estado==='pagado'?'var(--green)':rec.estado==='retrasado'?'#e55':'var(--yellow)';
+      const estadoLabel = rec.estado==='pagado'?'Pagado':rec.estado==='retrasado'?'Retrasado':'Pendiente';
+      rows += `<tr style="${esActual?'background:rgba(255,255,255,0.04)':''}">
+        <td style="padding:8px 6px;font-size:12px;color:var(--muted)">${label}</td>
+        <td style="padding:6px 4px">
+          <input type="text" value="${parseFloat(rec.monto||montoQ).toFixed(2)}"
+            style="width:80px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:13px;font-weight:600;color:var(--fg);text-align:right"
+            onblur="cambiarMontoQ('${t.id}','${p}',${q},this.value)">
+        </td>
+        <td style="padding:8px 6px">
+          <span style="font-size:11px;color:${estadoColor};font-weight:600">${estadoLabel}</span>
+          ${rec.fechaPago?`<br><span style="font-size:10px;color:var(--muted)">${fmtFecha(rec.fechaPago)}</span>`:''}
+        </td>
+        <td style="padding:8px 4px;white-space:nowrap">
+          ${rec.estado!=='pagado'?`
+            <button class="btn btn-sm" style="padding:3px 8px;font-size:11px;background:var(--green);color:#000" onclick="abrirPagoQuincena('${t.id}','${p}',${q},${parseFloat(rec.monto||montoQ)})">Pagar</button>
+            <button class="btn btn-sm" style="padding:3px 8px;font-size:11px;background:#e55;color:#fff;margin-left:4px" onclick="marcarRetrasadoQ('${t.id}','${p}',${q})">Retrasar</button>`:''}
+          ${rec.estado==='pagado'?`<button class="btn btn-sm" style="padding:3px 8px;font-size:11px;background:var(--ember);color:#fff" onclick="generarFacturaQ('${t.id}','${p}',${q})">Factura</button>`:''}
+        </td>
+      </tr>`;
+    });
+  });
+  return `<div style="margin-top:20px">
+    <label style="font-size:10px;letter-spacing:.08em;color:var(--muted)">QUINCENAS</label>
+    <table style="width:100%;border-collapse:collapse;margin-top:8px">${rows}</table>
+  </div>`;
+}
+
+async function cambiarMontoQ(trabajoId, periodo, q, val){
+  const monto = parseFloat(val)||0;
+  await _actualizarQuincena(trabajoId, periodo, q, { monto });
+}
+
+let _mpqCtx = {};
+function abrirPagoQuincena(trabajoId, periodo, q, monto){
+  _mpqCtx = { trabajoId, periodo, q, monto: parseFloat(monto)||0 };
+  const MESES_L = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const [yr,mn] = periodo.split('-');
+  document.getElementById('mpq-desc').textContent = `${MESES_L[parseInt(mn)-1]} ${yr} · Q${q} (${q===1?'1 al 15':'15 al 30'})`;
+  document.getElementById('mpq-monto').value = (parseFloat(monto)||0).toFixed(2);
+  document.getElementById('mpq-fecha').value = new Date().toISOString().slice(0,10);
+  openModal('modal-pago-quincena');
+}
+async function eliminarPagoQ(trabajoId, periodo, q){
+  const t = allTrabajos.find(t=>t.id===trabajoId); if(!t) return;
+  let qs = [...(t.quincenas||[])];
+  const idx = qs.findIndex(r=>r.periodo===periodo&&r.q===q);
+  if(idx>=0) qs[idx] = { ...qs[idx], estado:'oculta' };
+  else qs.push({ periodo, q, monto:0, estado:'oculta', fechaPago:null });
+  const res = await api('/api/trabajos/'+trabajoId+'/quincenas',{method:'PATCH',body:JSON.stringify({quincenas:qs})});
+  t.quincenas = res.quincenas || qs;
+  openTrabajo(trabajoId);
+}
+
+function editarPagadoQ(trabajoId, periodo, q, monto){
+  const t = allTrabajos.find(t=>t.id===trabajoId); if(!t) return;
+  const rec = (t.quincenas||[]).find(r=>r.periodo===periodo&&r.q===q);
+  _mpqCtx = { trabajoId, periodo, q, monto: parseFloat(monto)||0, editar: true };
+  const MESES_L = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const [yr,mn] = periodo.split('-');
+  document.getElementById('mpq-desc').textContent = `${MESES_L[parseInt(mn)-1]} ${yr} · Q${q} — Editar pago`;
+  document.getElementById('mpq-monto').value = (parseFloat(rec?.monto||monto)||0).toFixed(2);
+  document.getElementById('mpq-fecha').value = rec?.fechaPago ? rec.fechaPago.slice(0,10) : new Date().toISOString().slice(0,10);
+  openModal('modal-pago-quincena');
+}
+
+async function confirmarPagoQuincena(){
+  const monto = parseFloat(document.getElementById('mpq-monto').value)||_mpqCtx.monto;
+  const fecha = document.getElementById('mpq-fecha').value || new Date().toISOString().slice(0,10);
+  closeModal('modal-pago-quincena');
+  await _actualizarQuincena(_mpqCtx.trabajoId, _mpqCtx.periodo, _mpqCtx.q, { estado:'pagado', fechaPago: fecha, monto });
+  openTrabajo(_mpqCtx.trabajoId);
+}
+
+async function marcarRetrasadoQ(trabajoId, periodo, q){
+  const t = allTrabajos.find(t=>t.id===trabajoId);
+  const pm = parseFloat(t.pagoMensual)||0;
+  const monto = (t.quincenas||[]).find(r=>r.periodo===periodo&&r.q===q)?.monto || pm/2;
+  await _actualizarQuincena(trabajoId, periodo, q, { estado:'retrasado', monto });
+  openTrabajo(trabajoId);
+}
+
+async function _actualizarQuincena(trabajoId, periodo, q, datos){
+  const t = allTrabajos.find(t=>t.id===trabajoId); if(!t) return;
+  const pm = parseFloat(t.pagoMensual)||0;
+  let qs = [...(t.quincenas||[])];
+  const idx = qs.findIndex(r=>r.periodo===periodo&&r.q===q);
+  const rec = { periodo, q, monto: pm/2, estado:'pendiente', fechaPago:null, ...(idx>=0?qs[idx]:{}), ...datos };
+  if(idx>=0) qs[idx]=rec; else qs.push(rec);
+  const res = await api('/api/trabajos/'+trabajoId+'/quincenas',{method:'PATCH',body:JSON.stringify({quincenas:qs})});
+  t.quincenas = res.quincenas || qs;
+}
+
+function generarFacturaQ(trabajoId, periodo, q){
+  const t = allTrabajos.find(t=>t.id===trabajoId); if(!t) return;
+  const rec = (t.quincenas||[]).find(r=>r.periodo===periodo&&r.q===q);
+  const pm = parseFloat(t.pagoMensual)||0;
+  const monto = parseFloat(rec?.monto||pm/2).toFixed(2);
+  const MESES_L = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const [yr,mn] = periodo.split('-');
+  const mesNombre = MESES_L[parseInt(mn)-1];
+  const rango = q===1?'1 al 15':'15 al 30';
+  const fechaPago = rec?.fechaPago ? new Date(rec.fechaPago).toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'}) : '—';
+  const cliente = allClientes.find(c=>c._id===t.clienteId)||{nombre:t.cliente,empresa:t.empresa||''};
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Recibo · ${mesNombre} Q${q}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Helvetica Neue',Arial,sans-serif;background:#fff;color:#111;padding:60px;max-width:680px;margin:0 auto}
+    .logo{font-size:28px;font-weight:900;letter-spacing:-.5px;margin-bottom:4px}
+    .subtitle{font-size:12px;color:#888;letter-spacing:.1em;text-transform:uppercase;margin-bottom:40px}
+    h2{font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:#888;margin-bottom:24px}
+    table{width:100%;border-collapse:collapse;margin-bottom:32px}
+    td{padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px}
+    td:first-child{color:#888;width:45%}
+    td:last-child{font-weight:600;text-align:right}
+    .total-row td{border-top:2px solid #111;border-bottom:none;padding-top:16px;font-size:18px}
+    .total-row td:first-child{color:#111;font-weight:700}
+    .footer{margin-top:60px;padding-top:24px;border-top:1px solid #eee;font-size:11px;color:#aaa;text-align:center}
+    @media print{body{padding:40px}.no-print{display:none}}
+  </style></head><body>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:48px">
+    <div>
+      <div class="logo">Nokta</div>
+      <div class="subtitle">Studio</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.06em">Recibo de pago</div>
+      <div style="font-size:22px;font-weight:800;margin-top:4px">#${yr}${mn}Q${q}</div>
+    </div>
+  </div>
+  <h2>Detalle del servicio</h2>
+  <table>
+    <tr><td>Cliente</td><td>${cliente.nombre}</td></tr>
+    ${cliente.empresa?`<tr><td>Empresa</td><td>${cliente.empresa}</td></tr>`:''}
+    <tr><td>Servicio</td><td>${t.servicio}</td></tr>
+    <tr><td>Periodo</td><td>${mesNombre} ${yr} · del ${rango} de ${mesNombre}</td></tr>
+    <tr><td>Quincena</td><td>Q${q} de 2</td></tr>
+    <tr><td>Fecha de pago</td><td>${fechaPago}</td></tr>
+    <tr class="total-row"><td>Total</td><td>$${monto} MXN</td></tr>
+  </table>
+  <div class="footer">Nokta Studio · contacto@noktastudio.com<br>Este documento es un comprobante interno de pago.</div>
+  <div class="no-print" style="margin-top:32px;text-align:center">
+    <button onclick="window.print()" style="padding:10px 28px;background:#111;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer">Imprimir / Guardar PDF</button>
+  </div>
+  </body></html>`;
+  const win = window.open('','_blank','width=720,height=900');
+  win.document.write(html);
+  win.document.close();
 }
 async function marcarPagado(id){
   await api('/api/trabajos/'+id,{method:'PUT',body:JSON.stringify({estado:'pagado',anticipo:allTrabajos.find(t=>t.id===id)?.monto,saldo:0})});
@@ -1189,18 +1983,46 @@ async function imprimirDoc(){
 // ═══════════════════════════════════════════════════════════
 // CLIENTES
 // ═══════════════════════════════════════════════════════════
+function totalGenerado(ts){
+  return ts.reduce((s,t)=>{
+    const g = t.grupo || SVC_GRUPO[t.servicio] || '';
+    if(g==='B'){
+      const pagadas = (t.quincenas||[]).filter(q=>q.estado==='pagado').reduce((a,q)=>a+parseFloat(q.monto||0),0);
+      return s + pagadas;
+    }
+    return s + (parseFloat(t.monto)||0);
+  },0);
+}
+
 async function loadClientes(){
   allTrabajos=await api('/api/trabajos'); allClientes=await api('/api/clientes');
   const tbody=document.getElementById('clientes-tbody');
-  const nombres=[...new Set(allTrabajos.map(t=>t.cliente))];
+  // Combinar clientes registrados + clientes de trabajos
+  const nombres=[...new Set([...allClientes.map(c=>c.nombre),...allTrabajos.map(t=>t.cliente)])];
   if(!nombres.length){ tbody.innerHTML='<tr><td colspan="6" class="empty">No hay clientes registrados</td></tr>'; return; }
-  tbody.innerHTML=nombres.map(n=>{
+  const rows = nombres.map(n=>{
     const ts=allTrabajos.filter(t=>t.cliente===n);
-    const total=ts.reduce((s,t)=>s+(parseFloat(t.monto)||0),0);
-    const ultimo=ts.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+    const total=totalGenerado(ts);
+    const pendiente=ts.reduce((s,t)=>{
+      const g=t.grupo||SVC_GRUPO[t.servicio]||'';
+      if(g==='B') return s+(t.quincenas||[]).filter(q=>q.estado==='pendiente'||q.estado==='retrasado').reduce((a,q)=>a+parseFloat(q.monto||0),0);
+      return s+(parseFloat(t.saldo)||0);
+    },0);
+    const ultimo=ts.length?ts.sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0))[0]:null;
     const tipo=ts.length>1?'Frecuente':'Nuevo';
-    return `<tr onclick="openPerfilCliente('${n}')"><td>${n}</td><td><span class="pill ${tipo==='Frecuente'?'pill-green':'pill-blue'}">${tipo}</span></td><td>${ts.length}</td><td>${ultimo?fmtFecha(ultimo.fecha):'—'}</td><td>$${total.toFixed(2)}</td><td>${waCliente(n)}</td></tr>`;
-  }).join('');
+    return { n, ts, total, pendiente, ultimo, tipo };
+  }).sort((a,b)=>b.total-a.total);
+
+  tbody.innerHTML=rows.map(({n,ts,total,pendiente,ultimo,tipo})=>`
+    <tr onclick="openPerfilCliente('${n.replace(/'/g,"\\'")}')">
+      <td>${n}</td>
+      <td><span class="pill ${tipo==='Frecuente'?'pill-green':'pill-blue'}">${tipo}</span></td>
+      <td>${ts.length}</td>
+      <td>${ultimo?fmtFecha(ultimo.fecha||ultimo.fechaInicio):'—'}</td>
+      <td style="font-weight:600;color:var(--green)">$${total.toFixed(2)}</td>
+      <td style="color:var(--yellow)">$${pendiente.toFixed(2)}</td>
+      <td>${waCliente(n)}</td>
+    </tr>`).join('');
 }
 function waCliente(nombre){
   const c=allClientes.find(c=>c.nombre===nombre);
@@ -1208,23 +2030,88 @@ function waCliente(nombre){
   return `<a href="https://wa.me/${c.whatsapp}" target="_blank" onclick="event.stopPropagation()" style="color:var(--green);text-decoration:none;font-size:16px">💬</a>`;
 }
 async function openPerfilCliente(nombre){
-  const ts=allTrabajos.filter(t=>t.cliente===nombre);
-  const {cotizaciones,recibos}=await api('/api/documentos');
-  const c=allClientes.find(c=>c.nombre===nombre);
-  const total=ts.reduce((s,t)=>s+(parseFloat(t.monto)||0),0);
-  document.getElementById('perfil-title').textContent=nombre;
-  document.getElementById('perfil-body').innerHTML=`
-    <div class="cards" style="grid-template-columns:repeat(3,1fr)">
-      <div class="card"><div class="card-label">TRABAJOS</div><div class="card-value">${ts.length}</div></div>
-      <div class="card"><div class="card-label">TOTAL FACTURADO</div><div class="card-value">$${total.toFixed(2)}</div></div>
-      <div class="card"><div class="card-label">SALDO PENDIENTE</div><div class="card-value" style="color:var(--yellow)">$${ts.filter(t=>t.estado==='pendiente').reduce((s,t)=>s+(parseFloat(t.saldo)||0),0).toFixed(2)}</div></div>
+  if(!allTrabajos.length) allTrabajos = await api('/api/trabajos');
+  if(!allClientes.length) allClientes = await api('/api/clientes');
+  const ts = allTrabajos.filter(t=>t.cliente===nombre);
+  const c = allClientes.find(c=>c.nombre===nombre);
+  const total = totalGenerado(ts);
+  const cobrado = ts.reduce((s,t)=>{
+    const g=t.grupo||SVC_GRUPO[t.servicio]||'';
+    if(g==='B') return s+(t.quincenas||[]).filter(q=>q.estado==='pagado').reduce((a,q)=>a+parseFloat(q.monto||0),0);
+    return s+(t.estado==='pagado'?parseFloat(t.monto||0):parseFloat(t.anticipo||0));
+  },0);
+  const porCobrar = ts.reduce((s,t)=>{
+    const g=t.grupo||SVC_GRUPO[t.servicio]||'';
+    if(g==='B') return s+(t.quincenas||[]).filter(q=>q.estado!=='pagado'&&q.estado!=='oculta').reduce((a,q)=>a+parseFloat(q.monto||0),0);
+    return s+(parseFloat(t.saldo)||0);
+  },0);
+  const retrasadas = ts.reduce((s,t)=>s+(t.quincenas||[]).filter(q=>q.estado==='retrasado').length,0);
+
+  document.getElementById('cd-title').textContent = nombre;
+  document.getElementById('cd-actions').innerHTML = c?.whatsapp
+    ? `<a href="https://wa.me/${c.whatsapp}" target="_blank" class="btn btn-primary btn-sm">💬 WhatsApp</a>` : '';
+
+  // Columna izquierda — info del cliente
+  const infoCard = `<div class="section-card">
+    ${c?.empresa?`<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">EMPRESA</div><div style="font-size:14px">${c.empresa}</div></div>`:''}
+    ${c?.whatsapp?`<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">WHATSAPP</div><div style="font-size:14px">${c.whatsapp}</div></div>`:''}
+    ${c?.email?`<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">EMAIL</div><div style="font-size:14px">${c.email}</div></div>`:''}
+    <div style="padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">SERVICIOS</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+        ${[...new Set(ts.map(t=>GRUPO_NOMBRES[t.grupo||SVC_GRUPO[t.servicio]||'']||'—'))].filter(Boolean).map(g=>`<span class="pill pill-blue" style="font-size:11px">${g}</span>`).join('')||'—'}
+      </div>
     </div>
-    ${c?.whatsapp?`<a href="https://wa.me/${c.whatsapp}" target="_blank" class="btn btn-primary btn-sm" style="margin-bottom:16px;display:inline-flex">💬 WhatsApp</a>`:''}
-    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:500">TRABAJOS</div>
-    ${ts.map(t=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${t.servicio}</span><span>${fmtFecha(t.fecha)}</span><span>$${parseFloat(t.monto||0).toFixed(2)}</span><span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span></div>`).join('') || '<div class="empty">Sin trabajos</div>'}
-    <div style="font-size:12px;color:var(--muted);margin:12px 0 8px;font-weight:500">DOCUMENTOS</div>
-    ${[...cotizaciones.filter(d=>d.clienteNombre===nombre),...recibos.filter(d=>d.clienteNombre===nombre)].map(d=>`<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px"><span>${d.numero}</span><span class="text-muted">${fmtFecha(d.creado)}</span><span>$${parseFloat(d.total||0).toFixed(2)}</span></div>`).join('') || '<div class="empty" style="padding:12px">Sin documentos</div>'}`;
-  openModal('modal-perfil');
+    <div style="padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">TIPO</div>
+      <span class="pill ${ts.length>1?'pill-green':'pill-blue'}">${ts.length>1?'Frecuente':'Nuevo'}</span>
+    </div>
+    <div style="padding:14px 0">
+      <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">TRABAJOS</div>
+      <div style="font-size:28px;font-weight:700">${ts.length}</div>
+    </div>
+  </div>`;
+
+  // Columna derecha — stats + tabla de trabajos
+  const statsRow = `<div style="display:grid;grid-template-columns:repeat(${retrasadas?4:3},1fr);gap:16px;margin-bottom:20px">
+    <div class="card"><div class="card-label">TOTAL GENERADO</div><div class="card-value" style="color:var(--green)">$${total.toFixed(2)}</div></div>
+    <div class="card"><div class="card-label">YA COBRADO</div><div class="card-value">$${cobrado.toFixed(2)}</div></div>
+    <div class="card"><div class="card-label">POR COBRAR</div><div class="card-value" style="color:var(--yellow)">$${porCobrar.toFixed(2)}</div></div>
+    ${retrasadas?`<div class="card"><div class="card-label">RETRASADAS</div><div class="card-value" style="color:#e55">${retrasadas}</div></div>`:''}
+  </div>`;
+
+  const trabajosRows = ts.length ? ts.map(t=>{
+    const g=t.grupo||SVC_GRUPO[t.servicio]||'';
+    const gNombre=GRUPO_NOMBRES[g]||'';
+    const montoT = g==='B'
+      ? (t.quincenas||[]).filter(q=>q.estado==='pagado').reduce((a,q)=>a+parseFloat(q.monto||0),0)
+      : parseFloat(t.monto||0);
+    const badge=gNombre?`<span class="pill pill-blue" style="font-size:10px;margin-left:6px">${gNombre}</span>`:'';
+    return `<tr onclick="openTrabajo('${t.id}')" style="cursor:pointer">
+      <td>${t.servicio}${badge}</td>
+      <td>${fmtFecha(t.fecha||t.fechaInicio)}</td>
+      <td style="font-weight:600">$${montoT.toFixed(2)}</td>
+      <td><span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="4" class="empty">Sin trabajos</td></tr>`;
+
+  const trabajosCard = `<div class="section-card" style="padding:0;overflow:hidden">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--muted)">HISTORIAL DE TRABAJOS</div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="border-bottom:1px solid var(--border)">
+        <th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--muted);font-weight:500">SERVICIO</th>
+        <th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--muted);font-weight:500">FECHA</th>
+        <th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--muted);font-weight:500">COBRADO</th>
+        <th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--muted);font-weight:500">ESTADO</th>
+      </tr></thead>
+      <tbody>${trabajosRows}</tbody>
+    </table>
+  </div>`;
+
+  document.getElementById('cd-body').innerHTML = infoCard + `<div>${statsRow}${trabajosCard}</div>`;
+
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-cliente-detalle').classList.add('active');
 }
 
 // ═══════════════════════════════════════════════════════════

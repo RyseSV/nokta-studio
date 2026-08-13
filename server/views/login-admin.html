@@ -47,12 +47,8 @@ button:hover{opacity:.9}
   </form>
 </div>
 <script>
-const saved = JSON.parse(localStorage.getItem('nk_creds') || 'null');
-if (saved) {
-  document.getElementById('usr').value = saved.u;
-  document.getElementById('pw').value = saved.p;
-  document.getElementById('rem').checked = true;
-}
+// Remove any previously stored plain-text credentials (security cleanup)
+localStorage.removeItem('nk_creds');
 
 document.getElementById('f').onsubmit = async e => {
   e.preventDefault();
@@ -69,8 +65,6 @@ document.getElementById('f').onsubmit = async e => {
       body: JSON.stringify({ username: usr, password: pw, remember: rem })
     });
     if (r.ok) {
-      if (rem) localStorage.setItem('nk_creds', JSON.stringify({ u: usr, p: pw }));
-      else localStorage.removeItem('nk_creds');
       window.location.href = '/admin';
     } else {
       const d = await r.json();
@@ -82,11 +76,6 @@ document.getElementById('f').onsubmit = async e => {
     btn.textContent = 'Ingresar'; btn.disabled = false;
   }
 };
-
-window.addEventListener('load', () => {
-  document.getElementById('usr').value = '';
-  document.getElementById('pw').value = '';
-});
 </script>
 </body>
 </html>

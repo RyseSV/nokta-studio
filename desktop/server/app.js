@@ -69,9 +69,10 @@ mongoose.connect(process.env.MONGODB_URI)
 // ── Express setup ───────────────────────────────────────────
 const app = express();
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/img', express.static(path.join(__dirname, '../../img')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -167,6 +168,18 @@ app.get('/galeria', (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
+// DEV AUTO-LOGIN (solo en desarrollo)
+app.get('/dev-login', async (req, res) => {
+  if (process.env.NODE_ENV === 'production') return res.redirect('/admin');
+  try {
+    const u = await Usuario.findOne({ role: 'superadmin' }).lean() || await Usuario.findOne().lean();
+    if (!u) return res.redirect('/admin');
+    req.session.userId = u._id.toString();
+    req.session.role = u.role;
+    res.redirect('/admin');
+  } catch { res.redirect('/admin'); }
+});
+
 // AUTH API
 // ══════════════════════════════════════════════════════════════
 
@@ -191,8 +204,10 @@ app.post('/api/admin/logout', (req, res) => {
 });
 
 
-app.get('/api/admin/me', requireAdmin, (req, res) => {
-  res.json({ _id: req.session.userId, username: req.session.username, nombre: req.session.nombre, role: req.session.role });
+app.get('/api/admin/me', requireAdmin, async (req, res) => {
+  const u = await Usuario.findById(req.session.userId).lean();
+  if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
+  res.json({ _id: u._id, username: u.username, nombre: u.nombre, role: u.role, icono: u.icono || 'dark' });
 });
 
 // ══════════════════════════════════════════════════════════════
@@ -221,15 +236,29 @@ app.post('/api/usuarios', requireAdmin, requireSuperAdmin, async (req, res) => {
 
 app.put('/api/usuarios/:id', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
-    const update = { nombre: req.body.nombre, role: req.body.role };
+    const update = { nombre: req.body.nombre, role: req.body.role, icono: req.body.icono || 'dark' };
     if (req.body.password) update.password = await bcrypt.hash(req.body.password, 10);
     await Usuario.updateOne({ _id: req.params.id }, { $set: update });
-    // If editing own profile, refresh session data so sidebar updates immediately
     if (req.session.userId === req.params.id) {
       req.session.nombre = req.body.nombre;
       req.session.role = req.body.role;
     }
     res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/usuarios/:id/foto', requireAdmin, async (req, res) => {
+  try {
+    const { base64 } = req.body;
+    if (!base64) return res.status(400).json({ error: 'No image' });
+    const result = await cloudinary.uploader.upload(base64, {
+      folder: 'nokta-usuarios',
+      public_id: req.params.id,
+      overwrite: true,
+      transformation: [{ width: 200, height: 200, crop: 'fill', gravity: 'face' }],
+    });
+    await Usuario.updateOne({ _id: req.params.id }, { $set: { foto: result.secure_url } });
+    res.json({ ok: true, url: result.secure_url });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -398,6 +427,18 @@ app.put('/api/trabajos/:id', requireAdmin, async (req, res) => {
     t.saldo = m - a;
     await t.save();
     res.json({ ok: true, trabajo: t });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.patch('/api/trabajos/:id/quincenas', requireAdmin, async (req, res) => {
+  try {
+    const t = await Trabajo.findOneAndUpdate(
+      { id: req.params.id },
+      { $set: { quincenas: req.body.quincenas } },
+      { new: true }
+    );
+    if (!t) return res.status(404).json({ error: 'No encontrado' });
+    res.json({ ok: true, quincenas: t.quincenas });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

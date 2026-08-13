@@ -15,6 +15,11 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+console.log('Cloudinary config:', {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '(no configurado)',
+  api_key: process.env.CLOUDINARY_API_KEY ? '✓ set' : '(no configurado)',
+  api_secret: process.env.CLOUDINARY_API_SECRET ? '✓ set' : '(no configurado)',
+});
 
 // ── Mongoose schemas ────────────────────────────────────────
 const clienteSchema = new mongoose.Schema({
@@ -241,6 +246,7 @@ app.put('/api/usuarios/:id', requireAdmin, requireSuperAdmin, async (req, res) =
 
 app.post('/api/usuarios/:id/foto', requireAdmin, async (req, res) => {
   try {
+    console.log('POST /api/usuarios/:id/foto — id:', req.params.id, 'body size:', JSON.stringify(req.body).length);
     const { base64 } = req.body;
     if (!base64) return res.status(400).json({ error: 'No image' });
     const result = await cloudinary.uploader.upload(base64, {

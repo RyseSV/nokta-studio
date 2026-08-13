@@ -136,14 +136,57 @@ async function checkAlerts() {
     }
   }
 
-  // Pending payments > 7 days
+  // Pending payments > 7 days (non-recurrente only)
   const trabajos = await Trabajo.find({});
   for (const t of trabajos) {
+    const g = t.grupo || '';
+    if (g === 'B') continue; // handled separately below
     if (t.estado !== 'pendiente' || !t.creado) continue;
     const days = Math.ceil((now - new Date(t.creado)) / 86400000);
     if (days >= 7) {
       const exists = await Alerta.findOne({ tipo: 'pago_pendiente', 'datos.id': t.id });
       if (!exists) await addAlert('pago_pendiente', { id: t.id, cliente: t.cliente, servicio: t.servicio, saldo: t.saldo });
+    }
+  }
+
+  // Quincenas vencidas sin pagar (grupo B — recurrentes)
+  for (const t of trabajos) {
+    const g = t.grupo || '';
+    if (g !== 'B' || !t.fechaInicio) continue;
+    const montoQ = parseFloat(t.pagoMensual || 0) / 2;
+
+    // Generate periods from start to current month
+    const inicio = new Date(t.fechaInicio);
+    let cur = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+    const fin = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    while (cur < fin) {
+      const yr = cur.getFullYear();
+      const mn = String(cur.getMonth() + 1).padStart(2, '0');
+      const periodo = `${yr}-${mn}`;
+
+      for (const q of [1, 2]) {
+        // Due date: q1 = 15th, q2 = last day of month
+        const dueDay = q === 1 ? 15 : new Date(yr, cur.getMonth() + 1, 0).getDate();
+        const due = new Date(yr, cur.getMonth(), dueDay, 23, 59, 59);
+        if (due >= now) { cur.setMonth(cur.getMonth() + 1); continue; } // not due yet
+
+        const stored = (t.quincenas || []).find(r => r.periodo === periodo && r.q === q);
+        if (stored && (stored.estado === 'pagado' || stored.estado === 'oculta')) continue;
+
+        const alertKey = `${t.id}-${periodo}-q${q}`;
+        const exists = await Alerta.findOne({ tipo: 'quincena_vencida', 'datos.key': alertKey });
+        if (!exists) {
+          const monto = stored ? parseFloat(stored.monto || montoQ) : montoQ;
+          const label = q === 1 ? '1 al 15' : '15 al 30';
+          await addAlert('quincena_vencida', {
+            key: alertKey, id: t.id, cliente: t.cliente,
+            periodo, q, label, monto,
+            mensaje: `${t.cliente} — ${periodo} (${label}) $${monto.toFixed(2)} sin pagar`
+          });
+        }
+      }
+      cur.setMonth(cur.getMonth() + 1);
     }
   }
 

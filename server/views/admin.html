@@ -1208,8 +1208,8 @@ async function eliminarEvento(id){
 // ═══════════════════════════════════════════════════════════
 // ALERTAS
 // ═══════════════════════════════════════════════════════════
-const alertIcons={descarga:'📥',link_venciendo:'⏰',pago_pendiente:'💰',evento_proximo:'📅'};
-const alertLabels={descarga:'Descarga de galería',link_venciendo:'Link próximo a vencer',pago_pendiente:'Pago pendiente',evento_proximo:'Evento próximo'};
+const alertIcons={descarga:'📥',link_venciendo:'⏰',pago_pendiente:'💰',evento_proximo:'📅',quincena_vencida:'🔔'};
+const alertLabels={descarga:'Descarga de galería',link_venciendo:'Link próximo a vencer',pago_pendiente:'Pago pendiente',evento_proximo:'Evento próximo',quincena_vencida:'Quincena sin pagar'};
 async function loadAlertas(){
   allAlertas = await api('/api/alertas');
   updateBadge(allAlertas);
@@ -1222,11 +1222,13 @@ async function loadAlertas(){
     else if(a.tipo==='link_venciendo') desc=`${d.nombre} (${d.codigo}) — ${d.diasRestantes} día${d.diasRestantes!==1?'s':''} restante${d.diasRestantes!==1?'s':''}`;
     else if(a.tipo==='pago_pendiente') desc=`${d.cliente} — ${d.servicio} — Saldo: $${parseFloat(d.saldo||0).toFixed(2)}`;
     else if(a.tipo==='evento_proximo') desc=`${d.cliente} — ${d.tipo} — ${fmtFecha(d.fecha)} ${d.hora||''}`;
+    else if(a.tipo==='quincena_vencida') desc=d.mensaje||'';
     let btn='';
     if(a.tipo==='descarga') btn=`<button class="btn btn-ghost btn-sm" onclick="nav('galerias')">Ver galería</button>`;
     else if(a.tipo==='link_venciendo') btn=`<button class="btn btn-outline btn-sm" onclick="openReactivar('${d.codigo}')">Reactivar</button>`;
     else if(a.tipo==='pago_pendiente') btn=`<button class="btn btn-ghost btn-sm" onclick="openTrabajo('${d.id}')">Ver trabajo</button>`;
     else if(a.tipo==='evento_proximo') btn=`<button class="btn btn-ghost btn-sm" onclick="openEvento('${d.id}')">Ver evento</button>`;
+    else if(a.tipo==='quincena_vencida') btn=`<button class="btn btn-ghost btn-sm" onclick="openTrabajo('${d.id}')">Ver quincenas</button>`;
     return `<div class="alert-item ${a.leida?'':'unread'}">
       <div class="alert-icon">${alertIcons[a.tipo]||'🔔'}</div>
       <div class="alert-body">

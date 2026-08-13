@@ -918,13 +918,28 @@ function openUsuarioModal(id){
   openModal('modal-usuario');
 }
 
+function resizeImagen(dataUrl, maxSize=600){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.width, h=img.height;
+      if(w>maxSize||h>maxSize){ const r=Math.min(maxSize/w,maxSize/h); w=Math.round(w*r); h=Math.round(h*r); }
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(c.toDataURL('image/jpeg',0.82));
+    };
+    img.src=dataUrl;
+  });
+}
+
 function previewFotoUsuario(input){
   const file = input.files[0]; if(!file) return;
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = async e => {
+    const resized = await resizeImagen(e.target.result);
     const img = document.getElementById('u-foto-img');
     const ph  = document.getElementById('u-foto-placeholder');
-    img.src = e.target.result; img.style.display='block'; ph.style.display='none';
+    img.src = resized; img.style.display='block'; ph.style.display='none';
     document.getElementById('u-foto-btn').style.display = '';
   };
   reader.readAsDataURL(file);
@@ -932,15 +947,19 @@ function previewFotoUsuario(input){
 
 async function subirFotoUsuario(){
   const id  = document.getElementById('u-id').value; if(!id) return;
-  const src = document.getElementById('u-foto-img').src; if(!src) return;
+  const src = document.getElementById('u-foto-img').src;
+  if(!src || !src.startsWith('data:')) return;
   const btn = document.getElementById('u-foto-btn');
   btn.textContent='Subiendo…'; btn.disabled=true;
-  const res = await api('/api/usuarios/'+id+'/foto',{method:'POST',body:JSON.stringify({base64:src})});
-  if(res.ok){
-    toast('✓ Foto actualizada');
-    btn.style.display='none'; btn.disabled=false; btn.textContent='Subir foto';
-    await loadUsuarios();
-  } else { toast(res.error||'Error al subir','err'); btn.disabled=false; btn.textContent='Subir foto'; }
+  try {
+    const res = await api('/api/usuarios/'+id+'/foto',{method:'POST',body:JSON.stringify({base64:src})});
+    if(res.ok){
+      toast('✓ Foto actualizada');
+      btn.style.display='none'; btn.textContent='Subir foto';
+      await loadUsuarios();
+    } else { toast(res.error||'Error al subir foto','err'); }
+  } catch(e){ toast('Error de conexión: '+e.message,'err'); }
+  btn.disabled=false;
 }
 
 function selectIcono(val){

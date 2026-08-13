@@ -85,7 +85,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI }),
-  cookie: { maxAge: 8 * 60 * 60 * 1000 }
+  cookie: { maxAge: null }  // session cookie — expires when browser closes
 }));
 
 // ── Auth middleware ─────────────────────────────────────────

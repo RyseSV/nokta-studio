@@ -1066,13 +1066,30 @@ async function loadDashboard(){
   const ganancia=ingresos-gastosTot;
 
   // Pendiente: quincenas no pagadas del mes actual para B, saldo para otros
+  // Group B: generate both quincenas of current month even if not stored in DB
   const pendiente=allTrabajos.reduce((s,t)=>{
     const g=t.grupo||SVC_GRUPO[t.servicio]||'';
-    if(g==='B') return s+(t.quincenas||[]).filter(q=>q.periodo===periodoMes&&q.estado!=='pagado'&&q.estado!=='oculta').reduce((a,q)=>a+parseFloat(q.monto||0),0);
+    if(g==='B'){
+      const montoQ=parseFloat(t.pagoMensual||0)/2;
+      return s+[1,2].reduce((a,qi)=>{
+        const stored=(t.quincenas||[]).find(r=>r.periodo===periodoMes&&r.q===qi);
+        if(!stored) return a+montoQ; // not saved yet = pending by default
+        if(stored.estado!=='pagado'&&stored.estado!=='oculta') return a+parseFloat(stored.monto||montoQ);
+        return a;
+      },0);
+    }
     const d=new Date(t.fecha||''); const dp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
     return dp===periodoMes&&t.estado==='pendiente'?s+(parseFloat(t.saldo)||0):s;
   },0);
-  const pendienteCount=tMes.filter(t=>t.estado==='pendiente').length;
+  const pendienteCount=allTrabajos.filter(t=>{
+    const g=t.grupo||SVC_GRUPO[t.servicio]||'';
+    if(g==='B') return [1,2].some(qi=>{
+      const stored=(t.quincenas||[]).find(r=>r.periodo===periodoMes&&r.q===qi);
+      return !stored||(stored.estado!=='pagado'&&stored.estado!=='oculta');
+    });
+    const d=new Date(t.fecha||''); const dp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    return dp===periodoMes&&t.estado==='pendiente';
+  }).length;
 
   document.getElementById('d-ingresos').textContent='$'+ingresos.toFixed(2);
   const pct=ingresosPrev>0?((ingresos-ingresosPrev)/ingresosPrev*100).toFixed(0):0;

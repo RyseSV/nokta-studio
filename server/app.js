@@ -192,8 +192,11 @@ app.post('/api/admin/logout', (req, res) => {
 });
 
 
-app.get('/api/admin/me', requireAdmin, (req, res) => {
-  res.json({ _id: req.session.userId, username: req.session.username, nombre: req.session.nombre, role: req.session.role });
+app.get('/api/admin/me', requireAdmin, async (req, res) => {
+  try {
+    const u = await Usuario.findById(req.session.userId, '-password').lean();
+    res.json(u || { _id: req.session.userId, username: req.session.username, nombre: req.session.nombre, role: req.session.role });
+  } catch { res.json({ _id: req.session.userId, username: req.session.username, nombre: req.session.nombre, role: req.session.role }); }
 });
 
 // ══════════════════════════════════════════════════════════════

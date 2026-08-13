@@ -862,8 +862,8 @@ async function initSession(){
     document.getElementById('sb-nombre').textContent = me.nombre || me.username || '—';
     document.getElementById('sb-rol').textContent = me.role === 'admin' ? 'Administrador' : 'Editor';
     const avatarEl = document.getElementById('sb-avatar');
-    const iconSrc = me.icono === 'cream' ? '/img/logo/avatar_cream.png' : '/img/logo/avatar_dark.png';
-    avatarEl.innerHTML = `<img src="${iconSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+    const iconSrc = me.foto || (me.icono === 'cream' ? '/img/logo/avatar_cream.png' : '/img/logo/avatar_dark.png');
+    avatarEl.innerHTML = `<img src="${iconSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.src='/img/logo/avatar_dark.png'">`;
     if(me.role === 'admin'){
       document.getElementById('sb-admin-section').style.display = '';
       document.getElementById('sb-usuarios').style.display = '';

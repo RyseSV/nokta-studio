@@ -207,7 +207,7 @@ app.post('/api/admin/logout', (req, res) => {
 app.get('/api/admin/me', requireAdmin, async (req, res) => {
   const u = await Usuario.findById(req.session.userId).lean();
   if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
-  res.json({ _id: u._id, username: u.username, nombre: u.nombre, role: u.role, icono: u.icono || 'dark' });
+  res.json({ _id: u._id, username: u.username, nombre: u.nombre, role: u.role, icono: u.icono || 'dark', foto: u.foto || null });
 });
 
 // ══════════════════════════════════════════════════════════════

@@ -164,6 +164,7 @@ async function checkAlerts() {
 // ══════════════════════════════════════════════════════════════
 
 app.get('/admin', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
   if (!req.session.userId) return res.sendFile(path.join(__dirname, 'views', 'login-admin.html'));
   res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });

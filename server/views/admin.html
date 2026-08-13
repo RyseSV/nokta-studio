@@ -956,7 +956,11 @@ async function subirFotoUsuario(){
     if(res.ok){
       toast('✓ Foto actualizada');
       btn.style.display='none'; btn.textContent='Subir foto';
+      // Update the user in local cache immediately so table re-renders with new photo
+      const idx = allUsuarios.findIndex(x=>x._id===id);
+      if(idx!==-1) allUsuarios[idx].foto = res.url;
       await loadUsuarios();
+      await initSession();
     } else { toast(res.error||'Error al subir foto','err'); }
   } catch(e){ toast('Error de conexión: '+e.message,'err'); }
   btn.disabled=false;

@@ -228,10 +228,10 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
     </div>
   </div>
   <div class="cards" id="dash-cards">
+    <div class="card"><div class="card-label">INGRESOS MES PASADO</div><div class="card-value" id="d-ingresos-prev">$0</div><div class="card-sub" id="d-ingresos-prev-sub">—</div></div>
     <div class="card"><div class="card-label">INGRESOS DEL MES</div><div class="card-value" id="d-ingresos">$0</div><div class="card-sub" id="d-ingresos-sub">—</div></div>
     <div class="card"><div class="card-label">GANANCIA NETA</div><div class="card-value" id="d-ganancia">$0</div><div class="card-sub" id="d-margen">0% margen</div></div>
     <div class="card"><div class="card-label">PENDIENTE DE COBRO</div><div class="card-value" id="d-pendiente" style="color:var(--yellow)">$0</div><div class="card-sub warn" id="d-pendiente-sub">0 trabajos</div></div>
-    <div class="card"><div class="card-label">EVENTOS ESTE MES</div><div class="card-value" id="d-eventos">0</div><div class="card-sub" id="d-eventos-sub">—</div></div>
   </div>
   <div class="charts">
     <div class="chart-card"><div class="chart-title">Ingresos últimos 4 meses</div><canvas id="chart-bar" height="120"></canvas></div>
@@ -1037,18 +1037,14 @@ async function loadDashboard(){
   const periodoMes=`${year}-${String(mes+1).padStart(2,'0')}`;
   const periodoPrev=`${year}-${String((mes===0?12:mes)).padStart(2,'0')}`;
 
-  // Ingresos del mes: para grupo B suma ambas quincenas del periodo (pagadas + pendientes = ingreso comprometido)
-  // Para otros grupos: monto del trabajo si su fecha cae en ese periodo
+  // Ingresos del mes: solo quincenas ya PAGADAS para B; monto real para otros grupos
   function ingresosDelPeriodo(periodo){
     let total=0;
     allTrabajos.forEach(t=>{
       const g=t.grupo||SVC_GRUPO[t.servicio]||'';
       if(g==='B'){
-        const montoQ=parseFloat(t.pagoMensual||0)/2;
-        [1,2].forEach(qi=>{
-          const stored=(t.quincenas||[]).find(r=>r.periodo===periodo&&r.q===qi);
-          if(!stored) total+=montoQ;
-          else if(stored.estado!=='oculta') total+=parseFloat(stored.monto||montoQ);
+        (t.quincenas||[]).filter(q=>q.periodo===periodo&&q.estado==='pagado').forEach(q=>{
+          total+=parseFloat(q.monto||0);
         });
       } else {
         const d=new Date(t.fecha||t.fechaInicio||'');
@@ -1094,20 +1090,20 @@ async function loadDashboard(){
     return dp===periodoMes&&t.estado==='pendiente';
   }).length;
 
+  document.getElementById('d-ingresos-prev').textContent='$'+ingresosPrev.toFixed(2);
+  document.getElementById('d-ingresos-prev-sub').textContent=ingresosPrev>0?'Cobrado el mes anterior':'Sin ingresos el mes anterior';
+
   document.getElementById('d-ingresos').textContent='$'+ingresos.toFixed(2);
   const pct=ingresosPrev>0?((ingresos-ingresosPrev)/ingresosPrev*100).toFixed(0):0;
   const sub1=document.getElementById('d-ingresos-sub');
-  sub1.textContent=(pct>=0?'▲ +':'▼ ')+pct+'% vs mes anterior';
-  sub1.className='card-sub '+(pct>=0?'up':'down');
+  sub1.textContent=ingresos>0?(pct>=0?'▲ +':'▼ ')+pct+'% vs mes anterior':'Pendiente de cobro';
+  sub1.className='card-sub '+(ingresos>0&&pct>=0?'up':ingresos>0?'down':'');
 
   document.getElementById('d-ganancia').textContent='$'+ganancia.toFixed(2);
   document.getElementById('d-margen').textContent=(ingresos>0?(ganancia/ingresos*100).toFixed(0):0)+'% margen';
 
   document.getElementById('d-pendiente').textContent='$'+pendiente.toFixed(2);
   document.getElementById('d-pendiente-sub').textContent=pendienteCount+' trabajo'+(pendienteCount!==1?'s':'');
-
-  document.getElementById('d-eventos').textContent=tMes.length;
-  document.getElementById('d-eventos-sub').textContent=(tMes.length-tPrev.length>=0?'▲ ':'▼ ')+Math.abs(tMes.length-tPrev.length)+' vs mes anterior';
 
   // Bar chart — last 4 months
   const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];

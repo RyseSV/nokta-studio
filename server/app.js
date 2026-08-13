@@ -234,6 +234,21 @@ app.put('/api/usuarios/:id', requireAdmin, requireSuperAdmin, async (req, res) =
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+app.post('/api/usuarios/:id/foto', requireAdmin, async (req, res) => {
+  try {
+    const { base64 } = req.body;
+    if (!base64) return res.status(400).json({ error: 'No image' });
+    const result = await cloudinary.uploader.upload(base64, {
+      folder: 'nokta-usuarios',
+      public_id: `user_${req.params.id}`,
+      overwrite: true,
+      transformation: [{ width: 200, height: 200, crop: 'fill', gravity: 'face' }],
+    });
+    await Usuario.updateOne({ _id: req.params.id }, { $set: { foto: result.secure_url } });
+    res.json({ ok: true, url: result.secure_url });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.delete('/api/usuarios/:id', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
     const u = await Usuario.findById(req.params.id);

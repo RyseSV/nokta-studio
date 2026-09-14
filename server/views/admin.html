@@ -1927,8 +1927,13 @@ async function loadHistorialDoc(){
   const {cotizaciones,recibos}=await api('/api/documentos');
   const docs=tipo==='cotizacion'?cotizaciones:recibos;
   const fil=nombre?docs.filter(d=>d.clienteNombre===nombre):docs;
-  document.getElementById('doc-historial-list').innerHTML=fil.length?fil.map(d=>`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${d.numero}</span><span class="text-muted">${d.clienteNombre}</span><span>$${parseFloat(d.total||0).toFixed(2)}</span></div>`).join(''):
+  document.getElementById('doc-historial-list').innerHTML=fil.length?fil.map(d=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${d.numero}</span><span class="text-muted">${d.clienteNombre}</span><span>$${parseFloat(d.total||0).toFixed(2)}</span><button type="button" onclick="eliminarDoc('${tipo}','${d.id}')" style="background:none;border:none;color:var(--danger,#c0392b);cursor:pointer;font-size:14px">🗑</button></div>`).join(''):
     '<div class="empty">Sin documentos</div>';
+}
+async function eliminarDoc(tipo,id){
+  if(!confirm('¿Eliminar este documento?')) return;
+  await api(`/api/documentos/${tipo}/${id}`,{method:'DELETE'});
+  loadHistorialDoc();
 }
 function buildDocHTML(tipo, numero){
   const nombre=document.getElementById('doc-nombre').value;

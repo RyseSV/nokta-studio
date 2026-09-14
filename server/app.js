@@ -579,6 +579,16 @@ app.post('/api/documentos', requireAdmin, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+app.delete('/api/documentos/:tipo/:id', requireAdmin, async (req, res) => {
+  try {
+    const { tipo, id } = req.params;
+    if (tipo !== 'cotizacion' && tipo !== 'recibo') return res.status(400).json({ error: 'Tipo inválido' });
+    const Model = tipo === 'cotizacion' ? Cotizacion : Recibo;
+    await Model.deleteOne({ id });
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // ══════════════════════════════════════════════════════════════
 // ALERTAS API
 // ══════════════════════════════════════════════════════════════

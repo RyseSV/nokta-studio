@@ -165,6 +165,9 @@ body{background:var(--bg);color:var(--cream);font-family:'Poppins',sans-serif;mi
 </div>
 
 <script>
+function esc(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 let clienteData = null;
 let fotos = [];
 let favoritas = new Set();
@@ -236,11 +239,11 @@ function renderGrid() {
   grid.innerHTML = fotos.map((f, i) => {
     const isFav = favoritas.has(f.public_id);
     return `<div class="photo-item ${isFav ? 'favorita' : ''}" id="pi-${i}">
-      <img src="${f.thumb}" alt="foto ${i+1}" loading="lazy" onclick="openLB(${i})">
+      <img src="${esc(f.thumb)}" alt="foto ${i+1}" loading="lazy" onclick="openLB(${i})">
       <div class="photo-overlay">
         <div class="photo-actions">
           <button class="photo-btn" onclick="event.stopPropagation();toggleFav(${i})" title="${isFav?'Quitar favorita':'Agregar a favoritas'}">${isFav ? '❤️' : '🤍'}</button>
-          <a class="photo-btn" href="${f.url}" download onclick="event.stopPropagation()" title="Descargar">⬇</a>
+          <a class="photo-btn" href="${esc(f.url)}" download onclick="event.stopPropagation()" title="Descargar">⬇</a>
         </div>
       </div>
       <div class="fav-indicator">❤️</div>

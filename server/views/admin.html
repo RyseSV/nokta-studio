@@ -829,6 +829,21 @@ let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 let chartBar=null, chartPie=null, chartAnual=null, chartSvc=null, chartCli=null;
 let reactivarCodigo='';
 
+// Every value that ends up in an innerHTML/document.write template literal
+// below can originate from a client/trabajo/gasto/evento/equipo field that
+// an ordinary user of the panel (or a client via an intake form) typed in —
+// escape it first so a name like "<img src=x onerror=...>" can't run as
+// script in another admin's session.
+function esc(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+// For a value embedded as a single-quoted JS string literal INSIDE an
+// onclick="..." HTML attribute: escape it for the JS-string layer first
+// (backslash, then quote), then esc() the whole attribute value for HTML —
+// the browser decodes HTML entities before JS ever sees the string, so a
+// `"` in the original value can't break out of the attribute either.
+function escJs(s){ return String(s ?? '').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
 // ═══════════════════════════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════════════════════════
@@ -891,10 +906,10 @@ async function loadUsuarios(){
     ? allUsuarios.map(u=>{
         const iconSrc = u.foto || (u.icono === 'cream' ? '/img/logo/avatar_cream.png' : '/img/logo/avatar_dark.png');
         const initials = (u.nombre||'?')[0].toUpperCase();
-        const avatar = `<div style="width:32px;height:32px;border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;background:var(--ember);color:#fff;font-weight:600;font-size:13px;vertical-align:middle;margin-right:8px;flex-shrink:0"><img src="${iconSrc}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='${initials}'"></div>`;
+        const avatar = `<div style="width:32px;height:32px;border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;background:var(--ember);color:#fff;font-weight:600;font-size:13px;vertical-align:middle;margin-right:8px;flex-shrink:0"><img src="${esc(iconSrc)}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='${esc(initials)}'"></div>`;
         return `<tr onclick="openUsuarioModal('${u._id}')">
-          <td style="display:flex;align-items:center">${avatar}<b>${u.nombre||'—'}</b></td>
-          <td style="font-family:monospace;font-size:12px">@${u.username}</td>
+          <td style="display:flex;align-items:center">${avatar}<b>${esc(u.nombre||'—')}</b></td>
+          <td style="font-family:monospace;font-size:12px">@${esc(u.username)}</td>
           <td><span class="pill ${u.role==='admin'?'pill-blue':'pill-green'}">${roles[u.role]||u.role}</span></td>
           <td>${u.creado?fmtFecha(u.creado):'—'}</td>
           <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openUsuarioModal('${u._id}')">Editar</button></td>
@@ -1134,7 +1149,7 @@ async function loadDashboard(){
   // Recent jobs table
   const tbody=document.getElementById('dash-trabajos');
   const recent=allTrabajos.slice(0,8);
-  tbody.innerHTML=recent.length?recent.map(t=>`<tr onclick="openTrabajo('${t.id}')"><td>${t.cliente}</td><td>${t.servicio}</td><td>${fmtFecha(t.fecha)}</td><td>$${parseFloat(t.monto||0).toFixed(2)}</td><td><span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span></td></tr>`).join(''):
+  tbody.innerHTML=recent.length?recent.map(t=>`<tr onclick="openTrabajo('${t.id}')"><td>${esc(t.cliente)}</td><td>${esc(t.servicio)}</td><td>${fmtFecha(t.fecha)}</td><td>$${parseFloat(t.monto||0).toFixed(2)}</td><td><span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span></td></tr>`).join(''):
     '<tr><td colspan="5" class="empty">No hay trabajos registrados</td></tr>';
 
   // Alert badge
@@ -1178,11 +1193,11 @@ function renderCalendario(){
         if(qDate===dateStr){
           const color=q.estado==='pagado'?'var(--green)':q.estado==='retrasado'?'#e55':'var(--yellow)';
           const label=q.estado==='pagado'?'✓':'$';
-          qEvs.push(`<div class="cal-event" style="background:${color};color:${q.estado==='pagado'?'#000':'#000'};cursor:pointer" onclick="openTrabajo('${t.id}')">${label} ${t.cliente} Q${q.q}</div>`);
+          qEvs.push(`<div class="cal-event" style="background:${color};color:${q.estado==='pagado'?'#000':'#000'};cursor:pointer" onclick="openTrabajo('${t.id}')">${label} ${esc(t.cliente)} Q${q.q}</div>`);
         }
       });
     });
-    cell.innerHTML=`<div class="cal-num">${d}</div>`+evs.map(e=>`<div class="cal-event" onclick="openEvento('${e.id}')">${e.titulo||e.tipo}</div>`).join('')+qEvs.join('');
+    cell.innerHTML=`<div class="cal-num">${d}</div>`+evs.map(e=>`<div class="cal-event" onclick="openEvento('${e.id}')">${esc(e.titulo||e.tipo)}</div>`).join('')+qEvs.join('');
     grid.appendChild(cell);
   }
 }
@@ -1190,10 +1205,10 @@ function openEvento(id){
   const ev=allEventos.find(e=>e.id===id); if(!ev) return;
   document.getElementById('panel-title').textContent=ev.titulo||'Evento';
   document.getElementById('panel-body').innerHTML=`
-    <div class="panel-field"><label>TIPO</label><span>${ev.tipo||'—'}</span></div>
+    <div class="panel-field"><label>TIPO</label><span>${esc(ev.tipo||'—')}</span></div>
     <div class="panel-field" style="margin-top:12px"><label>FECHA</label><span>${fmtFecha(ev.fecha)}</span></div>
-    <div class="panel-field" style="margin-top:12px"><label>HORARIO</label><span>${ev.horaInicio||'—'} ${ev.horaFin?'→ '+ev.horaFin:''}</span></div>
-    <div class="panel-field" style="margin-top:12px"><label>LUGAR</label><span>${ev.lugar||'—'}</span></div>
+    <div class="panel-field" style="margin-top:12px"><label>HORARIO</label><span>${esc(ev.horaInicio||'—')} ${ev.horaFin?'→ '+esc(ev.horaFin):''}</span></div>
+    <div class="panel-field" style="margin-top:12px"><label>LUGAR</label><span>${esc(ev.lugar||'—')}</span></div>
     <div class="panel-field" style="margin-top:12px"><label>MONTO</label><span>$${parseFloat(ev.monto||0).toFixed(2)}</span></div>
     <div class="panel-field" style="margin-top:12px"><label>ANTICIPO</label><span>$${parseFloat(ev.anticipo||0).toFixed(2)}</span></div>
     <div class="panel-field" style="margin-top:12px"><label>SALDO</label><span style="color:var(--yellow)">$${parseFloat(ev.saldo||0).toFixed(2)}</span></div>`;
@@ -1225,11 +1240,11 @@ async function loadAlertas(){
   list.innerHTML=allAlertas.map(a=>{
     const d=a.datos||{};
     let desc='';
-    if(a.tipo==='descarga') desc=`${d.nombre} descargó su galería (${d.tipo==='todo'?'todo':'favoritas'}) — ${fmtDateTime(d.fecha)}`;
-    else if(a.tipo==='link_venciendo') desc=`${d.nombre} (${d.codigo}) — ${d.diasRestantes} día${d.diasRestantes!==1?'s':''} restante${d.diasRestantes!==1?'s':''}`;
-    else if(a.tipo==='pago_pendiente') desc=`${d.cliente} — ${d.servicio} — Saldo: $${parseFloat(d.saldo||0).toFixed(2)}`;
-    else if(a.tipo==='evento_proximo') desc=`${d.cliente} — ${d.tipo} — ${fmtFecha(d.fecha)} ${d.hora||''}`;
-    else if(a.tipo==='quincena_vencida') desc=d.mensaje||'';
+    if(a.tipo==='descarga') desc=`${esc(d.nombre)} descargó su galería (${d.tipo==='todo'?'todo':'favoritas'}) — ${fmtDateTime(d.fecha)}`;
+    else if(a.tipo==='link_venciendo') desc=`${esc(d.nombre)} (${esc(d.codigo)}) — ${d.diasRestantes} día${d.diasRestantes!==1?'s':''} restante${d.diasRestantes!==1?'s':''}`;
+    else if(a.tipo==='pago_pendiente') desc=`${esc(d.cliente)} — ${esc(d.servicio)} — Saldo: $${parseFloat(d.saldo||0).toFixed(2)}`;
+    else if(a.tipo==='evento_proximo') desc=`${esc(d.cliente)} — ${esc(d.tipo)} — ${fmtFecha(d.fecha)} ${esc(d.hora||'')}`;
+    else if(a.tipo==='quincena_vencida') desc=esc(d.mensaje||'');
     let btn='';
     if(a.tipo==='descarga') btn=`<button class="btn btn-ghost btn-sm" onclick="nav('galerias')">Ver galería</button>`;
     else if(a.tipo==='link_venciendo') btn=`<button class="btn btn-outline btn-sm" onclick="openReactivar('${d.codigo}')">Reactivar</button>`;
@@ -1313,10 +1328,10 @@ function mostrarDropClientes(){
 function renderClienteDrop(list){
   const drop = document.getElementById('t-cliente-drop');
   drop.innerHTML = list.map(c =>
-    `<div onclick="seleccionarCliente('${c._id}','${(c.nombre||'').replace(/'/g,"\\'")}')"
+    `<div onclick="seleccionarCliente('${c._id}','${esc(escJs(c.nombre||''))}')"
       style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)"
       onmouseover="this.style.background='var(--sb)'" onmouseout="this.style.background=''">
-      ${c.nombre} <span style="color:var(--muted);font-size:11px">${c.codigo||''}</span>
+      ${esc(c.nombre)} <span style="color:var(--muted);font-size:11px">${esc(c.codigo||'')}</span>
     </div>`
   ).join('') +
   `<div onclick="abrirCrearCliente()"
@@ -1452,7 +1467,7 @@ async function loadTrabajos(){
   tbody.innerHTML=fil.length?fil.map(t=>{
     const g=t.grupo||SVC_GRUPO[t.servicio]||'';
     const badge=g?`<span style="font-size:10px;color:var(--muted)"> · ${GRUPO_NOMBRES[g]||g}</span>`:'';
-    return `<tr onclick="openTrabajo('${t.id}')"><td>${t.cliente}</td><td>${t.servicio}${badge}</td><td>${fmtFecha(t.fecha)}</td><td>$${parseFloat(t.monto||0).toFixed(2)}</td><td>$${parseFloat(t.anticipo||0).toFixed(2)}</td><td style="color:var(--yellow)">$${parseFloat(t.saldo||0).toFixed(2)}</td><td><span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span></td></tr>`;
+    return `<tr onclick="openTrabajo('${t.id}')"><td>${esc(t.cliente)}</td><td>${esc(t.servicio)}${badge}</td><td>${fmtFecha(t.fecha)}</td><td>$${parseFloat(t.monto||0).toFixed(2)}</td><td>$${parseFloat(t.anticipo||0).toFixed(2)}</td><td style="color:var(--yellow)">$${parseFloat(t.saldo||0).toFixed(2)}</td><td><span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span></td></tr>`;
   }).join(''):
     '<tr><td colspan="7" class="empty">No hay trabajos</td></tr>';
 }
@@ -1476,13 +1491,13 @@ async function openTrabajo(id){
   const pf = (label, val) => val ? `
     <div style="padding:14px 0;border-bottom:1px solid var(--border)">
       <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">${label}</div>
-      <div style="font-size:14px">${val}</div>
+      <div style="font-size:14px">${esc(val)}</div>
     </div>` : '';
 
   let infoFields = `
     <div style="padding:14px 0;border-bottom:1px solid var(--border)">
       <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">SERVICIO</div>
-      <div style="font-size:14px;font-weight:600">${t.servicio} <span style="font-size:11px;color:var(--muted);font-weight:400">${GRUPO_NOMBRES[g]||''}</span></div>
+      <div style="font-size:14px;font-weight:600">${esc(t.servicio)} <span style="font-size:11px;color:var(--muted);font-weight:400">${GRUPO_NOMBRES[g]||''}</span></div>
     </div>`;
 
   if(g==='A'){
@@ -1840,9 +1855,9 @@ function generarFacturaQ(trabajoId, periodo, q){
   </div>
   <h2>Detalle del servicio</h2>
   <table>
-    <tr><td>Cliente</td><td>${cliente.nombre}</td></tr>
-    ${cliente.empresa?`<tr><td>Empresa</td><td>${cliente.empresa}</td></tr>`:''}
-    <tr><td>Servicio</td><td>${t.servicio}</td></tr>
+    <tr><td>Cliente</td><td>${esc(cliente.nombre)}</td></tr>
+    ${cliente.empresa?`<tr><td>Empresa</td><td>${esc(cliente.empresa)}</td></tr>`:''}
+    <tr><td>Servicio</td><td>${esc(t.servicio)}</td></tr>
     <tr><td>Periodo</td><td>${mesNombre} ${yr} · del ${rango} de ${mesNombre}</td></tr>
     <tr><td>Quincena</td><td>Q${q} de 2</td></tr>
     <tr><td>Fecha de pago</td><td>${fechaPago}</td></tr>
@@ -1890,7 +1905,7 @@ async function loadGastos(){
   document.getElementById('g-total-mes').textContent='$'+totalG.toFixed(2);
   document.getElementById('g-ratio').textContent=totalI>0?((1-totalG/totalI)*100).toFixed(0)+'% margen':'—';
   const tbody=document.getElementById('gastos-tbody');
-  tbody.innerHTML=fil.length?fil.map(g=>`<tr><td>${g.concepto}</td><td>${g.categoria}</td><td>${fmtFecha(g.fecha)}</td><td style="color:var(--red)">$${parseFloat(g.monto||0).toFixed(2)}</td><td><button class="btn btn-ghost btn-sm" onclick="eliminarGasto('${g.id}')">✕</button></td></tr>`).join(''):
+  tbody.innerHTML=fil.length?fil.map(g=>`<tr><td>${esc(g.concepto)}</td><td>${esc(g.categoria)}</td><td>${fmtFecha(g.fecha)}</td><td style="color:var(--red)">$${parseFloat(g.monto||0).toFixed(2)}</td><td><button class="btn btn-ghost btn-sm" onclick="eliminarGasto('${g.id}')">✕</button></td></tr>`).join(''):
     '<tr><td colspan="5" class="empty">No hay gastos</td></tr>';
 }
 async function eliminarGasto(id){ if(!confirm('¿Eliminar?')) return; await api('/api/gastos/'+id,{method:'DELETE'}); await loadGastos(); }
@@ -1927,7 +1942,7 @@ async function loadHistorialDoc(){
   const {cotizaciones,recibos}=await api('/api/documentos');
   const docs=tipo==='cotizacion'?cotizaciones:recibos;
   const fil=nombre?docs.filter(d=>d.clienteNombre===nombre):docs;
-  document.getElementById('doc-historial-list').innerHTML=fil.length?fil.map(d=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${d.numero}</span><span class="text-muted">${d.clienteNombre}</span><span>$${parseFloat(d.total||0).toFixed(2)}</span><button type="button" onclick="eliminarDoc('${tipo}','${d.id}')" style="background:none;border:none;color:var(--danger,#c0392b);cursor:pointer;font-size:14px">🗑</button></div>`).join(''):
+  document.getElementById('doc-historial-list').innerHTML=fil.length?fil.map(d=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${esc(d.numero)}</span><span class="text-muted">${esc(d.clienteNombre)}</span><span>$${parseFloat(d.total||0).toFixed(2)}</span><button type="button" onclick="eliminarDoc('${tipo}','${d.id}')" style="background:none;border:none;color:var(--danger,#c0392b);cursor:pointer;font-size:14px">🗑</button></div>`).join(''):
     '<div class="empty">Sin documentos</div>';
 }
 async function eliminarDoc(tipo,id){
@@ -1948,7 +1963,7 @@ function buildDocHTML(tipo, numero){
   const titulo=tipo==='cotizacion'?'Cotización':'Recibo de Pago';
   const numLabel=numero||(tipo==='cotizacion'?'NK-COT-###':'NK-REC-###');
   const logoUrl=location.origin+'/img/logo/nokta_lockup_color_transparent.png';
-  const filename=`${numLabel.replace(/###/,'001')}_${(nombre||'cliente').replace(/\s+/g,'-')}.pdf`;
+  const filename=escJs(`${numLabel.replace(/###/,'001')}_${(nombre||'cliente').replace(/\s+/g,'-')}.pdf`);
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${titulo} ${numLabel}</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -1996,21 +2011,21 @@ function buildDocHTML(tipo, numero){
   <hr class="divider">
   <div class="section-label">Cliente</div>
   <div class="client-grid">
-    <div class="field"><span>Nombre</span>${nombre||'—'}</div>
-    ${empresa?`<div class="field"><span>Empresa</span>${empresa}</div>`:''}
-    ${tel?`<div class="field"><span>Teléfono</span>${tel}</div>`:''}
-    ${email?`<div class="field"><span>Email</span>${email}</div>`:''}
+    <div class="field"><span>Nombre</span>${esc(nombre||'—')}</div>
+    ${empresa?`<div class="field"><span>Empresa</span>${esc(empresa)}</div>`:''}
+    ${tel?`<div class="field"><span>Teléfono</span>${esc(tel)}</div>`:''}
+    ${email?`<div class="field"><span>Email</span>${esc(email)}</div>`:''}
   </div>
   <hr class="divider-light">
   <div class="section-label">Servicios</div>
   <table>
     <thead><tr><th>Descripción</th><th style="text-align:right">Monto</th></tr></thead>
     <tbody>
-      ${servicios.map(s=>`<tr><td>${s.descripcion||'—'}</td><td>$${s.monto.toFixed(2)}</td></tr>`).join('')}
+      ${servicios.map(s=>`<tr><td>${esc(s.descripcion||'—')}</td><td>$${s.monto.toFixed(2)}</td></tr>`).join('')}
       <tr class="total-row"><td>Total</td><td>$${total.toFixed(2)}</td></tr>
     </tbody>
   </table>
-  ${notas?`<div class="notas"><strong>Notas y condiciones</strong>${notas}</div>`:''}
+  ${notas?`<div class="notas"><strong>Notas y condiciones</strong>${esc(notas)}</div>`:''}
   <div class="footer">
     <span>Nokta Studio</span>
     <span>Generado el ${new Date().toLocaleDateString('es',{day:'2-digit',month:'long',year:'numeric'})}</span>
@@ -2046,12 +2061,12 @@ function previewDoc(){
   const titulo=tipo==='cotizacion'?'Cotización':'Recibo de Pago';
   document.getElementById('doc-preview-html').innerHTML=`
     <div style="font-size:10px;letter-spacing:2px;color:#B85228;font-weight:600;margin-bottom:6px">${titulo.toUpperCase()}</div>
-    <div style="font-size:15px;font-weight:600;margin-bottom:14px;color:#1C1C1A">${nombre||'(sin nombre)'}</div>
-    ${empresa?`<div style="font-size:12px;color:#888;margin-bottom:4px">${empresa}</div>`:''}
-    <div style="font-size:12px;color:#888;margin-bottom:14px">${fechaEm||''}</div>
+    <div style="font-size:15px;font-weight:600;margin-bottom:14px;color:#1C1C1A">${esc(nombre||'(sin nombre)')}</div>
+    ${empresa?`<div style="font-size:12px;color:#888;margin-bottom:4px">${esc(empresa)}</div>`:''}
+    <div style="font-size:12px;color:#888;margin-bottom:14px">${esc(fechaEm||'')}</div>
     <table style="width:100%;font-size:12px;border-collapse:collapse">
       <tr style="border-bottom:2px solid #B85228"><th style="text-align:left;padding:6px 0;font-size:10px;letter-spacing:1px;color:#888;text-transform:uppercase;font-weight:500">Servicio</th><th style="text-align:right;font-size:10px;letter-spacing:1px;color:#888;text-transform:uppercase;font-weight:500">Monto</th></tr>
-      ${servicios.map(s=>`<tr><td style="padding:7px 0;border-bottom:1px solid #f0ebe5">${s.descripcion||'—'}</td><td style="text-align:right;border-bottom:1px solid #f0ebe5">$${s.monto.toFixed(2)}</td></tr>`).join('')}
+      ${servicios.map(s=>`<tr><td style="padding:7px 0;border-bottom:1px solid #f0ebe5">${esc(s.descripcion||'—')}</td><td style="text-align:right;border-bottom:1px solid #f0ebe5">$${s.monto.toFixed(2)}</td></tr>`).join('')}
       <tr><td style="padding:10px 0;font-weight:700;border-top:2px solid #B85228">TOTAL</td><td style="text-align:right;font-weight:700;color:#B85228;font-size:15px;border-top:2px solid #B85228">$${total.toFixed(2)}</td></tr>
     </table>`;
 }
@@ -2122,8 +2137,8 @@ async function loadClientes(){
   if(!rows.length){ tbody.innerHTML='<tr><td colspan="7" class="empty">Sin clientes en este estado</td></tr>'; return; }
 
   tbody.innerHTML=rows.map(({n,ts,total,pendiente,ultimo,tipo,estado})=>`
-    <tr onclick="openPerfilCliente('${n.replace(/'/g,"\\'")}')">
-      <td>${n}</td>
+    <tr onclick="openPerfilCliente('${esc(escJs(n))}')">
+      <td>${esc(n)}</td>
       <td><span class="pill ${tipo==='Frecuente'?'pill-green':'pill-blue'}">${tipo}</span></td>
       <td onclick="event.stopPropagation()">${selectEstadoCliente(n,estado)}</td>
       <td>${ts.length}</td>
@@ -2197,7 +2212,7 @@ async function openPerfilCliente(nombre){
 
   document.getElementById('cd-title').textContent = nombre;
   document.getElementById('cd-actions').innerHTML = c?.whatsapp
-    ? `<a href="https://wa.me/${c.whatsapp}" target="_blank" class="btn btn-primary btn-sm">💬 WhatsApp</a>` : '';
+    ? `<a href="https://wa.me/${esc(c.whatsapp)}" target="_blank" class="btn btn-primary btn-sm">💬 WhatsApp</a>` : '';
 
   // Columna izquierda — info del cliente
   const infoCard = `<div class="section-card">
@@ -2207,12 +2222,12 @@ async function openPerfilCliente(nombre){
     </div>
     <div style="padding:14px 0;border-bottom:1px solid var(--border)">
       <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">NOTAS</div>
-      <textarea id="cd-notas" placeholder="Ej: dejó de responder desde julio..." style="width:100%;min-height:60px">${ce?.notas||''}</textarea>
-      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="guardarNotaCliente('${nombre.replace(/'/g,"\\'")}')">Guardar nota</button>
+      <textarea id="cd-notas" placeholder="Ej: dejó de responder desde julio..." style="width:100%;min-height:60px">${esc(ce?.notas||'')}</textarea>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="guardarNotaCliente('${esc(escJs(nombre))}')">Guardar nota</button>
     </div>
-    ${c?.empresa?`<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">EMPRESA</div><div style="font-size:14px">${c.empresa}</div></div>`:''}
-    ${c?.whatsapp?`<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">WHATSAPP</div><div style="font-size:14px">${c.whatsapp}</div></div>`:''}
-    ${c?.email?`<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">EMAIL</div><div style="font-size:14px">${c.email}</div></div>`:''}
+    ${c?.empresa?`<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">EMPRESA</div><div style="font-size:14px">${esc(c.empresa)}</div></div>`:''}
+    ${c?.whatsapp?`<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">WHATSAPP</div><div style="font-size:14px">${esc(c.whatsapp)}</div></div>`:''}
+    ${c?.email?`<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">EMAIL</div><div style="font-size:14px">${esc(c.email)}</div></div>`:''}
     <div style="padding:14px 0;border-bottom:1px solid var(--border)">
       <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">SERVICIOS</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
@@ -2245,7 +2260,7 @@ async function openPerfilCliente(nombre){
       : parseFloat(t.monto||0);
     const badge=gNombre?`<span class="pill pill-blue" style="font-size:10px;margin-left:6px">${gNombre}</span>`:'';
     return `<tr onclick="openTrabajo('${t.id}')" style="cursor:pointer">
-      <td>${t.servicio}${badge}</td>
+      <td>${esc(t.servicio)}${badge}</td>
       <td>${fmtFecha(t.fecha||t.fechaInicio)}</td>
       <td style="font-weight:600">$${montoT.toFixed(2)}</td>
       <td><span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span></td>
@@ -2292,20 +2307,20 @@ async function loadGalerias(){
     return `<div class="gal-card" id="gcard-${c.codigo}">
       <div class="gal-card-top">
         <div>
-          <div class="gal-card-name">${c.nombre} ${reacs.length?`<span class="reac-tag">↺ Reactivado ${reacs.length}x</span>`:''}</div>
+          <div class="gal-card-name">${esc(c.nombre)} ${reacs.length?`<span class="reac-tag">↺ Reactivado ${reacs.length}x</span>`:''}</div>
         </div>
         <span class="pill ${c.estado==='activo'?'pill-green':c.estado==='descargado'?'pill-blue':'pill-red'}">${c.estado==='activo'?'Activo':c.estado==='descargado'?'Descargado':'Expirado'}</span>
       </div>
       <div class="link-box">
-        <span title="${link}">${link}</span>
-        <button class="copy-btn" onclick="copyText('${link}',this)">📋 Copiar</button>
+        <span title="${esc(link)}">${esc(link)}</span>
+        <button class="copy-btn" onclick="copyText('${escJs(link)}',this)">📋 Copiar</button>
       </div>
       <div class="link-box" style="margin-top:4px">
-        <span style="color:var(--cream);font-weight:500;letter-spacing:1px">🔑 ${c.codigo}</span>
-        <button class="copy-btn" onclick="copyText('${c.codigo}',this)">📋</button>
+        <span style="color:var(--cream);font-weight:500;letter-spacing:1px">🔑 ${esc(c.codigo)}</span>
+        <button class="copy-btn" onclick="copyText('${escJs(c.codigo)}',this)">📋</button>
       </div>
       <div class="gal-card-meta">
-        <span>📂 ${tipoLabels[c.tipo]||c.tipo}</span>
+        <span>📂 ${esc(tipoLabels[c.tipo]||c.tipo)}</span>
         <span>👁 ${(c.visitas||[]).length} visitas</span>
         ${dias!==null?`<span style="color:${dias<=3?'var(--yellow)':'inherit'}">⏱ ${dias} días restantes</span>`:'<span>∞ Sin límite</span>'}
         ${(c.descargas||[]).length?`<span style="color:var(--green)">✅ Descargado ${fmtDateTime(c.descargas[c.descargas.length-1].fecha)}</span>`:'<span style="color:var(--yellow)">⏳ Sin descargar</span>'}
@@ -2347,19 +2362,19 @@ function renderGalCards(filtro){
     const reacs=c.reactivaciones||[];
     return `<div class="gal-card" id="gcard-${c.codigo}">
       <div class="gal-card-top">
-        <div class="gal-card-name">${c.nombre} ${reacs.length?`<span class="reac-tag">↺ ${reacs.length}x</span>`:''}</div>
+        <div class="gal-card-name">${esc(c.nombre)} ${reacs.length?`<span class="reac-tag">↺ ${reacs.length}x</span>`:''}</div>
         <span class="pill ${c.estado==='activo'?'pill-green':c.estado==='descargado'?'pill-blue':'pill-red'}">${c.estado==='activo'?'Activo':c.estado==='descargado'?'Descargado':'Expirado'}</span>
       </div>
       <div class="link-box">
-        <span title="${link}">${link}</span>
-        <button class="copy-btn" onclick="copyText('${link}',this)">📋 Copiar</button>
+        <span title="${esc(link)}">${esc(link)}</span>
+        <button class="copy-btn" onclick="copyText('${escJs(link)}',this)">📋 Copiar</button>
       </div>
       <div class="link-box" style="margin-top:4px">
-        <span style="color:var(--cream);font-weight:500;letter-spacing:1px">🔑 ${c.codigo}</span>
-        <button class="copy-btn" onclick="copyText('${c.codigo}',this)">📋</button>
+        <span style="color:var(--cream);font-weight:500;letter-spacing:1px">🔑 ${esc(c.codigo)}</span>
+        <button class="copy-btn" onclick="copyText('${escJs(c.codigo)}',this)">📋</button>
       </div>
       <div class="gal-card-meta">
-        <span>📂 ${tipoLabels[c.tipo]||c.tipo}</span>
+        <span>📂 ${esc(tipoLabels[c.tipo]||c.tipo)}</span>
         <span>👁 ${(c.visitas||[]).length} visitas</span>
         ${dias!==null?`<span style="color:${dias<=3?'var(--yellow)':'inherit'}">⏱ ${dias} días restantes</span>`:'<span>∞ Sin límite</span>'}
         ${reacs.length?`<span style="color:#6495ED">↺ Reactivado ${reacs.length}x · Última: ${fmtFecha(reacs[reacs.length-1].fecha)}</span>`:''}
@@ -2444,8 +2459,8 @@ async function loadEquipo(){
   const list=document.getElementById('equipo-list');
   list.innerHTML=allEquipo.length?allEquipo.map(m=>`
     <div class="team-card">
-      <div class="team-avatar">${m.nombre[0]}</div>
-      <div class="team-info"><div class="team-name">${m.nombre}</div><div class="team-rol">${m.rol}</div></div>
+      <div class="team-avatar">${esc((m.nombre||'?')[0])}</div>
+      <div class="team-info"><div class="team-name">${esc(m.nombre)}</div><div class="team-rol">${esc(m.rol)}</div></div>
       <div style="text-align:right;font-size:12px;color:var(--muted)"><div>Pagado: <span style="color:var(--green)">$${parseFloat(m.pagado||0).toFixed(2)}</span></div><div>Pendiente: <span style="color:var(--yellow)">$${parseFloat(m.pendiente||0).toFixed(2)}</span></div></div>
       <button class="btn btn-ghost btn-sm" onclick="editEquipo('${m.id}')">✏ Editar</button>
       <button class="btn btn-danger btn-sm" onclick="eliminarEquipo('${m.id}')">🗑</button>
@@ -2481,25 +2496,25 @@ async function genReporte(tipo){
       <h3 style="font-size:13px;letter-spacing:1px;color:#888;margin-bottom:8px">TRABAJOS</h3>
       <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px">
         <thead><tr style="border-bottom:2px solid #B85228"><th style="text-align:left;padding:8px 0">Cliente</th><th style="text-align:left">Servicio</th><th style="text-align:left">Fecha</th><th style="text-align:right">Monto</th><th style="text-align:right">Estado</th></tr></thead>
-        <tbody>${tMes.length?tMes.map(t=>`<tr style="border-bottom:1px solid #eee"><td style="padding:8px 0">${t.cliente}</td><td>${t.servicio}</td><td>${t.fecha}</td><td style="text-align:right">$${parseFloat(t.monto||0).toFixed(2)}</td><td style="text-align:right">${t.estado==='pagado'?'✓ Pagado':'Pendiente'}</td></tr>`).join(''):'<tr><td colspan="5" style="padding:12px 0;color:#888">Sin trabajos este mes</td></tr>'}</tbody>
+        <tbody>${tMes.length?tMes.map(t=>`<tr style="border-bottom:1px solid #eee"><td style="padding:8px 0">${esc(t.cliente)}</td><td>${esc(t.servicio)}</td><td>${esc(t.fecha)}</td><td style="text-align:right">$${parseFloat(t.monto||0).toFixed(2)}</td><td style="text-align:right">${t.estado==='pagado'?'✓ Pagado':'Pendiente'}</td></tr>`).join(''):'<tr><td colspan="5" style="padding:12px 0;color:#888">Sin trabajos este mes</td></tr>'}</tbody>
       </table>
       <h3 style="font-size:13px;letter-spacing:1px;color:#888;margin-bottom:8px">GASTOS</h3>
       <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead><tr style="border-bottom:2px solid #B85228"><th style="text-align:left;padding:8px 0">Concepto</th><th style="text-align:left">Categoría</th><th style="text-align:left">Fecha</th><th style="text-align:right">Monto</th></tr></thead>
-        <tbody>${gMes.length?gMes.map(g=>`<tr style="border-bottom:1px solid #eee"><td style="padding:8px 0">${g.concepto}</td><td>${g.categoria}</td><td>${g.fecha}</td><td style="text-align:right;color:#c0392b">$${parseFloat(g.monto||0).toFixed(2)}</td></tr>`).join(''):'<tr><td colspan="4" style="padding:12px 0;color:#888">Sin gastos este mes</td></tr>'}</tbody>
+        <tbody>${gMes.length?gMes.map(g=>`<tr style="border-bottom:1px solid #eee"><td style="padding:8px 0">${esc(g.concepto)}</td><td>${esc(g.categoria)}</td><td>${esc(g.fecha)}</td><td style="text-align:right;color:#c0392b">$${parseFloat(g.monto||0).toFixed(2)}</td></tr>`).join(''):'<tr><td colspan="4" style="padding:12px 0;color:#888">Sin gastos este mes</td></tr>'}</tbody>
       </table>`;
   } else if(tipo==='clientes'){
     titulo=`Reporte de clientes — ${now.toLocaleDateString('es')}`;
     const nombres=[...new Set(allTrabajos.map(t=>t.cliente))];
     cuerpo=`<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:24px">
       <thead><tr style="border-bottom:2px solid #B85228"><th style="text-align:left;padding:8px 0">Cliente</th><th style="text-align:right">Trabajos</th><th style="text-align:right">Total facturado</th><th style="text-align:right">Pendiente</th></tr></thead>
-      <tbody>${nombres.map(n=>{const ts=allTrabajos.filter(t=>t.cliente===n);const total=ts.reduce((s,t)=>s+(parseFloat(t.monto)||0),0);const pend=ts.filter(t=>t.estado==='pendiente').reduce((s,t)=>s+(parseFloat(t.saldo)||0),0);return `<tr style="border-bottom:1px solid #eee"><td style="padding:8px 0;font-weight:500">${n}</td><td style="text-align:right">${ts.length}</td><td style="text-align:right">$${total.toFixed(2)}</td><td style="text-align:right;color:${pend>0?'#e67e22':'#27ae60'}">$${pend.toFixed(2)}</td></tr>`;}).join('')||'<tr><td colspan="4" style="padding:12px 0;color:#888">Sin clientes</td></tr>'}</tbody>
+      <tbody>${nombres.map(n=>{const ts=allTrabajos.filter(t=>t.cliente===n);const total=ts.reduce((s,t)=>s+(parseFloat(t.monto)||0),0);const pend=ts.filter(t=>t.estado==='pendiente').reduce((s,t)=>s+(parseFloat(t.saldo)||0),0);return `<tr style="border-bottom:1px solid #eee"><td style="padding:8px 0;font-weight:500">${esc(n)}</td><td style="text-align:right">${ts.length}</td><td style="text-align:right">$${total.toFixed(2)}</td><td style="text-align:right;color:${pend>0?'#e67e22':'#27ae60'}">$${pend.toFixed(2)}</td></tr>`;}).join('')||'<tr><td colspan="4" style="padding:12px 0;color:#888">Sin clientes</td></tr>'}</tbody>
     </table>`;
   } else {
     titulo=`Reporte de galerías — ${now.toLocaleDateString('es')}`;
     cuerpo=`<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:24px">
       <thead><tr style="border-bottom:2px solid #B85228"><th style="text-align:left;padding:8px 0">Cliente</th><th style="text-align:left">Código</th><th style="text-align:left">Estado</th><th style="text-align:right">Visitas</th><th style="text-align:right">Descargas</th></tr></thead>
-      <tbody>${allClientes.map(c=>`<tr style="border-bottom:1px solid #eee"><td style="padding:8px 0;font-weight:500">${c.nombre}</td><td style="font-family:monospace;font-size:11px">${c.codigo}</td><td>${c.estado==='activo'?'✓ Activo':c.estado==='descargado'?'✓ Descargado':'✗ Expirado'}</td><td style="text-align:right">${(c.visitas||[]).length}</td><td style="text-align:right">${(c.descargas||[]).length}</td></tr>`).join('')||'<tr><td colspan="5" style="padding:12px 0;color:#888">Sin galerías</td></tr>'}</tbody>
+      <tbody>${allClientes.map(c=>`<tr style="border-bottom:1px solid #eee"><td style="padding:8px 0;font-weight:500">${esc(c.nombre)}</td><td style="font-family:monospace;font-size:11px">${esc(c.codigo)}</td><td>${c.estado==='activo'?'✓ Activo':c.estado==='descargado'?'✓ Descargado':'✗ Expirado'}</td><td style="text-align:right">${(c.visitas||[]).length}</td><td style="text-align:right">${(c.descargas||[]).length}</td></tr>`).join('')||'<tr><td colspan="5" style="padding:12px 0;color:#888">Sin galerías</td></tr>'}</tbody>
     </table>`;
   }
 
@@ -2579,9 +2594,9 @@ function initMesFilter(selId,arr,campo){
   const mesesLabels=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   sel.innerHTML='<option value="">Todos los meses</option>'+meses.map(m=>{const[mo,yr]=m.split('_');return `<option value="${m}" ${m===cur?'selected':''}>${mesesLabels[mo]} ${yr}</option>`;}).join('');
 }
-function fillClientesDatalist(){ api('/api/clientes').then(cs=>{ const dl=document.getElementById('clientes-list'); dl.innerHTML=cs.map(c=>`<option value="${c.nombre}">`).join(''); }); }
-function fillClientesDatalist2(){ api('/api/clientes').then(cs=>{ const dl=document.getElementById('clientes-list2'); dl.innerHTML=cs.map(c=>`<option value="${c.nombre}">`).join(''); }); api('/api/trabajos').then(ts=>{ const dl=document.getElementById('clientes-list2'); const cur=dl.innerHTML; dl.innerHTML=cur+[...new Set(ts.map(t=>t.cliente))].map(n=>`<option value="${n}">`).join(''); }); }
-function fillClientesDatalist3(){ api('/api/trabajos').then(ts=>{ const dl=document.getElementById('clientes-list3'); dl.innerHTML=[...new Set(ts.map(t=>t.cliente))].map(n=>`<option value="${n}">`).join(''); }); }
+function fillClientesDatalist(){ api('/api/clientes').then(cs=>{ const dl=document.getElementById('clientes-list'); dl.innerHTML=cs.map(c=>`<option value="${esc(c.nombre)}">`).join(''); }); }
+function fillClientesDatalist2(){ api('/api/clientes').then(cs=>{ const dl=document.getElementById('clientes-list2'); dl.innerHTML=cs.map(c=>`<option value="${esc(c.nombre)}">`).join(''); }); api('/api/trabajos').then(ts=>{ const dl=document.getElementById('clientes-list2'); const cur=dl.innerHTML; dl.innerHTML=cur+[...new Set(ts.map(t=>t.cliente))].map(n=>`<option value="${esc(n)}">`).join(''); }); }
+function fillClientesDatalist3(){ api('/api/trabajos').then(ts=>{ const dl=document.getElementById('clientes-list3'); dl.innerHTML=[...new Set(ts.map(t=>t.cliente))].map(n=>`<option value="${esc(n)}">`).join(''); }); }
 
 // ── SIDEBAR MOBILE ──────────────────────────────────────────
 function toggleSb(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sb-overlay').classList.toggle('open'); }

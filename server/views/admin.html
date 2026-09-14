@@ -1054,17 +1054,17 @@ async function loadDashboard(){
           total+=parseFloat(q.monto||0);
         });
       } else {
-        const d=new Date(t.fecha||t.fechaInicio||'');
-        const dp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        const ma=mesAnioDeFecha(t.fecha||t.fechaInicio||'');
+        const dp=ma?`${ma.anio}-${String(ma.mes+1).padStart(2,'0')}`:'';
         if(dp===periodo) total+=parseFloat(t.monto||0);
       }
     });
     return total;
   }
 
-  const tMes=allTrabajos.filter(t=>{ const d=new Date(t.fecha||t.fechaInicio||''); return d.getMonth()===mes && d.getFullYear()===year; });
-  const tPrev=allTrabajos.filter(t=>{ const d=new Date(t.fecha||t.fechaInicio||''); return d.getMonth()===(mes===0?11:mes-1) && d.getFullYear()===year; });
-  const gMes=allGastos.filter(g=>{ const d=new Date(g.fecha); return d.getMonth()===mes && d.getFullYear()===year; });
+  const tMes=allTrabajos.filter(t=>{ const ma=mesAnioDeFecha(t.fecha||t.fechaInicio||''); return ma&&ma.mes===mes && ma.anio===year; });
+  const tPrev=allTrabajos.filter(t=>{ const ma=mesAnioDeFecha(t.fecha||t.fechaInicio||''); return ma&&ma.mes===(mes===0?11:mes-1) && ma.anio===year; });
+  const gMes=allGastos.filter(g=>{ const ma=mesAnioDeFecha(g.fecha); return ma&&ma.mes===mes && ma.anio===year; });
 
   const ingresos=ingresosDelPeriodo(periodoMes);
   const ingresosPrev=ingresosDelPeriodo(periodoPrev);
@@ -1084,7 +1084,7 @@ async function loadDashboard(){
         return a;
       },0);
     }
-    const d=new Date(t.fecha||''); const dp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const ma=mesAnioDeFecha(t.fecha||''); const dp=ma?`${ma.anio}-${String(ma.mes+1).padStart(2,'0')}`:'';
     return dp===periodoMes&&t.estado==='pendiente'?s+(parseFloat(t.saldo)||0):s;
   },0);
   const pendienteCount=allTrabajos.filter(t=>{
@@ -1093,7 +1093,7 @@ async function loadDashboard(){
       const stored=(t.quincenas||[]).find(r=>r.periodo===periodoMes&&r.q===qi);
       return !stored||(stored.estado!=='pagado'&&stored.estado!=='oculta');
     });
-    const d=new Date(t.fecha||''); const dp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const ma=mesAnioDeFecha(t.fecha||''); const dp=ma?`${ma.anio}-${String(ma.mes+1).padStart(2,'0')}`:'';
     return dp===periodoMes&&t.estado==='pendiente';
   }).length;
 
@@ -1445,7 +1445,7 @@ async function loadTrabajos(){
   const svc=document.getElementById('fil-svc-t').value;
   const est=document.getElementById('fil-estado-t').value;
   let fil=allTrabajos;
-  if(mes) fil=fil.filter(t=>{const d=new Date(t.fecha);return d.getMonth()+'_'+d.getFullYear()===mes;});
+  if(mes) fil=fil.filter(t=>{const ma=mesAnioDeFecha(t.fecha);return ma&&(ma.mes+'_'+ma.anio)===mes;});
   if(svc) fil=fil.filter(t=>(t.grupo||SVC_GRUPO[t.servicio]||'')===svc);
   if(est) fil=fil.filter(t=>t.estado===est);
   const tbody=document.getElementById('trabajos-tbody');
@@ -1880,11 +1880,11 @@ async function loadGastos(){
   const mes=document.getElementById('fil-mes-g').value;
   const cat=document.getElementById('fil-cat-g').value;
   let fil=allGastos;
-  if(mes) fil=fil.filter(g=>{const d=new Date(g.fecha);return d.getMonth()+'_'+d.getFullYear()===mes;});
+  if(mes) fil=fil.filter(g=>{const ma=mesAnioDeFecha(g.fecha);return ma&&(ma.mes+'_'+ma.anio)===mes;});
   if(cat) fil=fil.filter(g=>g.categoria===cat);
   const now=new Date(); const cm=now.getMonth(); const cy=now.getFullYear();
-  const gMes=allGastos.filter(g=>{const d=new Date(g.fecha);return d.getMonth()===cm&&d.getFullYear()===cy;});
-  const iMes=allTrabajos.filter(t=>{const d=new Date(t.fecha);return d.getMonth()===cm&&d.getFullYear()===cy;});
+  const gMes=allGastos.filter(g=>{const ma=mesAnioDeFecha(g.fecha);return ma&&ma.mes===cm&&ma.anio===cy;});
+  const iMes=allTrabajos.filter(t=>{const ma=mesAnioDeFecha(t.fecha);return ma&&ma.mes===cm&&ma.anio===cy;});
   const totalG=gMes.reduce((s,g)=>s+(parseFloat(g.monto)||0),0);
   const totalI=iMes.reduce((s,t)=>s+(parseFloat(t.monto)||0),0);
   document.getElementById('g-total-mes').textContent='$'+totalG.toFixed(2);
@@ -2405,7 +2405,7 @@ async function loadAnaliticas(){
   allTrabajos=await api('/api/trabajos');
   const year=new Date().getFullYear();
   const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const data=meses.map((_,i)=>allTrabajos.filter(t=>new Date(t.fecha).getMonth()===i&&new Date(t.fecha).getFullYear()===year).reduce((s,t)=>s+(parseFloat(t.monto)||0),0));
+  const data=meses.map((_,i)=>allTrabajos.filter(t=>{const ma=mesAnioDeFecha(t.fecha);return ma&&ma.mes===i&&ma.anio===year;}).reduce((s,t)=>s+(parseFloat(t.monto)||0),0));
   if(chartAnual) chartAnual.destroy();
   chartAnual=new Chart(document.getElementById('chart-anual'),{type:'line',data:{labels:meses,datasets:[{data,borderColor:'#B85228',backgroundColor:'rgba(184,82,40,.1)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#B85228'}]},options:{plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#7A7A72'}},y:{grid:{color:'#3a3a37'},ticks:{color:'#7A7A72',callback:v=>'$'+v}}}}});
 
@@ -2462,8 +2462,8 @@ async function genReporte(tipo){
 
   if(tipo==='mensual'){
     const mes=now.getMonth(); const year=now.getFullYear();
-    const tMes=allTrabajos.filter(t=>{const d=new Date(t.fecha);return d.getMonth()===mes&&d.getFullYear()===year;});
-    const gMes=allGastos.filter(g=>{const d=new Date(g.fecha);return d.getMonth()===mes&&d.getFullYear()===year;});
+    const tMes=allTrabajos.filter(t=>{const ma=mesAnioDeFecha(t.fecha);return ma&&ma.mes===mes&&ma.anio===year;});
+    const gMes=allGastos.filter(g=>{const ma=mesAnioDeFecha(g.fecha);return ma&&ma.mes===mes&&ma.anio===year;});
     const ing=tMes.reduce((s,t)=>s+(parseFloat(t.monto)||0),0);
     const gas=gMes.reduce((s,g)=>s+(parseFloat(g.monto)||0),0);
     titulo=`Reporte mensual — ${meses[mes]} ${year}`;
@@ -2551,6 +2551,18 @@ async function genReporte(tipo){
 // HELPERS
 // ═══════════════════════════════════════════════════════════
 function fmtFecha(f){ if(!f) return '—'; const d=f.includes('T')?new Date(f):new Date(f+'T12:00:00'); return isNaN(d)?'—':d.toLocaleDateString('es',{day:'2-digit',month:'short',year:'numeric'}); }
+// Mes/año de una fecha "YYYY-MM-DD" (o ISO con hora) leídos directo del texto,
+// sin pasar por Date — `new Date('YYYY-MM-DD')` se interpreta como medianoche
+// UTC, así que en zonas horarias negativas (América) un registro del día 1
+// del mes cae en el mes anterior. Esto rompía los totales mensuales de
+// Dashboard/Gastos/Trabajos/Analíticas/Reportes para cualquier fecha en el
+// día 1 del mes.
+function mesAnioDeFecha(f){
+  if(!f || f.length<7) return null;
+  const y=parseInt(f.slice(0,4),10), m=parseInt(f.slice(5,7),10);
+  if(!y || !m) return null;
+  return { mes:m-1, anio:y };
+}
 function fmtDateTime(f){ if(!f) return '—'; return new Date(f).toLocaleString('es',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
 function openPanel(){ document.getElementById('panel-overlay').classList.add('open'); document.getElementById('side-panel').classList.add('open'); }
 function closePanel(){ document.getElementById('panel-overlay').classList.remove('open'); document.getElementById('side-panel').classList.remove('open'); }
@@ -2558,7 +2570,7 @@ function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 function initMesFilter(selId,arr,campo){
   const sel=document.getElementById(selId); const cur=sel.value;
-  const meses=[...new Set(arr.map(x=>{const d=new Date(x[campo]);return d.getMonth()+'_'+d.getFullYear();}))];
+  const meses=[...new Set(arr.map(x=>{const ma=mesAnioDeFecha(x[campo]);return ma?ma.mes+'_'+ma.anio:null;}).filter(Boolean))];
   const mesesLabels=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   sel.innerHTML='<option value="">Todos los meses</option>'+meses.map(m=>{const[mo,yr]=m.split('_');return `<option value="${m}" ${m===cur?'selected':''}>${mesesLabels[mo]} ${yr}</option>`;}).join('');
 }

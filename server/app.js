@@ -56,15 +56,20 @@ const reciboSchema  = new mongoose.Schema({ id: { type: String, unique: true } }
 const alertaSchema  = new mongoose.Schema({ id: { type: String, unique: true } }, { strict: false });
 const equipoSchema  = new mongoose.Schema({ id: { type: String, unique: true } }, { strict: false });
 const eventoSchema  = new mongoose.Schema({ id: { type: String, unique: true } }, { strict: false });
+// Relación comercial por cliente (activo / pausado / cancelado). Independiente
+// del Cliente de galerías: un cliente financiero (agrupado por nombre desde
+// Trabajo.cliente) no siempre tiene una galería asociada.
+const clienteEstadoSchema = new mongoose.Schema({ nombre: { type: String, unique: true } }, { strict: false });
 
-const Cliente    = mongoose.model('Cliente',    clienteSchema);
-const Trabajo    = mongoose.model('Trabajo',    trabajoSchema);
-const Gasto      = mongoose.model('Gasto',      gastoSchema);
-const Cotizacion = mongoose.model('Cotizacion', cotSchema);
-const Recibo     = mongoose.model('Recibo',     reciboSchema);
-const Alerta     = mongoose.model('Alerta',     alertaSchema);
-const Equipo     = mongoose.model('Equipo',     equipoSchema);
-const Evento     = mongoose.model('Evento',     eventoSchema);
+const Cliente       = mongoose.model('Cliente',       clienteSchema);
+const Trabajo       = mongoose.model('Trabajo',       trabajoSchema);
+const Gasto         = mongoose.model('Gasto',         gastoSchema);
+const Cotizacion    = mongoose.model('Cotizacion',    cotSchema);
+const Recibo        = mongoose.model('Recibo',        reciboSchema);
+const Alerta        = mongoose.model('Alerta',        alertaSchema);
+const Equipo        = mongoose.model('Equipo',        equipoSchema);
+const Evento        = mongoose.model('Evento',        eventoSchema);
+const ClienteEstado = mongoose.model('ClienteEstado', clienteEstadoSchema);
 
 // ── Connect MongoDB ─────────────────────────────────────────
 mongoose.connect(process.env.MONGODB_URI)
@@ -367,6 +372,37 @@ app.delete('/api/clientes/:codigo', requireAdmin, async (req, res) => {
   try {
     await Cliente.deleteOne({ codigo: req.params.codigo });
     res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ══════════════════════════════════════════════════════════════
+// ESTADO DE RELACIÓN DEL CLIENTE (activo / pausado / cancelado)
+// ══════════════════════════════════════════════════════════════
+
+app.get('/api/clientes-estados', requireAdmin, async (req, res) => {
+  try {
+    const estados = await ClienteEstado.find({}).lean();
+    res.json(estados);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/clientes-estados/:nombre', requireAdmin, async (req, res) => {
+  try {
+    const { estado, notas } = req.body;
+    if (!['activo', 'pausado', 'cancelado'].includes(estado)) {
+      return res.status(400).json({ error: 'Estado inválido' });
+    }
+    // Express already URL-decodes route params once; decoding again here
+    // would throw for names containing a literal "%" (e.g. "100% Nokta").
+    const nombre = req.params.nombre;
+    const update = { nombre, estado, actualizado: new Date().toISOString() };
+    if (notas !== undefined) update.notas = notas;
+    const doc = await ClienteEstado.findOneAndUpdate(
+      { nombre },
+      update,
+      { upsert: true, new: true }
+    );
+    res.json({ ok: true, clienteEstado: doc });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

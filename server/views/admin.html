@@ -514,8 +514,14 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
 <!-- ═══════════════ CLIENTES ═══════════════ -->
 <section class="page" id="page-clientes">
   <div class="page-header"><div class="page-title">Clientes</div></div>
+  <div class="tabs" id="cli-tabs" style="margin-bottom:16px">
+    <button class="tab active" onclick="filtrarClientesEstado('todos',this)">Todos</button>
+    <button class="tab" onclick="filtrarClientesEstado('activo',this)">Activos</button>
+    <button class="tab" onclick="filtrarClientesEstado('pausado',this)">Pausados</button>
+    <button class="tab" onclick="filtrarClientesEstado('cancelado',this)">Cancelados</button>
+  </div>
   <div class="table-card">
-    <table><thead><tr><th>Nombre</th><th>Tipo</th><th>Trabajos</th><th>Último trabajo</th><th>Total generado</th><th>Por cobrar</th><th></th></tr></thead>
+    <table><thead><tr><th>Nombre</th><th>Tipo</th><th>Estado</th><th>Trabajos</th><th>Último trabajo</th><th>Total generado</th><th>Por cobrar</th><th></th></tr></thead>
     <tbody id="clientes-tbody"></tbody></table>
   </div>
 </section>
@@ -818,6 +824,7 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
 // STATE
 // ═══════════════════════════════════════════════════════════
 let allTrabajos=[], allGastos=[], allClientes=[], allAlertas=[], allEventos=[], allEquipo=[];
+let allClienteEstados=[], clientesFiltroEstado='todos';
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 let chartBar=null, chartPie=null, chartAnual=null, chartSvc=null, chartCli=null;
 let reactivarCodigo='';
@@ -2078,13 +2085,20 @@ function totalGenerado(ts){
   },0);
 }
 
+function estadoClienteDe(nombre){
+  return allClienteEstados.find(e=>e.nombre===nombre)?.estado || 'activo';
+}
+const ESTADO_CLIENTE_LABEL={activo:'Activo',pausado:'Pausado',cancelado:'Cancelado'};
+const ESTADO_CLIENTE_PILL={activo:'pill-green',pausado:'pill-yellow',cancelado:'pill-red'};
+
 async function loadClientes(){
   allTrabajos=await api('/api/trabajos'); allClientes=await api('/api/clientes');
+  allClienteEstados=await api('/api/clientes-estados');
   const tbody=document.getElementById('clientes-tbody');
   // Combinar clientes registrados + clientes de trabajos
   const nombres=[...new Set([...allClientes.map(c=>c.nombre),...allTrabajos.map(t=>t.cliente)])];
-  if(!nombres.length){ tbody.innerHTML='<tr><td colspan="6" class="empty">No hay clientes registrados</td></tr>'; return; }
-  const rows = nombres.map(n=>{
+  if(!nombres.length){ tbody.innerHTML='<tr><td colspan="7" class="empty">No hay clientes registrados</td></tr>'; return; }
+  let rows = nombres.map(n=>{
     const ts=allTrabajos.filter(t=>t.cliente===n);
     const total=totalGenerado(ts);
     const pendiente=ts.reduce((s,t)=>{
@@ -2094,19 +2108,61 @@ async function loadClientes(){
     },0);
     const ultimo=ts.length?ts.sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0))[0]:null;
     const tipo=ts.length>1?'Frecuente':'Nuevo';
-    return { n, ts, total, pendiente, ultimo, tipo };
+    const estado=estadoClienteDe(n);
+    return { n, ts, total, pendiente, ultimo, tipo, estado };
   }).sort((a,b)=>b.total-a.total);
 
-  tbody.innerHTML=rows.map(({n,ts,total,pendiente,ultimo,tipo})=>`
+  if(clientesFiltroEstado!=='todos') rows=rows.filter(r=>r.estado===clientesFiltroEstado);
+
+  if(!rows.length){ tbody.innerHTML='<tr><td colspan="7" class="empty">Sin clientes en este estado</td></tr>'; return; }
+
+  tbody.innerHTML=rows.map(({n,ts,total,pendiente,ultimo,tipo,estado})=>`
     <tr onclick="openPerfilCliente('${n.replace(/'/g,"\\'")}')">
       <td>${n}</td>
       <td><span class="pill ${tipo==='Frecuente'?'pill-green':'pill-blue'}">${tipo}</span></td>
+      <td onclick="event.stopPropagation()">${selectEstadoCliente(n,estado)}</td>
       <td>${ts.length}</td>
       <td>${ultimo?fmtFecha(ultimo.fecha||ultimo.fechaInicio):'—'}</td>
       <td style="font-weight:600;color:var(--green)">$${total.toFixed(2)}</td>
       <td style="color:var(--yellow)">$${pendiente.toFixed(2)}</td>
       <td>${waCliente(n)}</td>
     </tr>`).join('');
+}
+
+function filtrarClientesEstado(estado,btn){
+  clientesFiltroEstado=estado;
+  document.querySelectorAll('#cli-tabs .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  loadClientes();
+}
+
+function selectEstadoCliente(nombre,estadoActual){
+  const nombreAttr=nombre.replace(/"/g,'&quot;');
+  const opts=['activo','pausado','cancelado'].map(e=>`<option value="${e}" ${e===estadoActual?'selected':''}>${ESTADO_CLIENTE_LABEL[e]}</option>`).join('');
+  return `<select class="pill ${ESTADO_CLIENTE_PILL[estadoActual]}" style="border:none;cursor:pointer;font-family:'Poppins',sans-serif" onchange="cambiarEstadoCliente(&quot;${nombreAttr}&quot;,this.value)">${opts}</select>`;
+}
+
+async function cambiarEstadoCliente(nombre,estado){
+  try {
+    await api(`/api/clientes-estados/${encodeURIComponent(nombre)}`,{method:'PUT',body:JSON.stringify({estado})});
+    const idx=allClienteEstados.findIndex(e=>e.nombre===nombre);
+    if(idx>=0) allClienteEstados[idx].estado=estado; else allClienteEstados.push({nombre,estado});
+    toast('Estado actualizado','ok');
+    if(document.getElementById('page-clientes').classList.contains('active')) loadClientes();
+    if(document.getElementById('page-cliente-detalle').classList.contains('active') && document.getElementById('cd-title').textContent===nombre){
+      openPerfilCliente(nombre);
+    }
+  } catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+async function guardarNotaCliente(nombre){
+  const notas=document.getElementById('cd-notas').value;
+  try {
+    await api(`/api/clientes-estados/${encodeURIComponent(nombre)}`,{method:'PUT',body:JSON.stringify({estado:estadoClienteDe(nombre),notas})});
+    const idx=allClienteEstados.findIndex(e=>e.nombre===nombre);
+    if(idx>=0) allClienteEstados[idx].notas=notas; else allClienteEstados.push({nombre,estado:'activo',notas});
+    toast('Nota guardada','ok');
+  } catch(e){ toast('Error: '+e.message,'err'); }
 }
 function waCliente(nombre){
   const c=allClientes.find(c=>c.nombre===nombre);
@@ -2116,8 +2172,11 @@ function waCliente(nombre){
 async function openPerfilCliente(nombre){
   if(!allTrabajos.length) allTrabajos = await api('/api/trabajos');
   if(!allClientes.length) allClientes = await api('/api/clientes');
+  if(!allClienteEstados.length) allClienteEstados = await api('/api/clientes-estados');
   const ts = allTrabajos.filter(t=>t.cliente===nombre);
   const c = allClientes.find(c=>c.nombre===nombre);
+  const ce = allClienteEstados.find(e=>e.nombre===nombre);
+  const estadoActual = ce?.estado || 'activo';
   const total = totalGenerado(ts);
   const cobrado = ts.reduce((s,t)=>{
     const g=t.grupo||SVC_GRUPO[t.servicio]||'';
@@ -2137,6 +2196,15 @@ async function openPerfilCliente(nombre){
 
   // Columna izquierda — info del cliente
   const infoCard = `<div class="section-card">
+    <div style="padding:0 0 14px;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">ESTADO DE LA RELACIÓN</div>
+      ${selectEstadoCliente(nombre,estadoActual)}
+    </div>
+    <div style="padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">NOTAS</div>
+      <textarea id="cd-notas" placeholder="Ej: dejó de responder desde julio..." style="width:100%;min-height:60px">${ce?.notas||''}</textarea>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="guardarNotaCliente('${nombre.replace(/'/g,"\\'")}')">Guardar nota</button>
+    </div>
     ${c?.empresa?`<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">EMPRESA</div><div style="font-size:14px">${c.empresa}</div></div>`:''}
     ${c?.whatsapp?`<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">WHATSAPP</div><div style="font-size:14px">${c.whatsapp}</div></div>`:''}
     ${c?.email?`<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">EMAIL</div><div style="font-size:14px">${c.email}</div></div>`:''}

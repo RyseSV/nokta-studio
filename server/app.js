@@ -9,6 +9,7 @@ const path = require('path');
 const os = require('os');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const crypto = require('crypto');
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -43,7 +44,13 @@ const Usuario = mongoose.model('Usuario', usuarioSchema);
 async function seedAdmin() {
   const exists = await Usuario.findOne({ role: 'admin' });
   if (!exists) {
-    const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'Nokta2026!', 10);
+    let password = process.env.ADMIN_PASSWORD;
+    if (!password) {
+      password = crypto.randomBytes(9).toString('base64url');
+      console.warn(`  ⚠️  ADMIN_PASSWORD no configurado. Se generó una contraseña temporal para "admin": ${password}`);
+      console.warn('  ⚠️  Guárdala y define ADMIN_PASSWORD en las variables de entorno cuanto antes.');
+    }
+    const hash = await bcrypt.hash(password, 10);
     await Usuario.create({ username: 'admin', nombre: 'Administrador', password: hash, role: 'admin', creado: new Date().toISOString() });
     console.log('  Admin user creado ✓');
   }
@@ -78,6 +85,9 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // ── Express setup ───────────────────────────────────────────
 const app = express();
+// Render terminates TLS and proxies over HTTP internally — without this,
+// a `secure` session cookie would never actually get set in production.
+app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -90,12 +100,61 @@ const loginLimiter = rateLimit({
   message: { error: 'Demasiados intentos. Espera 15 minutos.' },
   skipSuccessfulRequests: true,
 });
+
+// Public gallery routes have no login — this is the only thing standing
+// between them and being hammered to enumerate codes or run up Cloudinary
+// zip-download costs.
+const galeriaLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 120,
+  message: { error: 'Demasiadas solicitudes. Intenta de nuevo en unos minutos.' },
+});
+
+// Every route below does `catch (err) { ... }` around a DB call — this
+// keeps the response generic instead of leaking raw Mongo/Mongoose error
+// text (field names, duplicate-key details, etc.) to whoever's asking.
+function handleError(res, err) {
+  console.error(err);
+  res.status(500).json({ error: 'Ocurrió un error interno. Intenta de nuevo.' });
+}
+
+// These "strict:false" schemas were designed to accept whatever fields the
+// web form for that record's group sends — but that also meant `...req.body`
+// would happily write ANY key a caller sent (e.g. `role`, `estado`, or a
+// Mongo operator-shaped key) straight into the document. Whitelisting to
+// the fields each form actually uses closes that off without touching the
+// flexible-schema design.
+function pick(obj, keys) {
+  const out = {};
+  for (const k of keys) if (obj[k] !== undefined) out[k] = obj[k];
+  return out;
+}
+const TRABAJO_FIELDS = [
+  'cliente', 'clienteId', 'servicio', 'grupo', 'grupoNombre', 'notas', 'estado',
+  'fecha', 'horaInicio', 'horaFin', 'lugar', 'monto', 'anticipo', 'saldo',
+  'empresa', 'pagoMensual', 'fechaInicio', 'diaCobro', 'estadoContrato',
+  'cantPiezas', 'formato', 'alcance', 'fechaEntrega',
+];
+const GASTO_FIELDS = ['concepto', 'categoria', 'monto', 'fecha'];
+const EQUIPO_FIELDS = ['nombre', 'rol', 'tipo', 'comision', 'pagado', 'pendiente'];
+const DOCUMENTO_FIELDS = ['clienteNombre', 'empresa', 'telefono', 'email', 'fechaEmision', 'fechaValidez', 'servicios', 'total', 'notas'];
+const EVENTO_FIELDS = ['titulo', 'tipo', 'fecha', 'horaInicio', 'horaFin', 'lugar', 'monto', 'anticipo', 'saldo'];
+let sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret) {
+  sessionSecret = crypto.randomBytes(32).toString('hex');
+  console.warn('  ⚠️  SESSION_SECRET no configurado. Se generó uno aleatorio para este arranque');
+  console.warn('  ⚠️  (esto cierra la sesión de todos al reiniciar el server) — define SESSION_SECRET en las variables de entorno.');
+}
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'nokta_secret',
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI }),
-  cookie: { maxAge: null }  // session cookie — expires when browser closes
+  cookie: {
+    maxAge: null,  // session cookie — expires when browser closes
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+  }
 }));
 
 // ── Auth middleware ─────────────────────────────────────────
@@ -114,7 +173,11 @@ async function generateCode(tipo) {
   const map = { boda:'BD', xvanios:'XV', corporativo:'CO', deportivo:'DP', graduacion:'GR', otro:'EV' };
   const prefix = map[tipo] || 'EV';
   const count = await Cliente.countDocuments({ codigo: new RegExp(`NK-${year}-${prefix}-`) });
-  return `NK-${year}-${prefix}-${String(count + 1).padStart(4, '0')}`;
+  // A random suffix (not just a sequential number) keeps gallery links from
+  // being guessable — otherwise anyone could enumerate NK-2026-BD-0001,
+  // -0002, -0003... and view/download a stranger's private photos.
+  const suffix = crypto.randomBytes(4).toString('hex');
+  return `NK-${year}-${prefix}-${String(count + 1).padStart(4, '0')}-${suffix}`;
 }
 
 // ── Auto-generate alerts ────────────────────────────────────
@@ -237,7 +300,7 @@ app.post('/api/admin/login', loginLimiter, async (req, res) => {
     req.session.nombre = user.nombre;
     req.session.role = user.role;
     res.json({ ok: true, role: user.role, nombre: user.nombre });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.post('/api/admin/logout', (req, res) => {
@@ -261,7 +324,7 @@ app.get('/api/usuarios', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
     const users = await Usuario.find({}, '-password').lean();
     res.json(users);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.post('/api/usuarios', requireAdmin, requireSuperAdmin, async (req, res) => {
@@ -273,7 +336,7 @@ app.post('/api/usuarios', requireAdmin, requireSuperAdmin, async (req, res) => {
     res.json({ ok: true, usuario: { _id: u._id, username: u.username, nombre: u.nombre, role: u.role } });
   } catch (err) {
     if (err.code === 11000) return res.status(400).json({ error: 'El usuario ya existe' });
-    res.status(500).json({ error: err.message });
+    handleError(res, err);
   }
 });
 
@@ -290,7 +353,7 @@ app.put('/api/usuarios/:id', requireAdmin, requireSuperAdmin, async (req, res) =
       req.session.role = req.body.role;
     }
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.post('/api/usuarios/:id/foto', requireAdmin, async (req, res) => {
@@ -306,7 +369,7 @@ app.post('/api/usuarios/:id/foto', requireAdmin, async (req, res) => {
     });
     await Usuario.updateOne({ _id: req.params.id }, { $set: { foto: result.secure_url } });
     res.json({ ok: true, url: result.secure_url });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.delete('/api/usuarios/:id', requireAdmin, requireSuperAdmin, async (req, res) => {
@@ -315,7 +378,7 @@ app.delete('/api/usuarios/:id', requireAdmin, requireSuperAdmin, async (req, res
     if (u?.role === 'admin') return res.status(400).json({ error: 'No puedes eliminar al admin' });
     await Usuario.deleteOne({ _id: req.params.id });
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 // ══════════════════════════════════════════════════════════════
@@ -327,7 +390,7 @@ app.get('/api/clientes', requireAdmin, async (req, res) => {
     await checkAlerts();
     const clientes = await Cliente.find({}).sort({ creado: -1 }).lean();
     res.json(clientes);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.post('/api/clientes', requireAdmin, async (req, res) => {
@@ -350,7 +413,7 @@ app.post('/api/clientes', requireAdmin, async (req, res) => {
       visitas: [], descargas: [], favoritos: [], reactivaciones: []
     });
     res.json({ ok: true, cliente, link: `${process.env.BASE_URL}/galeria?codigo=${codigo}` });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.put('/api/clientes/:codigo/reactivar', requireAdmin, async (req, res) => {
@@ -365,14 +428,14 @@ app.put('/api/clientes/:codigo/reactivar', requireAdmin, async (req, res) => {
     c.reactivaciones.push({ fecha: new Date().toISOString(), dias });
     await c.save();
     res.json({ ok: true, expira: c.expira });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.delete('/api/clientes/:codigo', requireAdmin, async (req, res) => {
   try {
     await Cliente.deleteOne({ codigo: req.params.codigo });
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 // ══════════════════════════════════════════════════════════════
@@ -383,7 +446,7 @@ app.get('/api/clientes-estados', requireAdmin, async (req, res) => {
   try {
     const estados = await ClienteEstado.find({}).lean();
     res.json(estados);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.put('/api/clientes-estados/:nombre', requireAdmin, async (req, res) => {
@@ -403,14 +466,14 @@ app.put('/api/clientes-estados/:nombre', requireAdmin, async (req, res) => {
       { upsert: true, new: true }
     );
     res.json({ ok: true, clienteEstado: doc });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 // ══════════════════════════════════════════════════════════════
 // GALERÍA PÚBLICA API
 // ══════════════════════════════════════════════════════════════
 
-app.get('/api/galeria/:codigo', async (req, res) => {
+app.get('/api/galeria/:codigo', galeriaLimiter, async (req, res) => {
   try {
     const c = await Cliente.findOne({ codigo: req.params.codigo });
     if (!c) return res.status(404).json({ error: 'Código no válido' });
@@ -421,17 +484,17 @@ app.get('/api/galeria/:codigo', async (req, res) => {
     }
     const diasRestantes = c.expira ? Math.max(0, Math.ceil((new Date(c.expira) - new Date()) / 86400000)) : null;
     res.json({ codigo: c.codigo, nombre: c.nombre, tipo: c.tipo, expira: c.expira, diasRestantes, favoritos: c.favoritos || [] });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
-app.post('/api/galeria/:codigo/visita', async (req, res) => {
+app.post('/api/galeria/:codigo/visita', galeriaLimiter, async (req, res) => {
   try {
     await Cliente.updateOne({ codigo: req.params.codigo }, { $push: { visitas: new Date().toISOString() } });
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
-app.post('/api/galeria/:codigo/descarga', async (req, res) => {
+app.post('/api/galeria/:codigo/descarga', galeriaLimiter, async (req, res) => {
   try {
     const c = await Cliente.findOne({ codigo: req.params.codigo });
     if (!c) return res.status(404).json({ error: 'No encontrado' });
@@ -441,17 +504,17 @@ app.post('/api/galeria/:codigo/descarga', async (req, res) => {
     await c.save();
     await addAlert('descarga', { nombre: c.nombre, codigo: c.codigo, tipo: descarga.tipo, fecha: descarga.fecha });
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
-app.post('/api/galeria/:codigo/favoritos', async (req, res) => {
+app.post('/api/galeria/:codigo/favoritos', galeriaLimiter, async (req, res) => {
   try {
     await Cliente.updateOne({ codigo: req.params.codigo }, { favoritos: req.body.favoritos || [] });
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
-app.get('/api/galeria/:codigo/fotos', async (req, res) => {
+app.get('/api/galeria/:codigo/fotos', galeriaLimiter, async (req, res) => {
   try {
     const result = await cloudinary.api.resources({ type: 'upload', prefix: `nokta-clientes/${req.params.codigo}/`, max_results: 500 });
     res.json(result.resources.map(r => ({
@@ -462,7 +525,7 @@ app.get('/api/galeria/:codigo/fotos', async (req, res) => {
   } catch (err) { res.json([]); }
 });
 
-app.get('/api/galeria/:codigo/zip', async (req, res) => {
+app.get('/api/galeria/:codigo/zip', galeriaLimiter, async (req, res) => {
   try {
     let zipUrl;
     if (req.query.tipo === 'favoritas' && req.query.ids) {
@@ -471,7 +534,7 @@ app.get('/api/galeria/:codigo/zip', async (req, res) => {
       zipUrl = cloudinary.utils.download_zip_url({ prefixes: [`nokta-clientes/${req.params.codigo}/`], resource_type: 'image' });
     }
     res.json({ url: zipUrl });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 // ══════════════════════════════════════════════════════════════
@@ -480,32 +543,33 @@ app.get('/api/galeria/:codigo/zip', async (req, res) => {
 
 app.get('/api/trabajos', requireAdmin, async (req, res) => {
   try { res.json(await Trabajo.find({}).sort({ creado: -1 }).lean()); }
-  catch (err) { res.status(500).json({ error: err.message }); }
+  catch (err) { handleError(res, err); }
 });
 
 app.post('/api/trabajos', requireAdmin, async (req, res) => {
   try {
-    const monto = parseFloat(req.body.monto) || 0;
-    const anticipo = parseFloat(req.body.anticipo) || 0;
-    const trabajo = await Trabajo.create({ id: `t${Date.now()}`, ...req.body, monto, anticipo, saldo: monto - anticipo, creado: new Date().toISOString() });
+    const datos = pick(req.body, TRABAJO_FIELDS);
+    const monto = parseFloat(datos.monto) || 0;
+    const anticipo = parseFloat(datos.anticipo) || 0;
+    const trabajo = await Trabajo.create({ id: `t${Date.now()}`, ...datos, monto, anticipo, saldo: monto - anticipo, creado: new Date().toISOString() });
     if (trabajo.fecha) {
       await Evento.create({ id: trabajo.id, titulo: `${trabajo.cliente} — ${trabajo.servicio}`, tipo: trabajo.servicio, fecha: trabajo.fecha, horaInicio: trabajo.horaInicio || '', horaFin: trabajo.horaFin || '', lugar: trabajo.lugar || '', monto, anticipo, saldo: monto - anticipo });
     }
     res.json({ ok: true, trabajo });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.put('/api/trabajos/:id', requireAdmin, async (req, res) => {
   try {
     const t = await Trabajo.findOne({ id: req.params.id });
     if (!t) return res.status(404).json({ error: 'No encontrado' });
-    Object.assign(t, req.body);
+    Object.assign(t, pick(req.body, TRABAJO_FIELDS));
     const m = parseFloat(t.monto) || 0;
     const a = parseFloat(t.anticipo) || 0;
     t.saldo = m - a;
     await t.save();
     res.json({ ok: true, trabajo: t });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.patch('/api/trabajos/:id/quincenas', requireAdmin, async (req, res) => {
@@ -517,14 +581,14 @@ app.patch('/api/trabajos/:id/quincenas', requireAdmin, async (req, res) => {
     );
     if (!t) return res.status(404).json({ error: 'No encontrado' });
     res.json({ ok: true, quincenas: t.quincenas });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.delete('/api/trabajos/:id', requireAdmin, async (req, res) => {
   try {
     await Trabajo.deleteOne({ id: req.params.id });
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 // ══════════════════════════════════════════════════════════════
@@ -533,21 +597,22 @@ app.delete('/api/trabajos/:id', requireAdmin, async (req, res) => {
 
 app.get('/api/gastos', requireAdmin, async (req, res) => {
   try { res.json(await Gasto.find({}).sort({ creado: -1 }).lean()); }
-  catch (err) { res.status(500).json({ error: err.message }); }
+  catch (err) { handleError(res, err); }
 });
 
 app.post('/api/gastos', requireAdmin, async (req, res) => {
   try {
-    const gasto = await Gasto.create({ id: `g${Date.now()}`, ...req.body, monto: parseFloat(req.body.monto) || 0, creado: new Date().toISOString() });
+    const datos = pick(req.body, GASTO_FIELDS);
+    const gasto = await Gasto.create({ id: `g${Date.now()}`, ...datos, monto: parseFloat(datos.monto) || 0, creado: new Date().toISOString() });
     res.json({ ok: true, gasto });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.delete('/api/gastos/:id', requireAdmin, async (req, res) => {
   try {
     await Gasto.deleteOne({ id: req.params.id });
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 // ══════════════════════════════════════════════════════════════
@@ -559,12 +624,13 @@ app.get('/api/documentos', requireAdmin, async (req, res) => {
     const cotizaciones = await Cotizacion.find({}).sort({ creado: -1 }).lean();
     const recibos = await Recibo.find({}).sort({ creado: -1 }).lean();
     res.json({ cotizaciones, recibos });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.post('/api/documentos', requireAdmin, async (req, res) => {
   try {
-    const { tipo, ...datos } = req.body;
+    const tipo = req.body.tipo;
+    const datos = pick(req.body, DOCUMENTO_FIELDS);
     let numero, doc;
     if (tipo === 'cotizacion') {
       const count = await Cotizacion.countDocuments({ clienteNombre: datos.clienteNombre });
@@ -576,7 +642,7 @@ app.post('/api/documentos', requireAdmin, async (req, res) => {
       doc = await Recibo.create({ id: `rec${Date.now()}`, numero, tipo: 'recibo', ...datos, creado: new Date().toISOString() });
     }
     res.json({ ok: true, numero, doc });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.delete('/api/documentos/:tipo/:id', requireAdmin, async (req, res) => {
@@ -586,7 +652,7 @@ app.delete('/api/documentos/:tipo/:id', requireAdmin, async (req, res) => {
     const Model = tipo === 'cotizacion' ? Cotizacion : Recibo;
     await Model.deleteOne({ id });
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 // ══════════════════════════════════════════════════════════════
@@ -597,28 +663,28 @@ app.get('/api/alertas', requireAdmin, async (req, res) => {
   try {
     await checkAlerts();
     res.json(await Alerta.find({}).sort({ fecha: -1 }).lean());
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.put('/api/alertas/leer', requireAdmin, async (req, res) => {
   try {
     await Alerta.updateMany({}, { leida: true });
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.put('/api/alertas/:id/leer', requireAdmin, async (req, res) => {
   try {
     await Alerta.updateOne({ id: req.params.id }, { leida: true });
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.delete('/api/alertas/:id', requireAdmin, async (req, res) => {
   try {
     await Alerta.deleteOne({ id: req.params.id });
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 // ══════════════════════════════════════════════════════════════
@@ -627,28 +693,28 @@ app.delete('/api/alertas/:id', requireAdmin, async (req, res) => {
 
 app.get('/api/equipo', requireAdmin, async (req, res) => {
   try { res.json(await Equipo.find({}).lean()); }
-  catch (err) { res.status(500).json({ error: err.message }); }
+  catch (err) { handleError(res, err); }
 });
 
 app.post('/api/equipo', requireAdmin, async (req, res) => {
   try {
-    const m = await Equipo.create({ id: `m${Date.now()}`, ...req.body, creado: new Date().toISOString() });
+    const m = await Equipo.create({ id: `m${Date.now()}`, ...pick(req.body, EQUIPO_FIELDS), creado: new Date().toISOString() });
     res.json({ ok: true, miembro: m });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.put('/api/equipo/:id', requireAdmin, async (req, res) => {
   try {
-    await Equipo.updateOne({ id: req.params.id }, { $set: req.body });
+    await Equipo.updateOne({ id: req.params.id }, { $set: pick(req.body, EQUIPO_FIELDS) });
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.delete('/api/equipo/:id', requireAdmin, async (req, res) => {
   try {
     await Equipo.deleteOne({ id: req.params.id });
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 // ══════════════════════════════════════════════════════════════
@@ -657,21 +723,21 @@ app.delete('/api/equipo/:id', requireAdmin, async (req, res) => {
 
 app.get('/api/eventos', requireAdmin, async (req, res) => {
   try { res.json(await Evento.find({}).sort({ fecha: 1 }).lean()); }
-  catch (err) { res.status(500).json({ error: err.message }); }
+  catch (err) { handleError(res, err); }
 });
 
 app.post('/api/eventos', requireAdmin, async (req, res) => {
   try {
-    const ev = await Evento.create({ id: `ev${Date.now()}`, ...req.body, creado: new Date().toISOString() });
+    const ev = await Evento.create({ id: `ev${Date.now()}`, ...pick(req.body, EVENTO_FIELDS), creado: new Date().toISOString() });
     res.json({ ok: true, evento: ev });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 app.delete('/api/eventos/:id', requireAdmin, async (req, res) => {
   try {
     await Evento.deleteOne({ id: req.params.id });
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { handleError(res, err); }
 });
 
 // ══════════════════════════════════════════════════════════════

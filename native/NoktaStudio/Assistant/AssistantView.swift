@@ -71,6 +71,7 @@ struct AssistantView: View {
                 } label: {
                     Image(systemName: "arrow.counterclockwise")
                 }
+                .buttonStyle(.glass)
                 .help("Nueva conversación")
             }
         }
@@ -88,7 +89,7 @@ struct AssistantView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Palette.card)
+        .glassEffect(.regular.tint(Palette.card), in: Rectangle())
     }
 
     private var emptyState: some View {
@@ -96,23 +97,26 @@ struct AssistantView: View {
             Text("Preguntame sobre tu negocio")
                 .font(.headline)
                 .foregroundStyle(Palette.cream)
-            ForEach([
-                "¿Cuánto me deben este mes?",
-                "Resume las alertas sin leer",
-                "Crea una cotización para Juan Pérez: diseño de logo $150",
-                "Pausa a TuBoleto, dejó de responder desde julio",
-            ], id: \.self) { suggestion in
-                Button {
-                    vm.draft = suggestion
-                    Task { await vm.send() }
-                } label: {
-                    Text(suggestion)
-                        .font(.footnote)
-                        .foregroundStyle(Palette.muted)
-                        .padding(.horizontal, 12).padding(.vertical, 8)
-                        .background(Palette.card, in: RoundedRectangle(cornerRadius: 10))
+            GlassEffectContainer(spacing: 8) {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach([
+                        "¿Cuánto me deben este mes?",
+                        "Resume las alertas sin leer",
+                        "Crea una cotización para Juan Pérez: diseño de logo $150",
+                        "Pausa a TuBoleto, dejó de responder desde julio",
+                    ], id: \.self) { suggestion in
+                        Button {
+                            vm.draft = suggestion
+                            Task { await vm.send() }
+                        } label: {
+                            Text(suggestion)
+                                .font(.footnote)
+                                .foregroundStyle(Palette.muted)
+                                .padding(.horizontal, 12).padding(.vertical, 8)
+                        }
+                        .buttonStyle(.glass)
+                    }
                 }
-                .buttonStyle(.plain)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -129,8 +133,8 @@ struct AssistantView: View {
                     .font(.callout)
                     .foregroundStyle(message.role == .system ? .red : Palette.cream)
                     .padding(.horizontal, 14).padding(.vertical, 10)
-                    .background(
-                        message.role == .user ? Palette.ember.opacity(0.85) : Palette.card,
+                    .glassEffect(
+                        .regular.tint(message.role == .user ? Palette.ember.opacity(0.85) : Palette.card),
                         in: RoundedRectangle(cornerRadius: 14)
                     )
             }
@@ -158,37 +162,38 @@ struct AssistantView: View {
         .contentShape(Rectangle())
         .onTapGesture { previewing = PDFPreviewItem(url: url, title: title) }
         .padding(12)
-        .background(Palette.card, in: RoundedRectangle(cornerRadius: 14))
+        .glassEffect(.regular.tint(Palette.card), in: RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.ember.opacity(0.4), lineWidth: 1))
     }
 
     private var inputBar: some View {
-        HStack(spacing: 10) {
-            TextField("Preguntá algo o pedí una acción…", text: $vm.draft, axis: .vertical)
-                .lineLimit(1...4)
-                .focused($inputFocused)
-                .padding(.horizontal, 12).padding(.vertical, 10)
-                .background(Palette.card, in: RoundedRectangle(cornerRadius: 10))
-                .foregroundStyle(Palette.cream)
-                // A vertical-axis TextField treats plain Return as a newline
-                // (needed for multi-line input), so `.onSubmit` never fires —
-                // intercept Return ourselves and only pass it through as a
-                // newline when Shift is held.
-                .onKeyPress(keys: [.return]) { press in
-                    if press.modifiers.contains(.shift) { return .ignored }
-                    Task { await vm.send() }
-                    return .handled
-                }
+        GlassEffectContainer(spacing: 10) {
+            HStack(spacing: 10) {
+                TextField("Preguntá algo o pedí una acción…", text: $vm.draft, axis: .vertical)
+                    .lineLimit(1...4)
+                    .focused($inputFocused)
+                    .padding(.horizontal, 12).padding(.vertical, 10)
+                    .glassEffect(.regular.tint(Palette.card), in: RoundedRectangle(cornerRadius: 10))
+                    .foregroundStyle(Palette.cream)
+                    // A vertical-axis TextField treats plain Return as a newline
+                    // (needed for multi-line input), so `.onSubmit` never fires —
+                    // intercept Return ourselves and only pass it through as a
+                    // newline when Shift is held.
+                    .onKeyPress(keys: [.return]) { press in
+                        if press.modifiers.contains(.shift) { return .ignored }
+                        Task { await vm.send() }
+                        return .handled
+                    }
 
-            Button {
-                Task { await vm.send() }
-            } label: {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.system(size: 28))
-                    .foregroundStyle(vm.draft.trimmingCharacters(in: .whitespaces).isEmpty ? Palette.muted : Palette.ember)
+                Button {
+                    Task { await vm.send() }
+                } label: {
+                    Image(systemName: "arrow.up")
+                        .font(.system(size: 15, weight: .semibold))
+                }
+                .buttonStyle(.glass(.regular.tint(vm.draft.trimmingCharacters(in: .whitespaces).isEmpty ? Palette.muted.opacity(0.3) : Palette.ember)))
+                .disabled(vm.draft.trimmingCharacters(in: .whitespaces).isEmpty || vm.isResponding)
             }
-            .buttonStyle(.plain)
-            .disabled(vm.draft.trimmingCharacters(in: .whitespaces).isEmpty || vm.isResponding)
         }
         .padding(12)
         .background(Palette.bg)

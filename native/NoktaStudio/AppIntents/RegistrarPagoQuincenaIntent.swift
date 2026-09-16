@@ -7,7 +7,13 @@ import AppIntents
 /// NoktaAPI syncs the session cookie from the WKWebView's persistent cookie
 /// store on every call, so this works as long as the user has logged into
 /// the app at least once.
-struct RegistrarPagoQuincenaIntent: AppIntent {
+///
+/// Conforms to `LongRunningIntent` (App Intents 2.0, iOS/macOS 27) since
+/// this does three sequential network calls (fetch trabajos, PATCH
+/// quincenas, POST documento) — reporting progress via `performBackgroundTask`
+/// tells the system this is expected to take a moment, instead of it
+/// assuming the intent hung, and gives Siri/Shortcuts a status to show.
+struct RegistrarPagoQuincenaIntent: AppIntent, LongRunningIntent {
     static var title: LocalizedStringResource = "Registrar pago de quincena"
     static var description = IntentDescription("Marca como pagada la quincena pendiente de un cliente con paquete mensual y genera su recibo.")
     static var openAppWhenRun: Bool = false
@@ -20,7 +26,15 @@ struct RegistrarPagoQuincenaIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let result = try await RegistrarPagoQuincenaCore.run(cliente: cliente)
+        let result = try await performBackgroundTask {
+            progress.totalUnitCount = 2
+            progress.localizedDescription = "Buscando la quincena de \(cliente)…"
+            let result = try await RegistrarPagoQuincenaCore.run(cliente: cliente)
+            progress.completedUnitCount = 1
+            progress.localizedDescription = "Generando recibo…"
+            progress.completedUnitCount = 2
+            return result
+        }
         return .result(dialog: IntentDialog(stringLiteral: result.message))
     }
 }

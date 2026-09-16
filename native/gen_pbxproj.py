@@ -449,7 +449,7 @@ def main():
 				INFOPLIST_KEY_UIViewControllerBasedStatusBarAppearance = NO;
 \t\t\t\tINFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 \t\t\t\tINFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 26.0;
+\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 27.0;
 \t\t\t\tLD_RUNPATH_SEARCH_PATHS = (
 \t\t\t\t\t"$(inherited)",
 \t\t\t\t\t"@executable_path/Frameworks",
@@ -481,7 +481,7 @@ def main():
 				INFOPLIST_KEY_UIViewControllerBasedStatusBarAppearance = NO;
 \t\t\t\tINFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 \t\t\t\tINFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 26.0;
+\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 27.0;
 \t\t\t\tLD_RUNPATH_SEARCH_PATHS = (
 \t\t\t\t\t"$(inherited)",
 \t\t\t\t\t"@executable_path/Frameworks",
@@ -514,7 +514,7 @@ def main():
 \t\t\t\t\t"$(inherited)",
 \t\t\t\t\t"@executable_path/../Frameworks",
 \t\t\t\t);
-\t\t\t\tMACOSX_DEPLOYMENT_TARGET = 26.0;
+\t\t\t\tMACOSX_DEPLOYMENT_TARGET = 27.0;
 \t\t\t\tMARKETING_VERSION = 1.0;
 \t\t\t\tPRODUCT_BUNDLE_IDENTIFIER = "{BUNDLE_ID_BASE}.mac";
 \t\t\t\tPRODUCT_NAME = "NoktaStudio";
@@ -540,7 +540,7 @@ def main():
 \t\t\t\t\t"$(inherited)",
 \t\t\t\t\t"@executable_path/../Frameworks",
 \t\t\t\t);
-\t\t\t\tMACOSX_DEPLOYMENT_TARGET = 26.0;
+\t\t\t\tMACOSX_DEPLOYMENT_TARGET = 27.0;
 \t\t\t\tMARKETING_VERSION = 1.0;
 \t\t\t\tPRODUCT_BUNDLE_IDENTIFIER = "{BUNDLE_ID_BASE}.mac";
 \t\t\t\tPRODUCT_NAME = "NoktaStudio";

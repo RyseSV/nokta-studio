@@ -7,7 +7,7 @@ enum ServicioGrupoMap {
     static let map: [String: String] = [
         "Fotografía de eventos": "A", "Fotografía corporativa": "A", "Fotografía de producto": "A",
         "Fotografía gastronómica": "A", "Retratos": "A", "Cobertura audiovisual": "A", "Foto + Video": "A",
-        "Fotografía de evento": "A", "Video de evento": "A",
+        "Fotografía de evento": "A", "Video de evento": "A", "Clases": "A",
         "Marketing digital": "B", "Gestión de redes": "B", "Community management": "B",
         "Paquete completo": "B", "Redes sociales": "B",
         "Edición de video": "C", "Motion graphics": "C", "Reels sueltos": "C",

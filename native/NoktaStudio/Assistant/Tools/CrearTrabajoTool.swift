@@ -7,7 +7,8 @@ struct CrearTrabajoArgs {
     var cliente: String
     @Guide(description: """
     Servicio exacto. Eventos: 'Fotografía de eventos', 'Fotografía corporativa', 'Fotografía de producto', \
-    'Fotografía gastronómica', 'Retratos', 'Cobertura audiovisual', 'Foto + Video'. Paquetes mensuales: \
+    'Fotografía gastronómica', 'Retratos', 'Cobertura audiovisual', 'Foto + Video', 'Clases' (para ingresos \
+    por dar clases o capacitaciones, ej. clases de IA). Paquetes mensuales: \
     'Marketing digital', 'Gestión de redes', 'Community management', 'Paquete completo'. Edición de video: \
     'Edición de video', 'Motion graphics', 'Reels sueltos'. Branding: 'Identidad visual', 'Branding'. Web: \
     'Diseño y desarrollo web'.

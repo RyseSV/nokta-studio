@@ -7,13 +7,6 @@ struct RegistrarPagoQuincenaArgs {
     var cliente: String
 }
 
-private struct QPeriodo {
-    let periodo: String
-    let q: Int
-    let due: Date
-    let label: String
-}
-
 /// Registers a same-day payment for a Grupo B (paquete mensual) client's
 /// quincena, then generates the recibo/"factura" for it — one action for
 /// the flow the user actually does: "TuBoleto pagó, dame la factura del
@@ -25,6 +18,11 @@ private struct QPeriodo {
 /// Q2): it walks every quincena from the trabajo's fechaInicio up to today,
 /// picks the oldest one that's due and not yet paid, and falls back to the
 /// quincena currently in progress if the client is fully caught up.
+///
+/// The actual work lives in `RegistrarPagoQuincenaCore` so the same logic
+/// backs both this FoundationModels Tool (used by the in-app Asistente
+/// chat) and `RegistrarPagoQuincenaIntent` (used by Siri/Shortcuts via App
+/// Intents) without duplicating the quincena-picking rules in two places.
 struct RegistrarPagoQuincenaTool: Tool {
     let name = "registrar_pago_quincena"
     let description = "Registra el pago de una quincena de un cliente con paquete mensual (grupo B) y genera automáticamente el recibo/factura correspondiente, detectando cuál quincena corresponde y si el pago llegó a tiempo o atrasado. Úsalo cuando el usuario diga que un cliente recurrente ya pagó y pida la factura o el recibo. Nunca le pidas ni le pases una fecha o periodo: la herramienta la calcula sola."
@@ -32,33 +30,53 @@ struct RegistrarPagoQuincenaTool: Tool {
 
     let onCreated: @Sendable (DocumentoParaPDF) -> Void
 
-    private func lastDay(of year: Int, _ month: Int, cal: Calendar) -> Int {
+    func call(arguments: RegistrarPagoQuincenaArgs) async throws -> String {
+        let result = try await RegistrarPagoQuincenaCore.run(cliente: arguments.cliente)
+        if let doc = result.doc { onCreated(doc) }
+        return result.message
+    }
+}
+
+struct RegistrarPagoQuincenaResult {
+    let message: String
+    let doc: DocumentoParaPDF?
+}
+
+private struct QPeriodo {
+    let periodo: String
+    let q: Int
+    let due: Date
+    let label: String
+}
+
+enum RegistrarPagoQuincenaCore {
+    private static func lastDay(of year: Int, _ month: Int, cal: Calendar) -> Int {
         let firstOfNext = DateComponents(year: month == 12 ? year + 1 : year, month: month == 12 ? 1 : month + 1, day: 1)
         guard let firstOfNextDate = cal.date(from: firstOfNext),
               let lastDayDate = cal.date(byAdding: .day, value: -1, to: firstOfNextDate) else { return 28 }
         return cal.component(.day, from: lastDayDate)
     }
 
-    func call(arguments: RegistrarPagoQuincenaArgs) async throws -> String {
+    static func run(cliente: String) async throws -> RegistrarPagoQuincenaResult {
         let trabajos: [NoktaTrabajo] = try await NoktaAPI.get("/api/trabajos")
         guard let t = trabajos.first(where: {
-            $0.cliente.localizedCaseInsensitiveCompare(arguments.cliente) == .orderedSame && $0.grupoResuelto == "B"
+            $0.cliente.localizedCaseInsensitiveCompare(cliente) == .orderedSame && $0.grupoResuelto == "B"
         }) else {
-            return "No encontré un paquete mensual activo para '\(arguments.cliente)'."
+            return RegistrarPagoQuincenaResult(message: "No encontré un paquete mensual activo para '\(cliente)'.", doc: nil)
         }
         guard let fechaInicioStr = t.fechaInicio, fechaInicioStr.count >= 7 else {
-            return "'\(t.cliente)' no tiene fecha de inicio configurada para calcular sus quincenas."
+            return RegistrarPagoQuincenaResult(message: "'\(t.cliente)' no tiene fecha de inicio configurada para calcular sus quincenas.", doc: nil)
         }
 
         let cal = Calendar.current
         let now = Date()
         let inicioParts = fechaInicioStr.prefix(7).split(separator: "-")
         guard inicioParts.count == 2, let inicioYear = Int(inicioParts[0]), let inicioMonth = Int(inicioParts[1]) else {
-            return "No pude leer la fecha de inicio de '\(t.cliente)'."
+            return RegistrarPagoQuincenaResult(message: "No pude leer la fecha de inicio de '\(t.cliente)'.", doc: nil)
         }
         let nowComps = cal.dateComponents([.year, .month], from: now)
         guard let nowYear = nowComps.year, let nowMonth = nowComps.month else {
-            return "No pude determinar la fecha de hoy."
+            return RegistrarPagoQuincenaResult(message: "No pude determinar la fecha de hoy.", doc: nil)
         }
 
         let dfLabel = DateFormatter()
@@ -93,7 +111,7 @@ struct RegistrarPagoQuincenaTool: Tool {
             ?? periodos.last
 
         guard let picked = candidate else {
-            return "No pude determinar qué quincena de '\(t.cliente)' corresponde pagar."
+            return RegistrarPagoQuincenaResult(message: "No pude determinar qué quincena de '\(t.cliente)' corresponde pagar.", doc: nil)
         }
 
         let atrasado = now > picked.due
@@ -136,9 +154,9 @@ struct RegistrarPagoQuincenaTool: Tool {
             empresa: nil, telefono: nil, email: nil, fechaEmision: fechaHoyISO,
             servicios: [(servicioDesc, monto)], notas: notas
         )
-        onCreated(doc)
 
         let estadoTxt = atrasado ? "con atraso (vencía el \(dfLabel.string(from: picked.due)))" : "a tiempo"
-        return "Quincena \(picked.label) para \(t.cliente) marcada como pagada, \(estadoTxt). Recibo \(resp.numero) por $\(String(format: "%.2f", monto)) generado — te dejo el PDF arriba."
+        let message = "Quincena \(picked.label) para \(t.cliente) marcada como pagada, \(estadoTxt). Recibo \(resp.numero) por $\(String(format: "%.2f", monto)) generado."
+        return RegistrarPagoQuincenaResult(message: message, doc: doc)
     }
 }

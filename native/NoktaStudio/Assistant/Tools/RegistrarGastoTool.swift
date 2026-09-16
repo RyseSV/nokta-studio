@@ -19,10 +19,16 @@ struct RegistrarGastoTool: Tool {
     typealias Arguments = RegistrarGastoArgs
 
     func call(arguments: RegistrarGastoArgs) async throws -> String {
-        let fecha = arguments.fecha ?? String(ISO8601DateFormatter().string(from: Date()).prefix(10))
+        try await RegistrarGastoCore.run(concepto: arguments.concepto, categoria: arguments.categoria, monto: arguments.monto, fecha: arguments.fecha)
+    }
+}
+
+enum RegistrarGastoCore {
+    static func run(concepto: String, categoria: String, monto: Double, fecha: String?) async throws -> String {
+        let fecha = fecha ?? String(ISO8601DateFormatter().string(from: Date()).prefix(10))
         struct Body: Encodable { let concepto: String; let categoria: String; let monto: Double; let fecha: String }
         struct Resp: Decodable { let ok: Bool }
-        let _: Resp = try await NoktaAPI.post("/api/gastos", body: Body(concepto: arguments.concepto, categoria: arguments.categoria, monto: arguments.monto, fecha: fecha))
-        return "Gasto registrado: \(arguments.concepto) — $\(String(format: "%.2f", arguments.monto)) (\(arguments.categoria))."
+        let _: Resp = try await NoktaAPI.post("/api/gastos", body: Body(concepto: concepto, categoria: categoria, monto: monto, fecha: fecha))
+        return "Gasto registrado: \(concepto) — $\(String(format: "%.2f", monto)) (\(categoria))."
     }
 }

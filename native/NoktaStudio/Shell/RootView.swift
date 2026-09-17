@@ -4,7 +4,7 @@ import WebKit
 /// One entry per sidebar row in admin.html, same order/grouping/icons.
 /// Sections without a native screen yet fall back to the shared WKWebView,
 /// driven to the matching page via its `nav(id)` JS router.
-enum NoktaSection: String, CaseIterable, Identifiable {
+enum NoktaSection: String, CaseIterable, Identifiable, Hashable {
     case dashboard, calendario, alertas
     case nuevoTrabajo, trabajos, gastos, documentos
     case clientes, galerias
@@ -74,27 +74,27 @@ private let sidebarGroups: [SidebarGroup] = [
     SidebarGroup(title: "", items: [.asistente]),
 ]
 
-struct RootView: View {
-    private static let adminURL = URL(string: "https://nokta-studio.onrender.com/admin")!
+/// Shared state/wiring both platform shells need: the one persistent
+/// WKWebView instance (so it survives navigating away and back), the
+/// nav(id) side effect, and the unread-alerts badge count.
+@MainActor
+private final class RootShell {
+    static let adminURL = URL(string: "https://nokta-studio.onrender.com/admin")!
+}
 
-    @State private var selection: NoktaSection? = .dashboard
+struct RootView: View {
     @State private var webView = WKWebView(frame: .zero, configuration: makeNoktaWebViewConfiguration())
     @State private var isLoading = false
     @State private var canGoBack = false
     @State private var unreadAlertas = 0
 
     var body: some View {
-        NavigationSplitView {
-            sidebar
-        } detail: {
-            detailContent
-        }
-        .tint(NoktaPalette.ember)
-        .accentColor(NoktaPalette.ember)
-        .onChange(of: selection) { _, new in
-            if let pageId = new?.webPageId {
-                webView.evaluateJavaScript("if (typeof nav === 'function') { nav('\(pageId)'); }")
-            }
+        Group {
+            #if os(iOS)
+            iOSShell
+            #else
+            macShell
+            #endif
         }
         .task {
             if let alertas: [NoktaAlerta] = try? await NoktaAPI.get("/api/alertas") {
@@ -103,35 +103,115 @@ struct RootView: View {
         }
     }
 
-    /// `List(selection:)` (not a hand-rolled ScrollView+Button) is what makes
-    /// NavigationSplitView do the right thing on both platforms: on Mac/iPad
-    /// it swaps the detail column in place, on iPhone (compact) it pushes —
-    /// a plain Button only updated `selection` without ever navigating on iOS.
-    private var sidebar: some View {
-        List(selection: $selection) {
-            logoRow
-            ForEach(sidebarGroups, id: \.title) { group in
-                Section {
-                    ForEach(group.items) { item in
-                        sidebarRowLabel(item).tag(item)
+    private func onSelect(_ item: NoktaSection) {
+        if let pageId = item.webPageId {
+            webView.evaluateJavaScript("if (typeof nav === 'function') { nav('\(pageId)'); }")
+        }
+    }
+
+    @ViewBuilder
+    private func detailView(for item: NoktaSection) -> some View {
+        switch item {
+        case .dashboard: DashboardView()
+        case .asistente: AssistantView()
+        default: webPanel
+        }
+    }
+
+    private var webPanel: some View {
+        ZStack {
+            NoktaPalette.bg.ignoresSafeArea()
+            NoktaWebView(url: RootShell.adminURL, isLoading: $isLoading, canGoBack: $canGoBack, webView: webView)
+                .ignoresSafeArea()
+            if isLoading { ProgressView().tint(NoktaPalette.ember) }
+        }
+    }
+
+    // MARK: - macOS: NavigationSplitView with fully custom (Button-based)
+    // sidebar rows. Deliberately NOT `List(selection:)` — on macOS a
+    // selectable List always paints AppKit's system-accent selection
+    // highlight/focus ring behind the row (it composites on top of any
+    // `.listRowBackground`/content color we set), which fights the ember
+    // Liquid-Glass-adjacent look everywhere else in the app. A plain Button
+    // updating `@State selection` gives us full control of the "active row"
+    // appearance with zero system chrome.
+    #if os(macOS)
+    @State private var macSelection: NoktaSection = .dashboard
+
+    private var macShell: some View {
+        NavigationSplitView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    logoRow
+                    ForEach(sidebarGroups, id: \.title) { group in
+                        if !group.title.isEmpty {
+                            Text(group.title)
+                                .font(NoktaFont.sidebarSection)
+                                .tracking(2)
+                                .foregroundStyle(NoktaPalette.muted)
+                                .padding(.horizontal, 20)
+                                .padding(.top, 16)
+                                .padding(.bottom, 6)
+                        }
+                        ForEach(group.items) { item in
+                            Button {
+                                macSelection = item
+                                onSelect(item)
+                            } label: {
+                                sidebarRowLabel(item, isActive: macSelection == item)
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
-                } header: {
-                    if !group.title.isEmpty {
-                        Text(group.title)
-                            .font(NoktaFont.sidebarSection)
-                            .tracking(2)
-                            .foregroundStyle(NoktaPalette.muted)
+                }
+                .padding(.top, 4)
+            }
+            .background(NoktaPalette.sb)
+            .navigationSplitViewColumnWidth(220)
+        } detail: {
+            detailView(for: macSelection)
+        }
+    }
+    #endif
+
+    // MARK: - iOS: plain NavigationStack + real NavigationLink push. A
+    // pushed-and-popped row doesn't retain a persistent "selected" system
+    // look the way a split-view sidebar List does, so this doesn't need the
+    // same workaround as macOS.
+    #if os(iOS)
+    private var iOSShell: some View {
+        NavigationStack {
+            List {
+                logoRow
+                ForEach(sidebarGroups, id: \.title) { group in
+                    Section {
+                        ForEach(group.items) { item in
+                            NavigationLink(value: item) {
+                                sidebarRowLabel(item, isActive: false)
+                            }
+                            .listRowBackground(NoktaPalette.sb)
+                            .listRowSeparator(.hidden)
+                        }
+                    } header: {
+                        if !group.title.isEmpty {
+                            Text(group.title)
+                                .font(NoktaFont.sidebarSection)
+                                .tracking(2)
+                                .foregroundStyle(NoktaPalette.muted)
+                        }
                     }
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(NoktaPalette.sb)
+            .navigationDestination(for: NoktaSection.self) { item in
+                detailView(for: item)
+                    .onAppear { onSelect(item) }
+            }
         }
-        .listStyle(.sidebar)
-        .scrollContentBackground(.hidden)
-        .background(NoktaPalette.sb)
-        .tint(NoktaPalette.ember)
-        .focusEffectDisabled()
-        .navigationSplitViewColumnWidth(220)
     }
+    #endif
 
     private var logoRow: some View {
         HStack(spacing: 0) {
@@ -139,13 +219,15 @@ struct RootView: View {
             Text(".").foregroundStyle(NoktaPalette.ember)
         }
         .font(NoktaFont.sidebarLogo)
-        .listRowBackground(Color.clear)
+        .padding(.horizontal, 20)
+        .padding(.top, 4)
+        .padding(.bottom, 20)
+        .listRowBackground(NoktaPalette.sb)
         .listRowSeparator(.hidden)
     }
 
-    private func sidebarRowLabel(_ item: NoktaSection) -> some View {
-        let isActive = selection == item
-        return HStack(spacing: 10) {
+    private func sidebarRowLabel(_ item: NoktaSection, isActive: Bool) -> some View {
+        HStack(spacing: 10) {
             Text(item.icon).font(.system(size: 16)).frame(width: 20, alignment: .center)
             Text(item.label).font(NoktaFont.sidebarLink)
             Spacer(minLength: 0)
@@ -158,40 +240,13 @@ struct RootView: View {
                     .background(NoktaPalette.ember, in: Capsule())
             }
         }
+        .padding(.vertical, 9)
+        .padding(.horizontal, 20)
         .foregroundStyle(isActive ? NoktaPalette.cream : NoktaPalette.muted)
-        // Opaque, content-level background (not .listRowBackground) — on
-        // macOS the sidebar List always paints its own system-accent-blue
-        // selection highlight behind the row, on top of .listRowBackground,
-        // so the only way to show our ember tint instead is to paint an
-        // opaque layer as part of the row's own content, which composites
-        // after (in front of) that highlight.
         .background(isActive ? NoktaPalette.sidebarActiveBg : NoktaPalette.sb)
-        .listRowBackground(Color.clear)
-        .listRowSeparator(.hidden)
         .overlay(alignment: .leading) {
             Rectangle().fill(isActive ? NoktaPalette.ember : .clear).frame(width: 3)
         }
-        .focusEffectDisabled()
-    }
-
-    @ViewBuilder
-    private var detailContent: some View {
-        switch selection {
-        case .dashboard, .none:
-            DashboardView()
-        case .asistente:
-            AssistantView()
-        default:
-            webPanel
-        }
-    }
-
-    private var webPanel: some View {
-        ZStack {
-            NoktaPalette.bg.ignoresSafeArea()
-            NoktaWebView(url: Self.adminURL, isLoading: $isLoading, canGoBack: $canGoBack, webView: webView)
-                .ignoresSafeArea()
-            if isLoading { ProgressView().tint(NoktaPalette.ember) }
-        }
+        .contentShape(Rectangle())
     }
 }

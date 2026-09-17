@@ -19,10 +19,6 @@ enum NoktaPalette {
     static let blue = Color(hex: 0x6495ED)
     /// `#e55` (quincena "retrasado") — distinct from `--red`.
     static let overdue = Color(hex: 0xEE5555)
-    /// `sb` blended with 8% `ember` — precomputed as a solid/opaque color so
-    /// it can fully mask macOS's system-accent sidebar selection highlight
-    /// (see RootView's sidebarRowLabel for why this must be opaque).
-    static let sidebarActiveBg = Color(hex: 0x1E1612)
 
     /// Chart.js doughnut palette for "Por tipo de servicio".
     static let servicioPie: [Color] = [

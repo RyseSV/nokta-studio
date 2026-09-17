@@ -232,7 +232,9 @@ struct RootView: View {
             Text(item.label).font(NoktaFont.sidebarLink)
             Spacer(minLength: 0)
             if item == .alertas, unreadAlertas > 0 {
-                Text("\(unreadAlertas)")
+                // String(_:), not a Text("\(unreadAlertas)") literal — a direct
+                // interpolated-Int Text applies locale grouping (1,234) by default.
+                Text(String(unreadAlertas))
                     .font(.system(size: 10))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 7)
@@ -243,7 +245,8 @@ struct RootView: View {
         .padding(.vertical, 9)
         .padding(.horizontal, 20)
         .foregroundStyle(isActive ? NoktaPalette.cream : NoktaPalette.muted)
-        .background(isActive ? NoktaPalette.sidebarActiveBg : NoktaPalette.sb)
+        .background(isActive ? Color.clear : NoktaPalette.sb)
+        .glassEffect(isActive ? .regular.tint(NoktaPalette.ember) : .identity, in: RoundedRectangle(cornerRadius: NoktaRadius.button))
         .overlay(alignment: .leading) {
             Rectangle().fill(isActive ? NoktaPalette.ember : .clear).frame(width: 3)
         }

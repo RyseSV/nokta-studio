@@ -75,6 +75,7 @@ final class DashboardViewModel {
 
 struct DashboardView: View {
     @State private var vm = DashboardViewModel()
+    private var anioActual: Int { Calendar.current.component(.year, from: Date()) }
 
     var body: some View {
         ScrollView {
@@ -97,38 +98,46 @@ struct DashboardView: View {
             Spacer()
             Picker("", selection: $vm.mesSeleccionado) {
                 ForEach(0..<12, id: \.self) { i in
-                    Text("\(FechaUtil.mesesCompletos[i]) \(Calendar.current.component(.year, from: Date()))").tag(i)
+                    // Plain String, not a Text("...\(year)...") literal — SwiftUI's
+                    // LocalizedStringKey interpolation formats interpolated numbers
+                    // with locale grouping by default, which turned "2026" into "2,026".
+                    Text(FechaUtil.mesesCompletos[i] + " " + String(anioActual)).tag(i)
                 }
             }
             .pickerStyle(.menu)
             .tint(NoktaPalette.cream)
+            .padding(.horizontal, 14).padding(.vertical, 8)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: NoktaRadius.button))
         }
     }
 
     private var cardsGrid: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 16)], spacing: 16) {
-            card(
-                label: "INGRESOS MES PASADO", value: fmt(vm.ingresosPrev),
-                sub: vm.ingresosPrev > 0 ? "Cobrado el mes anterior" : "Sin ingresos el mes anterior"
-            )
-            card(
-                label: "INGRESOS DEL MES", value: fmt(vm.ingresos),
-                sub: vm.ingresos > 0 ? "\(vm.pctVsMesAnterior >= 0 ? "▲ +" : "▼ ")\(Int(vm.pctVsMesAnterior))% vs mes anterior" : "Pendiente de cobro",
-                subColor: vm.ingresos > 0 ? (vm.pctVsMesAnterior >= 0 ? NoktaPalette.green : NoktaPalette.red) : NoktaPalette.muted
-            )
-            card(
-                label: "GANANCIA NETA", value: fmt(vm.ganancia),
-                sub: "\(vm.ingresos > 0 ? Int(vm.ganancia / vm.ingresos * 100) : 0)% margen"
-            )
-            card(
-                label: "PENDIENTE DE COBRO", value: fmt(vm.pendiente.monto),
-                sub: "\(vm.pendiente.count) trabajo\(vm.pendiente.count == 1 ? "" : "s")",
-                subColor: NoktaPalette.yellow, valueColor: NoktaPalette.yellow
-            )
+        GlassEffectContainer(spacing: 16) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 16)], spacing: 16) {
+                card(
+                    label: "INGRESOS MES PASADO", value: fmt(vm.ingresosPrev),
+                    sub: vm.ingresosPrev > 0 ? "Cobrado el mes anterior" : "Sin ingresos el mes anterior"
+                )
+                card(
+                    label: "INGRESOS DEL MES", value: fmt(vm.ingresos),
+                    sub: vm.ingresos > 0 ? "\(vm.pctVsMesAnterior >= 0 ? "▲ +" : "▼ ")\(Int(vm.pctVsMesAnterior))% vs mes anterior" : "Pendiente de cobro",
+                    subColor: vm.ingresos > 0 ? (vm.pctVsMesAnterior >= 0 ? NoktaPalette.green : NoktaPalette.red) : NoktaPalette.muted
+                )
+                card(
+                    label: "GANANCIA NETA", value: fmt(vm.ganancia),
+                    sub: "\(vm.ingresos > 0 ? Int(vm.ganancia / vm.ingresos * 100) : 0)% margen"
+                )
+                card(
+                    label: "PENDIENTE DE COBRO", value: fmt(vm.pendiente.monto),
+                    sub: "\(vm.pendiente.count) trabajo\(vm.pendiente.count == 1 ? "" : "s")",
+                    subColor: NoktaPalette.yellow, valueColor: NoktaPalette.yellow
+                )
+            }
         }
     }
 
     private var chartsRow: some View {
+        GlassEffectContainer(spacing: 16) {
         HStack(alignment: .top, spacing: 16) {
             chartCard(title: "Ingresos últimos 4 meses") {
                 Chart(vm.barData) { d in
@@ -166,6 +175,7 @@ struct DashboardView: View {
             }
             .frame(maxWidth: .infinity)
         }
+        }
     }
 
     private var ultimosTrabajosTable: some View {
@@ -189,8 +199,7 @@ struct DashboardView: View {
                 }
             }
         }
-        .background(NoktaPalette.card)
-        .clipShape(RoundedRectangle(cornerRadius: NoktaRadius.card))
+        .glassEffect(.regular.tint(NoktaPalette.card), in: RoundedRectangle(cornerRadius: NoktaRadius.card))
     }
 
     private var tableHeaderRow: some View {
@@ -235,8 +244,7 @@ struct DashboardView: View {
             content()
         }
         .padding(20)
-        .background(NoktaPalette.card)
-        .clipShape(RoundedRectangle(cornerRadius: NoktaRadius.card))
+        .glassEffect(.regular.tint(NoktaPalette.card), in: RoundedRectangle(cornerRadius: NoktaRadius.card))
     }
 
     private func card(label: String, value: String, sub: String, subColor: Color = NoktaPalette.muted, valueColor: Color = NoktaPalette.cream) -> some View {
@@ -247,8 +255,7 @@ struct DashboardView: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(NoktaPalette.card)
-        .clipShape(RoundedRectangle(cornerRadius: NoktaRadius.card))
+        .glassEffect(.regular.tint(NoktaPalette.card), in: RoundedRectangle(cornerRadius: NoktaRadius.card))
     }
 
     private func fmt(_ v: Double) -> String { "$" + String(format: "%.2f", v) }

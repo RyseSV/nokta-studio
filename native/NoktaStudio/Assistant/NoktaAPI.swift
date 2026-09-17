@@ -45,18 +45,56 @@ struct FlexInt: Codable {
     }
 }
 
+/// Tolerant string decoding for fields the server never parses at all
+/// (`cantPiezas`, `diaCobro`) — always written as a string from the web
+/// form, but decode a stray JSON number too rather than crash the whole
+/// `[NoktaTrabajo]` fetch over one odd document.
+@propertyWrapper
+struct FlexString: Codable {
+    var wrappedValue: String?
+    init(wrappedValue: String?) { self.wrappedValue = wrappedValue }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        if let s = try? c.decode(String.self) { wrappedValue = s }
+        else if let d = try? c.decode(Double.self) { wrappedValue = d == d.rounded() ? String(Int(d)) : String(d) }
+        else { wrappedValue = nil }
+    }
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        if let v = wrappedValue { try c.encode(v) } else { try c.encodeNil() }
+    }
+}
+extension KeyedDecodingContainer {
+    func decode(_ type: FlexString.Type, forKey key: Key) throws -> FlexString {
+        try decodeIfPresent(FlexString.self, forKey: key) ?? FlexString(wrappedValue: nil)
+    }
+}
+
 struct NoktaTrabajo: Codable {
     var id: String
     var cliente: String
+    var clienteId: String?
     var servicio: String
     var grupo: String?
+    var grupoNombre: String?
     var estado: String
     @Flex var monto: Double?
     @Flex var anticipo: Double?
     @Flex var saldo: Double?
     @Flex var pagoMensual: Double?
     var fecha: String?
+    var horaInicio: String?
+    var horaFin: String?
+    var lugar: String?
+    var empresa: String?
+    @FlexString var cantPiezas: String?
+    var formato: String?
+    var fechaEntrega: String?
+    var alcance: String?
     var fechaInicio: String?
+    @FlexString var diaCobro: String?
+    var estadoContrato: String?
+    var notas: String?
     var creado: String?
     var quincenas: [NoktaQuincena]?
     var sesiones: [NoktaSesion]?

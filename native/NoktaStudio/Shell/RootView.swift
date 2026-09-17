@@ -57,8 +57,7 @@ enum NoktaSection: String, CaseIterable, Identifiable, Hashable {
     /// sidebar `onclick="nav('...')"` handlers for the exact id list.
     var webPageId: String? {
         switch self {
-        case .dashboard, .asistente: nil
-        case .nuevoTrabajo: "nuevo-trabajo"
+        case .dashboard, .asistente, .trabajos, .nuevoTrabajo: nil
         default: rawValue
         }
     }
@@ -117,11 +116,22 @@ struct RootView: View {
 
     @ViewBuilder
     private func detailView(for item: NoktaSection) -> some View {
-        switch item {
-        case .dashboard: DashboardView()
-        case .asistente: AssistantView()
-        default: webPanel
+        Group {
+            switch item {
+            case .dashboard: DashboardView()
+            case .asistente: AssistantView()
+            case .nuevoTrabajo: NuevoTrabajoView()
+            case .trabajos: TrabajosContainerView()
+            default: webPanel
+            }
         }
+        // Without this, switching away from a section that owns its own
+        // NavigationStack (e.g. Trabajos, mid-push into a detail row) can
+        // leave that pushed content on screen under the newly-selected
+        // sidebar item — NavigationSplitView doesn't always tear down a
+        // nested stack's navigation state just because the branch changed.
+        // Forcing a distinct identity per section guarantees a clean rebuild.
+        .id(item)
     }
 
     private var webPanel: some View {

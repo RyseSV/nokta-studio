@@ -1513,6 +1513,7 @@ async function openTrabajo(id){
   _panelTrabajoId = id;
   const g = t.grupo || SVC_GRUPO[t.servicio] || '';
   const esRecurrente = t.servicio === 'Clases';
+  if(!allClienteEstados.length) allClienteEstados = await api('/api/clientes-estados');
   if(g==='B' && !(t.quincenas||[]).length){
     allTrabajos = await api('/api/trabajos');
     const fresh = allTrabajos.find(x=>x.id===id);
@@ -1561,7 +1562,7 @@ async function openTrabajo(id){
         <div style="font-size:22px;font-weight:700">$${pm.toFixed(2)}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:2px">$${(pm/2).toFixed(2)} por quincena</div>
       </div>`;
-    infoFields += pf('INICIO CONTRATO', fmtFecha(t.fechaInicio)) + pf('ESTADO CONTRATO', t.estadoContrato);
+    infoFields += pf('INICIO CONTRATO', fmtFecha(t.fechaInicio)) + pf('ESTADO CONTRATO', ESTADO_CLIENTE_LABEL[estadoClienteDe(t.cliente)]);
   } else if(g==='C'){
     infoFields += pf('PIEZAS', t.cantPiezas) + pf('FORMATO', t.formato) + pf('ENTREGA ESTIMADA', fmtFecha(t.fechaEntrega));
     infoFields += `<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">MONTO TOTAL</div><div style="font-size:22px;font-weight:700">$${parseFloat(t.monto||0).toFixed(2)}</div></div>${pf('SALDO', '$'+parseFloat(t.saldo||0).toFixed(2))}`;
@@ -1570,10 +1571,17 @@ async function openTrabajo(id){
     infoFields += `<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">MONTO TOTAL</div><div style="font-size:22px;font-weight:700">$${parseFloat(t.monto||0).toFixed(2)}</div></div>${pf('SALDO', '$'+parseFloat(t.saldo||0).toFixed(2))}`;
   }
 
+  // Para clientes recurrentes (paquete mensual o clases), "ESTADO" refleja si
+  // la relación con el cliente sigue activa — no si ya se pagó todo, eso ya
+  // se ve en el saldo/quincenas/sesiones. Un cliente pausado no debería
+  // seguir marcado "Pendiente" solo porque queda un saldo por cobrar.
+  const estadoPillHtml = (g==='B' || esRecurrente)
+    ? (() => { const er = estadoClienteDe(t.cliente); return `<span class="pill ${ESTADO_CLIENTE_PILL[er]}">${ESTADO_CLIENTE_LABEL[er]}</span>`; })()
+    : `<span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span>`;
   infoFields += `
     <div style="padding:14px 0;border-bottom:1px solid var(--border)">
       <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">ESTADO</div>
-      <span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span>
+      ${estadoPillHtml}
     </div>
     ${t.notas?pf('NOTAS', t.notas):''}`;
 
@@ -1596,7 +1604,10 @@ function _generarPeriodos(t){
   let fin = new Date(hoy.getFullYear(), hoy.getMonth()+2, 1);
   // Contrato pausado/cancelado: no generar quincenas más allá de lo ya
   // registrado, para no seguir marcando meses futuros como pendientes/vencidos.
-  if(t?.estadoContrato && t.estadoContrato!=='activo'){
+  // Se lee el estado EN VIVO de la relación con el cliente (allClienteEstados),
+  // no t.estadoContrato — ese campo se guarda solo al crear el trabajo y
+  // queda desactualizado si luego pausas/cancelas al cliente desde Clientes.
+  if(t?.cliente && estadoClienteDe(t.cliente)!=='activo'){
     const periodosGuardados=(t.quincenas||[]).map(q=>q.periodo).sort();
     const ultimo=periodosGuardados[periodosGuardados.length-1];
     if(ultimo){

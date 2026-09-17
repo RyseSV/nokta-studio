@@ -189,6 +189,12 @@ async function addAlert(tipo, datos) {
 async function checkAlerts() {
   const now = new Date();
 
+  // Estado real de la relación por nombre de cliente (activo/pausado/cancelado) —
+  // usado para congelar la generación de quincenas de contratos pausados/cancelados,
+  // igual que _generarPeriodos en admin.html (misma fuente de verdad en ambos lados).
+  const estadosCliente = await ClienteEstado.find({}).lean();
+  const estadoClienteDe = (nombre) => estadosCliente.find(e => e.nombre === nombre)?.estado || 'activo';
+
   // Expiring gallery links (≤ 3 days)
   const clientes = await Cliente.find({});
   for (const c of clientes) {
@@ -229,7 +235,7 @@ async function checkAlerts() {
     let fin = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     // Contrato pausado/cancelado: no seguir generando/alertando meses
     // posteriores al último periodo ya registrado (ver _generarPeriodos en admin.html).
-    if (t.estadoContrato && t.estadoContrato !== 'activo') {
+    if (estadoClienteDe(t.cliente) !== 'activo') {
       const periodosGuardados = (t.quincenas || []).map(r => r.periodo).sort();
       const ultimo = periodosGuardados[periodosGuardados.length - 1];
       if (ultimo) {

@@ -23,7 +23,11 @@ struct CrearEventoArgs {
 
 struct CrearEventoTool: Tool {
     let name = "crear_evento"
-    let description = "Agrega un evento al calendario de Nokta Studio."
+    let description = """
+    Agrega SOLO una entrada al calendario (recordatorio de fecha/hora/lugar) — no genera ningún ingreso, \
+    saldo ni factura y no cuenta en el dashboard. Si el usuario dice 'trabajo', 'cobro', 'clase', 'venta', \
+    pide registrar un pago, o quiere marcarlo como pagado, usa crear_trabajo en su lugar, NUNCA esta herramienta.
+    """
     typealias Arguments = CrearEventoArgs
 
     func call(arguments: CrearEventoArgs) async throws -> String {

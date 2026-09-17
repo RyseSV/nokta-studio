@@ -71,7 +71,14 @@ final class AssistantViewModel {
         la factura, el recibo, o simplemente registrar el pago, usa SIEMPRE registrar_pago_quincena en vez de \
         gestionar_quincena — esa herramienta calcula la fecha real, detecta si el pago llegó atrasado, y genera \
         el recibo con el PDF en un solo paso. Nunca calcules tú si algo está atrasado ni inventes fechas: esa \
-        herramienta ya usa la fecha real del dispositivo.
+        herramienta ya usa la fecha real del dispositivo. \
+        crear_trabajo y crear_evento suenan parecido pero NO son intercambiables: crear_trabajo registra un \
+        ingreso real (cuenta en dashboard, saldo, facturación) — úsala siempre que el usuario diga 'trabajo', \
+        'cobro', 'clase', 'venta' o pida registrar un pago, aunque tenga fecha/hora como un evento. crear_evento \
+        es solo un recordatorio de calendario sin dinero asociado — úsala solo cuando el usuario pida agendar \
+        algo explícitamente sin mencionar cobro. Si el usuario pide crear un trabajo Y marcarlo pagado en el \
+        mismo mensaje, hazlo en una sola llamada a crear_trabajo usando su argumento 'pagado' — no uses \
+        marcar_trabajo_pagado después, esa herramienta es solo para trabajos que ya existían de antes.
         """
         return LanguageModelSession(
             tools: [

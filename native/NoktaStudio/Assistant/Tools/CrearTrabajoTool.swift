@@ -14,12 +14,14 @@ struct CrearTrabajoArgs {
     'Diseño y desarrollo web'.
     """)
     var servicio: String
-    @Guide(description: "Fecha del evento/entrega/inicio de contrato, formato YYYY-MM-DD, SOLO si el usuario la mencionó explícitamente. Si no la mencionó, deja este campo vacío/nulo y pregúntale la fecha en tu respuesta en vez de adivinar una — nunca asumas el día 1 del mes ni la fecha de hoy para esto.")
+    @Guide(description: "Fecha de la sesión/entrega/inicio de contrato, formato YYYY-MM-DD, extraída literalmente de lo que dijo el usuario en cualquier formato (ej. 'el sábado 12', '2026-09-12', '12 de septiembre') — conviértela tú mismo a YYYY-MM-DD, nunca vuelvas a preguntarla si ya aparece en el mensaje. Deja este campo vacío/nulo SOLO si el usuario genuinamente no mencionó ninguna fecha; en ese caso pregúntale antes de crear el trabajo — nunca asumas el día 1 del mes ni la fecha de hoy.")
     var fecha: String?
     @Guide(description: "Monto total en dólares (no aplica igual para paquetes mensuales, ahí usa pagoMensual)")
     var monto: Double?
     @Guide(description: "Anticipo pagado, en dólares")
     var anticipo: Double?
+    @Guide(description: "true SOLO si el usuario dice explícitamente que ya se pagó / que lo marques como pagado (ej. 'y márcalo como pagado', 'ya me pagaron'). Si es true y no diste anticipo, se usa el monto completo como anticipo — no hace falta un segundo paso para marcarlo pagado.")
+    var pagado: Bool?
     @Guide(description: "Solo para paquetes mensuales (grupo B): pago mensual en dólares")
     var pagoMensual: Double?
     @Guide(description: "Solo para paquetes mensuales: día del mes en que se cobra (1-31)")
@@ -36,13 +38,20 @@ struct CrearTrabajoArgs {
 /// grupo (A–E) from servicio and fills only the fields that group uses.
 struct CrearTrabajoTool: Tool {
     let name = "crear_trabajo"
-    let description = "Crea un nuevo trabajo/proyecto para un cliente (evento, paquete mensual, edición de video, branding o desarrollo web)."
+    let description = """
+    Registra un INGRESO/trabajo financiero para un cliente (evento, clase, paquete mensual, edición de video, \
+    branding o desarrollo web) — crea el registro que cuenta para dashboard, saldo pendiente y facturación. \
+    Usa esta herramienta (no crear_evento) siempre que el usuario diga 'trabajo', 'cobro', 'clase', 'venta', \
+    'ingreso' o pida registrar un pago, incluso si el servicio tiene fecha/hora como un evento. Puedes marcarlo \
+    pagado en la misma llamada con el argumento 'pagado' — no hace falta una segunda herramienta para eso.
+    """
     typealias Arguments = CrearTrabajoArgs
 
     func call(arguments: CrearTrabajoArgs) async throws -> String {
         let grupo = ServicioGrupoMap.grupo(for: arguments.servicio)
         let monto = arguments.pagoMensual ?? arguments.monto ?? 0
-        let anticipo = arguments.anticipo ?? 0
+        let pagado = arguments.pagado ?? false
+        let anticipo = arguments.anticipo ?? (pagado ? monto : 0)
 
         var fields: [String: AnyEncodableValue] = [
             "id": .string("t\(Int(Date().timeIntervalSince1970 * 1000))"),
@@ -50,7 +59,7 @@ struct CrearTrabajoTool: Tool {
             "servicio": .string(arguments.servicio),
             "grupo": .string(grupo),
             "grupoNombre": .string(ServicioGrupoMap.nombres[grupo] ?? grupo),
-            "estado": .string("pendiente"),
+            "estado": .string(pagado ? "pagado" : "pendiente"),
             "monto": .double(monto),
             "anticipo": .double(anticipo),
             "saldo": .double(max(0, monto - anticipo)),
@@ -70,7 +79,8 @@ struct CrearTrabajoTool: Tool {
 
         struct Resp: Decodable { let ok: Bool }
         let _: Resp = try await NoktaAPI.post("/api/trabajos", body: AnyEncodableDict(fields))
-        return "Trabajo creado: \(arguments.cliente) — \(arguments.servicio), monto $\(String(format: "%.2f", monto))."
+        let estadoTxt = pagado ? "pagado" : "pendiente"
+        return "Trabajo creado: \(arguments.cliente) — \(arguments.servicio), monto $\(String(format: "%.2f", monto)), estado \(estadoTxt)."
     }
 }
 

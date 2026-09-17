@@ -1079,7 +1079,7 @@ async function loadDashboard(){
   const periodoMes=`${year}-${String(mes+1).padStart(2,'0')}`;
   const periodoPrev=`${year}-${String((mes===0?12:mes)).padStart(2,'0')}`;
 
-  // Ingresos del mes: solo quincenas ya PAGADAS para B; monto real para otros grupos
+  // Ingresos del mes: solo quincenas/sesiones ya PAGADAS para B/recurrentes; monto real para otros grupos
   function ingresosDelPeriodo(periodo){
     let total=0;
     allTrabajos.forEach(t=>{
@@ -1087,6 +1087,12 @@ async function loadDashboard(){
       if(g==='B'){
         (t.quincenas||[]).filter(q=>q.periodo===periodo&&q.estado==='pagado').forEach(q=>{
           total+=parseFloat(q.monto||0);
+        });
+      } else if((t.sesiones||[]).length){
+        t.sesiones.filter(s=>s.estado==='pagado').forEach(s=>{
+          const ma=mesAnioDeFecha(s.fecha||'');
+          const dp=ma?`${ma.anio}-${String(ma.mes+1).padStart(2,'0')}`:'';
+          if(dp===periodo) total+=parseFloat(s.monto||0);
         });
       } else {
         const ma=mesAnioDeFecha(t.fecha||t.fechaInicio||'');
@@ -1119,6 +1125,12 @@ async function loadDashboard(){
         return a;
       },0);
     }
+    if((t.sesiones||[]).length){
+      return s + t.sesiones.reduce((a,ses)=>{
+        const ma=mesAnioDeFecha(ses.fecha||''); const dp=ma?`${ma.anio}-${String(ma.mes+1).padStart(2,'0')}`:'';
+        return dp===periodoMes&&ses.estado!=='pagado' ? a+parseFloat(ses.monto||0) : a;
+      },0);
+    }
     const ma=mesAnioDeFecha(t.fecha||''); const dp=ma?`${ma.anio}-${String(ma.mes+1).padStart(2,'0')}`:'';
     return dp===periodoMes&&t.estado==='pendiente'?s+(parseFloat(t.saldo)||0):s;
   },0);
@@ -1127,6 +1139,10 @@ async function loadDashboard(){
     if(g==='B') return [1,2].some(qi=>{
       const stored=(t.quincenas||[]).find(r=>r.periodo===periodoMes&&r.q===qi);
       return !stored||(stored.estado!=='pagado'&&stored.estado!=='oculta');
+    });
+    if((t.sesiones||[]).length) return t.sesiones.some(ses=>{
+      const ma=mesAnioDeFecha(ses.fecha||''); const dp=ma?`${ma.anio}-${String(ma.mes+1).padStart(2,'0')}`:'';
+      return dp===periodoMes && ses.estado!=='pagado';
     });
     const ma=mesAnioDeFecha(t.fecha||''); const dp=ma?`${ma.anio}-${String(ma.mes+1).padStart(2,'0')}`:'';
     return dp===periodoMes&&t.estado==='pendiente';

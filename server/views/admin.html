@@ -817,6 +817,25 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
   </div>
 </div>
 
+<!-- ═══ MODAL AGREGAR SESIÓN (clases / pagos recurrentes) ═══ -->
+<div class="modal-overlay" id="modal-agregar-sesion">
+  <div class="modal" style="max-width:340px">
+    <div class="modal-title">Agregar sesión</div>
+    <div class="form-group" style="margin-top:4px">
+      <label>Fecha</label>
+      <input type="date" id="as-fecha" style="width:100%">
+    </div>
+    <div class="form-group" style="margin-top:12px">
+      <label>Monto ($)</label>
+      <input type="number" id="as-monto" step="0.01" min="0" style="width:100%">
+    </div>
+    <div class="form-actions" style="margin-top:20px">
+      <button class="btn btn-primary" onclick="confirmarAgregarSesion()">＋ Agregar</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-agregar-sesion')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ REPORTE PRINT ═══ -->
 <div id="reporte-print" style="display:none"></div>
 
@@ -1355,7 +1374,7 @@ async function crearClienteRapido(e){
   e.preventDefault();
   const nombre = document.getElementById('nc-rapido-nombre').value;
   const wa = document.getElementById('nc-rapido-wa').value;
-  const r = await api('/api/clientes', { method:'POST', body: JSON.stringify({ nombre, whatsapp: wa, tipo:'otro', dias:0 }) });
+  const r = await api('/api/clientes', { method:'POST', body: JSON.stringify({ nombre, whatsapp: wa, tipo:'contacto', dias:0 }) });
   if (r.ok && r.cliente) {
     allClientes = await api('/api/clientes');
     seleccionarCliente(r.cliente._id, r.cliente.nombre);
@@ -1477,16 +1496,20 @@ async function openTrabajo(id){
   const t=allTrabajos.find(t=>t.id===id); if(!t) return;
   _panelTrabajoId = id;
   const g = t.grupo || SVC_GRUPO[t.servicio] || '';
+  const esRecurrente = t.servicio === 'Clases';
   if(g==='B' && !(t.quincenas||[]).length){
     allTrabajos = await api('/api/trabajos');
     const fresh = allTrabajos.find(x=>x.id===id);
     if(fresh) Object.assign(t, fresh);
     if(!(t.quincenas||[]).length) await _autoGenerarQuincenas(t);
   }
+  if(esRecurrente && !(t.sesiones||[]).length){
+    await _autoGenerarSesiones(t);
+  }
 
   document.getElementById('td-title').textContent = t.cliente;
   document.getElementById('td-actions').innerHTML = `
-    ${g!=='B'&&t.estado!=='pagado'?`<button class="btn btn-primary btn-sm" onclick="marcarPagado('${t.id}')">✓ Marcar pagado</button>`:''}
+    ${g!=='B'&&!esRecurrente&&t.estado!=='pagado'?`<button class="btn btn-primary btn-sm" onclick="marcarPagado('${t.id}')">✓ Marcar pagado</button>`:''}
     <button class="btn btn-danger btn-sm" onclick="eliminarTrabajo('${t.id}')">🗑 Eliminar</button>`;
 
   const pf = (label, val) => val ? `
@@ -1540,7 +1563,7 @@ async function openTrabajo(id){
 
   document.getElementById('td-body').innerHTML = `
     <div class="section-card">${infoFields}</div>
-    <div>${g==='B' ? renderQuincenasTabla(t) : '<div class="section-card" style="color:var(--muted);font-size:14px;padding:32px;text-align:center">Sin pagos por quincena para este tipo de servicio.</div>'}</div>`;
+    <div>${g==='B' ? renderQuincenasTabla(t) : esRecurrente ? renderSesionesPanel(t) : '<div class="section-card" style="color:var(--muted);font-size:14px;padding:32px;text-align:center">Sin pagos por quincena para este tipo de servicio.</div>'}</div>`;
 
   animateStatNums();
 
@@ -1572,6 +1595,91 @@ async function _autoGenerarQuincenas(t){
   }));
   const res = await api('/api/trabajos/'+t.id+'/quincenas',{method:'PATCH',body:JSON.stringify({quincenas:qs})});
   t.quincenas = res.quincenas || qs;
+}
+
+// ── Sesiones: pagos recurrentes sueltos (ej. clases semanales) ──
+async function _autoGenerarSesiones(t){
+  const sesiones = [{
+    id: 's'+Date.now(),
+    fecha: t.fecha || new Date().toISOString().slice(0,10),
+    monto: parseFloat(t.monto || 20) || 20,
+    estado: t.estado==='pagado' ? 'pagado' : 'pendiente',
+    fechaPago: t.estado==='pagado' ? (t.creado || new Date().toISOString()) : null
+  }];
+  const res = await api('/api/trabajos/'+t.id+'/sesiones',{method:'PATCH',body:JSON.stringify({sesiones})});
+  if(res.trabajo) Object.assign(t, res.trabajo);
+}
+
+function renderSesionesPanel(t){
+  const sesiones = [...(t.sesiones||[])].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+  const rows = sesiones.map(s => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:14px;font-weight:600">${fmtFecha(s.fecha)}</div>
+        <div style="font-size:12px;color:var(--muted)">$${parseFloat(s.monto||0).toFixed(2)}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="pill ${s.estado==='pagado'?'pill-green':'pill-yellow'}">${s.estado==='pagado'?'Pagado':'Pendiente'}</span>
+        ${s.estado!=='pagado'?`<button class="btn btn-sm" style="padding:5px 14px;font-size:12px;background:var(--green);color:#000;border-radius:6px" onclick="marcarSesionPagada('${t.id}','${s.id}')">Pagado</button>`:''}
+        <button class="btn btn-sm" style="padding:5px 10px;background:transparent;border:1px solid #e55;border-radius:6px;line-height:0;cursor:pointer" onclick="eliminarSesion('${t.id}','${s.id}')" title="Eliminar sesión"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+      </div>
+    </div>`).join('');
+  return `<div class="section-card" style="padding:0">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:.08em;color:var(--muted)">SESIONES</div>
+    ${rows || '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">Sin sesiones registradas</div>'}
+    <div style="padding:14px 16px">
+      <button class="btn btn-ghost btn-sm" style="font-size:12px" onclick="abrirAgregarSesion('${t.id}')">＋ Agregar sesión</button>
+    </div>
+  </div>`;
+}
+
+async function _guardarSesiones(trabajoId, sesiones){
+  const t = allTrabajos.find(x=>x.id===trabajoId); if(!t) return;
+  const res = await api('/api/trabajos/'+trabajoId+'/sesiones',{method:'PATCH',body:JSON.stringify({sesiones})});
+  if(res.trabajo) Object.assign(t, res.trabajo);
+  await openTrabajo(trabajoId);
+  loadDashboard();
+}
+
+async function marcarSesionPagada(trabajoId, sesionId){
+  const t = allTrabajos.find(x=>x.id===trabajoId); if(!t) return;
+  const sesiones = (t.sesiones||[]).map(s => s.id===sesionId ? {...s, estado:'pagado', fechaPago:new Date().toISOString()} : s);
+  await _guardarSesiones(trabajoId, sesiones);
+  toast('✓ Sesión marcada como pagada');
+}
+
+async function eliminarSesion(trabajoId, sesionId){
+  if(!confirm('¿Eliminar esta sesión?')) return;
+  const t = allTrabajos.find(x=>x.id===trabajoId); if(!t) return;
+  const sesiones = (t.sesiones||[]).filter(s => s.id!==sesionId);
+  await _guardarSesiones(trabajoId, sesiones);
+}
+
+function abrirAgregarSesion(trabajoId){
+  const t = allTrabajos.find(x=>x.id===trabajoId); if(!t) return;
+  const sesiones = [...(t.sesiones||[])].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+  const ultima = sesiones[sesiones.length-1];
+  let fechaDefault = new Date().toISOString().slice(0,10);
+  if(ultima?.fecha){
+    const d = new Date(ultima.fecha+'T00:00:00');
+    d.setDate(d.getDate()+7);
+    fechaDefault = d.toISOString().slice(0,10);
+  }
+  document.getElementById('as-fecha').value = fechaDefault;
+  document.getElementById('as-monto').value = ultima ? parseFloat(ultima.monto||20) : 20;
+  _asTrabajoId = trabajoId;
+  openModal('modal-agregar-sesion');
+}
+let _asTrabajoId = null;
+async function confirmarAgregarSesion(){
+  const fecha = document.getElementById('as-fecha').value;
+  const monto = parseFloat(document.getElementById('as-monto').value)||0;
+  if(!fecha){ toast('Selecciona una fecha','err'); return; }
+  const t = allTrabajos.find(x=>x.id===_asTrabajoId); if(!t) return;
+  const sesiones = [...(t.sesiones||[]), { id:'s'+Date.now(), fecha, monto, estado:'pendiente', fechaPago:null }];
+  closeModal('modal-agregar-sesion');
+  await _guardarSesiones(_asTrabajoId, sesiones);
+  toast('✓ Sesión agregada');
 }
 
 function animateStatNums(){
@@ -2292,12 +2400,13 @@ async function openPerfilCliente(nombre){
 // ═══════════════════════════════════════════════════════════
 async function loadGalerias(){
   allClientes=await api('/api/clientes');
-  const activos=allClientes.filter(c=>c.estado==='activo').length;
-  const pendientes=allClientes.filter(c=>c.estado==='activo'&&!(c.descargas||[]).length).length;
+  const galClientes=allClientes.filter(c=>c.tipo!=='contacto');
+  const activos=galClientes.filter(c=>c.estado==='activo').length;
+  const pendientes=galClientes.filter(c=>c.estado==='activo'&&!(c.descargas||[]).length).length;
   document.getElementById('gal-activos').textContent=activos;
   document.getElementById('gal-pendientes').textContent=pendientes;
-  document.getElementById('gal-total').textContent=allClientes.length;
-  document.getElementById('gal-reactivados').textContent=allClientes.filter(c=>(c.reactivaciones||[]).length>0).length;
+  document.getElementById('gal-total').textContent=galClientes.length;
+  document.getElementById('gal-reactivados').textContent=galClientes.filter(c=>(c.reactivaciones||[]).length>0).length;
   const list=document.getElementById('gal-list');
   const tipoLabels={boda:'Boda',xvanios:'XV Años',corporativo:'Corporativo',deportivo:'Deportivo',graduacion:'Graduación',otro:'Evento'};
 
@@ -2335,7 +2444,7 @@ async function loadGalerias(){
     </div>`;
   }
 
-  if(!allClientes.length){ list.innerHTML='<div class="empty">No hay clientes con galería</div>'; return; }
+  if(!galClientes.length){ list.innerHTML='<div class="empty">No hay clientes con galería</div>'; return; }
   renderGalCards('todos');
 }
 
@@ -2349,11 +2458,12 @@ function renderGalCards(filtro){
   const list=document.getElementById('gal-list');
   const tipoLabels={boda:'Boda',xvanios:'XV Años',corporativo:'Corporativo',deportivo:'Deportivo',graduacion:'Graduación',otro:'Evento'};
 
-  let fil=allClientes;
-  if(filtro==='activo')     fil=allClientes.filter(c=>c.estado==='activo');
-  else if(filtro==='descargado') fil=allClientes.filter(c=>c.estado==='descargado');
-  else if(filtro==='expirado')   fil=allClientes.filter(c=>c.estado==='expirado');
-  else if(filtro==='reactivado') fil=allClientes.filter(c=>(c.reactivaciones||[]).length>0);
+  const galClientes=allClientes.filter(c=>c.tipo!=='contacto');
+  let fil=galClientes;
+  if(filtro==='activo')     fil=galClientes.filter(c=>c.estado==='activo');
+  else if(filtro==='descargado') fil=galClientes.filter(c=>c.estado==='descargado');
+  else if(filtro==='expirado')   fil=galClientes.filter(c=>c.estado==='expirado');
+  else if(filtro==='reactivado') fil=galClientes.filter(c=>(c.reactivaciones||[]).length>0);
 
   if(!fil.length){ list.innerHTML='<div class="empty">Sin clientes en esta categoría</div>'; return; }
 

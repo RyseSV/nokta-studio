@@ -401,7 +401,9 @@ app.post('/api/clientes', requireAdmin, async (req, res) => {
     const diasNum = parseInt(dias);
     const expira = diasNum === 0 ? null : new Date(ahora.getTime() + diasNum * 86400000);
 
-    try { await cloudinary.api.create_folder(`nokta-clientes/${codigo}`); } catch (e) {}
+    if (tipo !== 'contacto') {
+      try { await cloudinary.api.create_folder(`nokta-clientes/${codigo}`); } catch (e) {}
+    }
 
     const cliente = await Cliente.create({
       codigo, nombre, tipo,
@@ -581,6 +583,27 @@ app.patch('/api/trabajos/:id/quincenas', requireAdmin, async (req, res) => {
     );
     if (!t) return res.status(404).json({ error: 'No encontrado' });
     res.json({ ok: true, quincenas: t.quincenas });
+  } catch (err) { handleError(res, err); }
+});
+
+// Sesiones: pagos recurrentes sueltos (ej. clases semanales) sin periodo fijo,
+// a diferencia de las quincenas (grupo B) que están ancladas a mes/día 15-30.
+// El monto/anticipo/saldo/estado del trabajo se recalculan aquí a partir de
+// las sesiones para que el dashboard, el perfil del cliente y las alertas
+// (que ya leen esos campos) sigan funcionando sin cambios adicionales.
+app.patch('/api/trabajos/:id/sesiones', requireAdmin, async (req, res) => {
+  try {
+    const sesiones = req.body.sesiones || [];
+    const monto = sesiones.reduce((s, x) => s + (parseFloat(x.monto) || 0), 0);
+    const anticipo = sesiones.filter(x => x.estado === 'pagado').reduce((s, x) => s + (parseFloat(x.monto) || 0), 0);
+    const estado = sesiones.length && sesiones.every(x => x.estado === 'pagado') ? 'pagado' : 'pendiente';
+    const t = await Trabajo.findOneAndUpdate(
+      { id: req.params.id },
+      { $set: { sesiones, monto, anticipo, saldo: monto - anticipo, estado } },
+      { new: true }
+    );
+    if (!t) return res.status(404).json({ error: 'No encontrado' });
+    res.json({ ok: true, trabajo: t });
   } catch (err) { handleError(res, err); }
 });
 

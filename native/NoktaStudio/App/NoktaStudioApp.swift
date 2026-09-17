@@ -5,11 +5,12 @@ import AppIntents
 struct NoktaStudioApp: App {
     init() {
         NoktaShortcuts.updateAppShortcutParameters()
+        NoktaFontRegistrar.registerBundledFonts()
     }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
                 .preferredColorScheme(.dark)
         }
     }

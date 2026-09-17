@@ -40,7 +40,10 @@
 		DB76EF3A1907D1F4BEE55E51 /* RegistrarGastoTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33760DA275F4C57B9E4ABC0A /* RegistrarGastoTool.swift */; };
 		D9B021527C697A8E4BC61989 /* RegistrarPagoQuincenaTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F65C68B171E6BFB2AAC9B58 /* RegistrarPagoQuincenaTool.swift */; };
 		F1B1FD5100B51C037F238B5F /* ServicioGrupoMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86DE2959682B0A4B679E693D /* ServicioGrupoMap.swift */; };
-		8D2444592AB627ABB1AFC5C9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3851714DD339BEAA44BC21F5 /* ContentView.swift */; };
+		EC3617447E8154DA68742268 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91B271F66E0C9D033658882F /* DesignSystem.swift */; };
+		EAAF3A63BB14AF394CAE8F97 /* Ingresos.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBF1E26111ECB99F91A8D12 /* Ingresos.swift */; };
+		3AE504125F87E4AD848630F8 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105203992F135ED07A66C361 /* DashboardView.swift */; };
+		CA7D0ADF52ECAA67A5CCF214 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F2D2F148896334509E9E1F /* RootView.swift */; };
 		831A7066B0F64F0101EF1A1E /* NoktaWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB38ED61BB052E334C9FBAA6 /* NoktaWebView.swift */; };
 		7A98018EB868FB65026A8ACD /* NoktaStudioApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 753E68B7B4953F70C848178A /* NoktaStudioApp.swift */; };
 		F6BE16DD9EC99473CF0C791E /* ConsultarAlertasIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858048089CEAD4965706E81B /* ConsultarAlertasIntent.swift */; };
@@ -75,10 +78,23 @@
 		8999649F3BD3506AF5455475 /* RegistrarGastoTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33760DA275F4C57B9E4ABC0A /* RegistrarGastoTool.swift */; };
 		2EA466B3640F392A4CF9C045 /* RegistrarPagoQuincenaTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F65C68B171E6BFB2AAC9B58 /* RegistrarPagoQuincenaTool.swift */; };
 		494107E3D498EA5D86E7852C /* ServicioGrupoMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86DE2959682B0A4B679E693D /* ServicioGrupoMap.swift */; };
-		EB528B41EEC36AFCA0BED5A0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3851714DD339BEAA44BC21F5 /* ContentView.swift */; };
+		DFF256C3C42D973B6257D35D /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91B271F66E0C9D033658882F /* DesignSystem.swift */; };
+		53BE993D03FC5C8ACC4238FE /* Ingresos.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBF1E26111ECB99F91A8D12 /* Ingresos.swift */; };
+		5805B630C9630207E29320B4 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105203992F135ED07A66C361 /* DashboardView.swift */; };
+		87A0FACA3BA5E454FB360EA9 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F2D2F148896334509E9E1F /* RootView.swift */; };
 		2AB4D63607EE84CB3E49151A /* NoktaWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB38ED61BB052E334C9FBAA6 /* NoktaWebView.swift */; };
 		1567291634E038F286E91D2C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CFDBAC21689581B04CB7ABB5 /* Assets.xcassets */; };
 		7B6B6A277A353A0833D22730 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CFDBAC21689581B04CB7ABB5 /* Assets.xcassets */; };
+		4B7AC2CF262456D74D75C9C7 /* Poppins-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6EE96B676F11A1B72FB10D74 /* Poppins-Bold.ttf */; };
+		521465174AA10CA270428C31 /* Poppins-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 44296FB7088CFED343CFF1EE /* Poppins-Light.ttf */; };
+		E4C41564F6C25D863BC06471 /* Poppins-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 39085646C607B488D1B05BC6 /* Poppins-Medium.ttf */; };
+		44FFB2741CA8CB7851C5BE21 /* Poppins-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FBFB3B639E73FF10CC45E165 /* Poppins-Regular.ttf */; };
+		AF2A50FDD0BA8C44EF4E9EDF /* Poppins-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D52C631B6BC70C7720ECB67E /* Poppins-SemiBold.ttf */; };
+		259DC3EB93B4D9F5BBDEFF02 /* Poppins-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6EE96B676F11A1B72FB10D74 /* Poppins-Bold.ttf */; };
+		A990D0BB1AA266CB7F42DF55 /* Poppins-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 44296FB7088CFED343CFF1EE /* Poppins-Light.ttf */; };
+		00E0C497A38B0C1551EAC377 /* Poppins-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 39085646C607B488D1B05BC6 /* Poppins-Medium.ttf */; };
+		DEDA7ED8EF4A506B838B657B /* Poppins-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FBFB3B639E73FF10CC45E165 /* Poppins-Regular.ttf */; };
+		F6741603D137B6294C23A0F6 /* Poppins-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D52C631B6BC70C7720ECB67E /* Poppins-SemiBold.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -115,8 +131,16 @@
 		33760DA275F4C57B9E4ABC0A /* RegistrarGastoTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegistrarGastoTool.swift; sourceTree = "<group>"; };
 		7F65C68B171E6BFB2AAC9B58 /* RegistrarPagoQuincenaTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegistrarPagoQuincenaTool.swift; sourceTree = "<group>"; };
 		86DE2959682B0A4B679E693D /* ServicioGrupoMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServicioGrupoMap.swift; sourceTree = "<group>"; };
-		3851714DD339BEAA44BC21F5 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		91B271F66E0C9D033658882F /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		BEBF1E26111ECB99F91A8D12 /* Ingresos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ingresos.swift; sourceTree = "<group>"; };
+		105203992F135ED07A66C361 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		33F2D2F148896334509E9E1F /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		DB38ED61BB052E334C9FBAA6 /* NoktaWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoktaWebView.swift; sourceTree = "<group>"; };
+		6EE96B676F11A1B72FB10D74 /* Poppins-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Poppins-Bold.ttf; sourceTree = "<group>"; };
+		44296FB7088CFED343CFF1EE /* Poppins-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Poppins-Light.ttf; sourceTree = "<group>"; };
+		39085646C607B488D1B05BC6 /* Poppins-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Poppins-Medium.ttf; sourceTree = "<group>"; };
+		FBFB3B639E73FF10CC45E165 /* Poppins-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Poppins-Regular.ttf; sourceTree = "<group>"; };
+		D52C631B6BC70C7720ECB67E /* Poppins-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Poppins-SemiBold.ttf; sourceTree = "<group>"; };
 		CFDBAC21689581B04CB7ABB5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		57157261AC48F9302A3B476E /* NoktaStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "NoktaStudio.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B0BB3AAC6141AA5CDB947A5 /* NoktaStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "NoktaStudio.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -146,6 +170,10 @@
 				1C48CE29E4E135EE62951B22,
 				FDCEBBF9DA95BEB2A4BFD3EE,
 				B650B6C384DB426CDB6DABB8,
+				410188F9DC6E499FEC68BCF6,
+				E1A8163F06C67BC7F1F82BB0,
+				A024F06580C79B7582C3806A,
+				72B4D395CBFFB3EEC69CDEB6,
 				9E8191CD8A03A7B5FF478C7E,
 				CFDBAC21689581B04CB7ABB5,
 				5151B46607EBC8890D8DFCC2,
@@ -215,10 +243,54 @@
 			path = "Assistant";
 			sourceTree = "<group>";
 		};
+		410188F9DC6E499FEC68BCF6 = {
+			isa = PBXGroup;
+			children = (
+				91B271F66E0C9D033658882F,
+				BEBF1E26111ECB99F91A8D12,
+			);
+			path = "Core";
+			sourceTree = "<group>";
+		};
+		E1A8163F06C67BC7F1F82BB0 = {
+			isa = PBXGroup;
+			children = (
+				105203992F135ED07A66C361,
+			);
+			path = "Dashboard";
+			sourceTree = "<group>";
+		};
+		D05438F98A27BC39A60EE06E = {
+			isa = PBXGroup;
+			children = (
+				6EE96B676F11A1B72FB10D74,
+				44296FB7088CFED343CFF1EE,
+				39085646C607B488D1B05BC6,
+				FBFB3B639E73FF10CC45E165,
+				D52C631B6BC70C7720ECB67E,
+			);
+			path = "Fonts";
+			sourceTree = "<group>";
+		};
+		A024F06580C79B7582C3806A = {
+			isa = PBXGroup;
+			children = (
+				D05438F98A27BC39A60EE06E,
+			);
+			path = "Resources";
+			sourceTree = "<group>";
+		};
+		72B4D395CBFFB3EEC69CDEB6 = {
+			isa = PBXGroup;
+			children = (
+				33F2D2F148896334509E9E1F,
+			);
+			path = "Shell";
+			sourceTree = "<group>";
+		};
 		9E8191CD8A03A7B5FF478C7E = {
 			isa = PBXGroup;
 			children = (
-				3851714DD339BEAA44BC21F5,
 				DB38ED61BB052E334C9FBAA6,
 			);
 			path = "WebView";
@@ -305,7 +377,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				1567291634E038F286E91D2C /* Assets.xcassets in Resources */,
-
+				4B7AC2CF262456D74D75C9C7 /* Poppins-Bold.ttf in Resources */,
+				521465174AA10CA270428C31 /* Poppins-Light.ttf in Resources */,
+				E4C41564F6C25D863BC06471 /* Poppins-Medium.ttf in Resources */,
+				44FFB2741CA8CB7851C5BE21 /* Poppins-Regular.ttf in Resources */,
+				AF2A50FDD0BA8C44EF4E9EDF /* Poppins-SemiBold.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -314,7 +390,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				7B6B6A277A353A0833D22730 /* Assets.xcassets in Resources */,
-
+				259DC3EB93B4D9F5BBDEFF02 /* Poppins-Bold.ttf in Resources */,
+				A990D0BB1AA266CB7F42DF55 /* Poppins-Light.ttf in Resources */,
+				00E0C497A38B0C1551EAC377 /* Poppins-Medium.ttf in Resources */,
+				DEDA7ED8EF4A506B838B657B /* Poppins-Regular.ttf in Resources */,
+				F6741603D137B6294C23A0F6 /* Poppins-SemiBold.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -358,7 +438,10 @@
 				DB76EF3A1907D1F4BEE55E51 /* RegistrarGastoTool.swift in Sources */,
 				D9B021527C697A8E4BC61989 /* RegistrarPagoQuincenaTool.swift in Sources */,
 				F1B1FD5100B51C037F238B5F /* ServicioGrupoMap.swift in Sources */,
-				8D2444592AB627ABB1AFC5C9 /* ContentView.swift in Sources */,
+				EC3617447E8154DA68742268 /* DesignSystem.swift in Sources */,
+				EAAF3A63BB14AF394CAE8F97 /* Ingresos.swift in Sources */,
+				3AE504125F87E4AD848630F8 /* DashboardView.swift in Sources */,
+				CA7D0ADF52ECAA67A5CCF214 /* RootView.swift in Sources */,
 				831A7066B0F64F0101EF1A1E /* NoktaWebView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -400,7 +483,10 @@
 				8999649F3BD3506AF5455475 /* RegistrarGastoTool.swift in Sources */,
 				2EA466B3640F392A4CF9C045 /* RegistrarPagoQuincenaTool.swift in Sources */,
 				494107E3D498EA5D86E7852C /* ServicioGrupoMap.swift in Sources */,
-				EB528B41EEC36AFCA0BED5A0 /* ContentView.swift in Sources */,
+				DFF256C3C42D973B6257D35D /* DesignSystem.swift in Sources */,
+				53BE993D03FC5C8ACC4238FE /* Ingresos.swift in Sources */,
+				5805B630C9630207E29320B4 /* DashboardView.swift in Sources */,
+				87A0FACA3BA5E454FB360EA9 /* RootView.swift in Sources */,
 				2AB4D63607EE84CB3E49151A /* NoktaWebView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

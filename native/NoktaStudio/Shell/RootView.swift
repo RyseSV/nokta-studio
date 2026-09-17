@@ -87,6 +87,11 @@ struct RootView: View {
     @State private var isLoading = false
     @State private var canGoBack = false
     @State private var unreadAlertas = 0
+    /// If a sidebar item is tapped before the WKWebView's first load finishes
+    /// (e.g. right after launch), `nav(id)` silently no-ops — the page's own
+    /// router isn't defined yet — leaving the SPA on its own default page.
+    /// Remember the request and replay it once loading actually finishes.
+    @State private var pendingWebPage: String?
 
     var body: some View {
         Group {
@@ -105,6 +110,7 @@ struct RootView: View {
 
     private func onSelect(_ item: NoktaSection) {
         if let pageId = item.webPageId {
+            pendingWebPage = pageId
             webView.evaluateJavaScript("if (typeof nav === 'function') { nav('\(pageId)'); }")
         }
     }
@@ -124,6 +130,26 @@ struct RootView: View {
             NoktaWebView(url: RootShell.adminURL, isLoading: $isLoading, canGoBack: $canGoBack, webView: webView)
                 .ignoresSafeArea()
             if isLoading { ProgressView().tint(NoktaPalette.ember) }
+        }
+        // These sections are a single-page app inside one persistent WKWebView
+        // — switching sidebar items only calls the page's own client-side
+        // nav(id) router, it never refetches the page. After a server deploy
+        // the running webView is still executing the OLD JS until something
+        // actually reloads it, so a manual reload control is not optional here.
+        .toolbar {
+            ToolbarItem {
+                if canGoBack {
+                    Button { webView.goBack() } label: { Image(systemName: "chevron.left") }
+                }
+            }
+            ToolbarItem {
+                Button { webView.reload() } label: { Image(systemName: "arrow.clockwise") }
+            }
+        }
+        .onChange(of: isLoading) { wasLoading, nowLoading in
+            if wasLoading, !nowLoading, let pageId = pendingWebPage {
+                webView.evaluateJavaScript("if (typeof nav === 'function') { nav('\(pageId)'); }")
+            }
         }
     }
 

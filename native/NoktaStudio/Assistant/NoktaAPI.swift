@@ -59,8 +59,19 @@ struct NoktaTrabajo: Codable {
     var fechaInicio: String?
     var creado: String?
     var quincenas: [NoktaQuincena]?
+    var sesiones: [NoktaSesion]?
 
     var grupoResuelto: String { grupo ?? ServicioGrupoMap.grupo(for: servicio) }
+}
+
+/// Pago recurrente suelto (ej. clase semanal) — mismo formato que produce/lee
+/// el panel "Sesiones" en admin.html vía PATCH /api/trabajos/:id/sesiones.
+struct NoktaSesion: Codable {
+    var id: String
+    var fecha: String
+    @Flex var monto: Double?
+    var estado: String
+    var fechaPago: String?
 }
 
 struct NoktaQuincena: Codable {

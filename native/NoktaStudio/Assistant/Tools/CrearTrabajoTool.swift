@@ -53,6 +53,14 @@ struct CrearTrabajoTool: Tool {
         let pagado = arguments.pagado ?? false
         let anticipo = arguments.anticipo ?? (pagado ? monto : 0)
 
+        // 'Clases' es recurrente (ej. clase semanal): cada pago nuevo es una
+        // SESIÓN dentro del mismo trabajo del cliente, igual que hace el
+        // panel "Sesiones" en admin.html — no un trabajo separado por cada
+        // fecha, o el dashboard y el historial del cliente se duplican.
+        if arguments.servicio == "Clases" {
+            return try await agregarSesion(arguments: arguments, monto: monto, pagado: pagado)
+        }
+
         var fields: [String: AnyEncodableValue] = [
             "id": .string("t\(Int(Date().timeIntervalSince1970 * 1000))"),
             "cliente": .string(arguments.cliente),
@@ -81,6 +89,62 @@ struct CrearTrabajoTool: Tool {
         let _: Resp = try await NoktaAPI.post("/api/trabajos", body: AnyEncodableDict(fields))
         let estadoTxt = pagado ? "pagado" : "pendiente"
         return "Trabajo creado: \(arguments.cliente) — \(arguments.servicio), monto $\(String(format: "%.2f", monto)), estado \(estadoTxt)."
+    }
+
+    private func agregarSesion(arguments: CrearTrabajoArgs, monto: Double, pagado: Bool) async throws -> String {
+        let fecha = arguments.fecha ?? String(ISO8601DateFormatter().string(from: Date()).prefix(10))
+        let ahora = ISO8601DateFormatter().string(from: Date())
+        let nuevaSesion = NoktaSesion(
+            id: "s\(Int(Date().timeIntervalSince1970 * 1000))",
+            fecha: fecha, monto: monto,
+            estado: pagado ? "pagado" : "pendiente",
+            fechaPago: pagado ? ahora : nil
+        )
+
+        let trabajos: [NoktaTrabajo] = try await NoktaAPI.get("/api/trabajos")
+        let existente = trabajos.first {
+            $0.servicio == "Clases" && $0.cliente.caseInsensitiveCompare(arguments.cliente) == .orderedSame
+        }
+
+        struct SesionesBody: Encodable { let sesiones: [NoktaSesion] }
+        struct Resp: Decodable { let ok: Bool }
+
+        if let t = existente {
+            var sesiones = t.sesiones ?? []
+            if sesiones.isEmpty {
+                // El trabajo ya existía de antes del panel de Sesiones (un solo
+                // pago suelto) — lo convertimos en la primera sesión, igual que
+                // _autoGenerarSesiones en admin.html, antes de agregar la nueva.
+                sesiones = [NoktaSesion(
+                    id: "s\(Int((ISO8601DateFormatter().date(from: t.creado ?? ahora) ?? Date()).timeIntervalSince1970 * 1000))",
+                    fecha: t.fecha ?? fecha, monto: t.monto ?? 0,
+                    estado: t.estado,
+                    fechaPago: t.estado == "pagado" ? (t.creado ?? ahora) : nil
+                )]
+            }
+            sesiones.append(nuevaSesion)
+            let _: Resp = try await NoktaAPI.patch("/api/trabajos/\(t.id)/sesiones", body: SesionesBody(sesiones: sesiones))
+            let estadoTxt = pagado ? "pagado" : "pendiente"
+            return "Sesión agregada al trabajo de \(arguments.cliente) — \(fecha), $\(String(format: "%.2f", monto)), estado \(estadoTxt)."
+        }
+
+        let grupo = ServicioGrupoMap.grupo(for: "Clases")
+        let fields: [String: AnyEncodableValue] = [
+            "id": .string("t\(Int(Date().timeIntervalSince1970 * 1000))"),
+            "cliente": .string(arguments.cliente),
+            "servicio": .string("Clases"),
+            "grupo": .string(grupo),
+            "grupoNombre": .string(ServicioGrupoMap.nombres[grupo] ?? grupo),
+            "estado": .string(pagado ? "pagado" : "pendiente"),
+            "monto": .double(monto),
+            "anticipo": .double(pagado ? monto : 0),
+            "saldo": .double(pagado ? 0 : monto),
+            "fecha": .string(fecha),
+            "creado": .string(ahora),
+        ]
+        let _: Resp = try await NoktaAPI.post("/api/trabajos", body: AnyEncodableDict(fields))
+        let estadoTxt = pagado ? "pagado" : "pendiente"
+        return "Trabajo creado: \(arguments.cliente) — Clases, $\(String(format: "%.2f", monto)), estado \(estadoTxt)."
     }
 }
 

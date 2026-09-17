@@ -1572,12 +1572,24 @@ async function openTrabajo(id){
   document.getElementById('page-trabajo-detalle').classList.add('active');
 }
 
-function _generarPeriodos(fechaInicio){
+function _generarPeriodos(t){
   const hoy = new Date();
-  const inicio = fechaInicio ? new Date(fechaInicio) : new Date();
+  const inicio = t?.fechaInicio ? new Date(t.fechaInicio) : new Date();
   const periodos = [];
   let cur = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
-  const fin = new Date(hoy.getFullYear(), hoy.getMonth()+2, 1);
+  let fin = new Date(hoy.getFullYear(), hoy.getMonth()+2, 1);
+  // Contrato pausado/cancelado: no generar quincenas más allá de lo ya
+  // registrado, para no seguir marcando meses futuros como pendientes/vencidos.
+  if(t?.estadoContrato && t.estadoContrato!=='activo'){
+    const periodosGuardados=(t.quincenas||[]).map(q=>q.periodo).sort();
+    const ultimo=periodosGuardados[periodosGuardados.length-1];
+    if(ultimo){
+      const [yr,mn]=ultimo.split('-').map(Number);
+      fin=new Date(yr, mn, 1); // mes siguiente al último ya registrado
+    } else {
+      fin=new Date(inicio.getFullYear(), inicio.getMonth()+1, 1);
+    }
+  }
   while(cur < fin){ periodos.push(`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`); cur.setMonth(cur.getMonth()+1); }
   return periodos;
 }
@@ -1585,7 +1597,7 @@ function _generarPeriodos(fechaInicio){
 async function _autoGenerarQuincenas(t){
   const pm = parseFloat(t.pagoMensual)||0;
   const montoQ = pm/2;
-  const periodos = _generarPeriodos(t.fechaInicio);
+  const periodos = _generarPeriodos(t);
   const existing = t.quincenas || [];
   const qs = [];
   periodos.forEach(p => [1,2].forEach(q => {
@@ -1712,7 +1724,7 @@ function renderQuincenasTabla(t){
   const montoQ = pm/2;
   const hoy = new Date();
   const quincenas = t.quincenas || [];
-  const periodos = _generarPeriodos(t.fechaInicio);
+  const periodos = _generarPeriodos(t);
   const MESES_L = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`;
 
@@ -1822,7 +1834,7 @@ function renderQuincenasPanel(t){
   const montoQ = pm/2;
   const hoy = new Date();
   const quincenas = t.quincenas || [];
-  const periodos = _generarPeriodos(t.fechaInicio);
+  const periodos = _generarPeriodos(t);
   const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`;
   let rows = '';
@@ -2276,6 +2288,15 @@ async function cambiarEstadoCliente(nombre,estado){
     await api(`/api/clientes-estados/${encodeURIComponent(nombre)}`,{method:'PUT',body:JSON.stringify({estado})});
     const idx=allClienteEstados.findIndex(e=>e.nombre===nombre);
     if(idx>=0) allClienteEstados[idx].estado=estado; else allClienteEstados.push({nombre,estado});
+    // Sincroniza el estado del contrato de sus paquetes mensuales (grupo B):
+    // pausar/cancelar al cliente también detiene la generación de quincenas
+    // nuevas para ese contrato (ver _generarPeriodos).
+    if(!allTrabajos.length) allTrabajos = await api('/api/trabajos');
+    const contratosB = allTrabajos.filter(t=>t.cliente===nombre && (t.grupo||SVC_GRUPO[t.servicio])==='B');
+    for(const t of contratosB){
+      await api('/api/trabajos/'+t.id,{method:'PUT',body:JSON.stringify({estadoContrato:estado})});
+      t.estadoContrato = estado;
+    }
     toast('Estado actualizado','ok');
     if(document.getElementById('page-clientes').classList.contains('active')) loadClientes();
     if(document.getElementById('page-cliente-detalle').classList.contains('active') && document.getElementById('cd-title').textContent===nombre){

@@ -227,24 +227,19 @@ async function checkAlerts() {
   for (const t of trabajos) {
     const g = t.grupo || '';
     if (g !== 'B' || !t.fechaInicio) continue;
+    // Contrato pausado/cancelado: no generar NINGÚN aviso de "quincena sin
+    // pagar" para él — mientras esté en pausa no se le sigue cobrando, así
+    // que no tiene sentido seguir recordando quincenas atrasadas tampoco.
+    // (Antes solo se congelaba la generación de periodos NUEVOS, pero los ya
+    // vencidos seguían generando alerta — confirmado con el dueño del
+    // negocio que ninguna alerta debería salir mientras esté pausado.)
+    if (estadoClienteDe(t.cliente) !== 'activo') continue;
     const montoQ = parseFloat(t.pagoMensual || 0) / 2;
 
     // Generate periods from start to current month
     const inicio = new Date(t.fechaInicio);
     let cur = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
     let fin = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    // Contrato pausado/cancelado: no seguir generando/alertando meses
-    // posteriores al último periodo ya registrado (ver _generarPeriodos en admin.html).
-    if (estadoClienteDe(t.cliente) !== 'activo') {
-      const periodosGuardados = (t.quincenas || []).map(r => r.periodo).sort();
-      const ultimo = periodosGuardados[periodosGuardados.length - 1];
-      if (ultimo) {
-        const [yr, mn] = ultimo.split('-').map(Number);
-        fin = new Date(yr, mn, 1);
-      } else {
-        fin = new Date(inicio.getFullYear(), inicio.getMonth() + 1, 1);
-      }
-    }
 
     while (cur < fin) {
       const yr = cur.getFullYear();

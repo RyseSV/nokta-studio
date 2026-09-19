@@ -36,11 +36,17 @@ for date in ["2026-09-18", "2026-09-18T12:00:00Z", "2026-09-18T12:00:00.123Z"] {
     let html = PDFTemplates.facturaQuincena(cliente: "Prueba", empresa: nil, servicio: "Prueba", periodo: "2026-09", q: 2, monto: 20, fechaPago: date)
     precondition(html.contains("18 de septiembre de 2026"), "Missing date: \(date)")
 }
+for (periodo, ultimoDia) in [("2026-01", 31), ("2026-04", 30), ("2026-02", 28), ("2028-02", 29)] {
+    let segunda = PDFTemplates.facturaQuincena(cliente: "Prueba", empresa: nil, servicio: "Prueba", periodo: periodo, q: 2, monto: 20, fechaPago: nil)
+    precondition(segunda.contains("del 16 al \(ultimoDia)"), "Incorrect second-half range: \(periodo)")
+    let primera = PDFTemplates.facturaQuincena(cliente: "Prueba", empresa: nil, servicio: "Prueba", periodo: periodo, q: 1, monto: 20, fechaPago: nil)
+    precondition(primera.contains("del 1 al 15"))
+}
 for date: String? in [nil, "invalid"] {
     let html = PDFTemplates.facturaQuincena(cliente: "Prueba", empresa: nil, servicio: "Prueba", periodo: "2026-09", q: 2, monto: 20, fechaPago: date)
     precondition(!html.contains("18 de septiembre de 2026"))
 }
-print("PASS: 6 client names, static API path, and PDF HTML dates")
+print("PASS: 6 client names, static API path, and PDF HTML dates/month ranges")
 '''
 with tempfile.TemporaryDirectory(prefix="nokta-native-check-") as tmp:
     swift_file = Path(tmp) / "checks.swift"

@@ -6,6 +6,7 @@ private struct ReportePreviewItem: Identifiable {
     let title: String
 }
 
+@MainActor
 @Observable
 final class ReportesViewModel {
     var isGenerating = false
@@ -16,38 +17,36 @@ final class ReportesViewModel {
         isGenerating = true
         defer { isGenerating = false }
         do {
-            async let t: [NoktaTrabajo]? = try? NoktaAPI.get("/api/trabajos")
-            async let g: [NoktaGasto]? = try? NoktaAPI.get("/api/gastos")
-            async let c: [NoktaCliente]? = try? NoktaAPI.get("/api/clientes")
-            let (trabajos, gastos, clientes) = await (t ?? [], g ?? [], c ?? [])
-
             let now = Date()
             let cal = Calendar.current
             let mesActual = cal.component(.month, from: now)
             let anioActual = cal.component(.year, from: now)
             let meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
 
+            let periodo = FechaUtil.periodo(anio: anioActual, mes: mesActual)
             let titulo: String
             let cuerpo: String
 
             switch tipo {
             case "mensual":
-                let tMes = trabajos.filter { t in
-                    guard let am = FechaUtil.anioMes(t.fecha) else { return false }
-                    return am.mes == mesActual && am.anio == anioActual
-                }
+                async let t: [NoktaTrabajo] = NoktaAPI.get("/api/trabajos")
+                async let g: [NoktaGasto] = NoktaAPI.get("/api/gastos")
+                let (trabajos, gastos) = try await (t, g)
+                let aportes = trabajos.map { trabajo in
+                    (trabajo: trabajo, monto: IngresosCalculator.ingresosDelPeriodo(periodo, trabajos: [trabajo]))
+                }.filter { $0.monto != 0 }
                 let gMes = gastos.filter { g in
                     guard let am = FechaUtil.anioMes(g.fecha) else { return false }
                     return am.mes == mesActual && am.anio == anioActual
                 }
-                let ingresos = tMes.reduce(0.0) { $0 + ($1.monto ?? 0) }
+                let ingresos = IngresosCalculator.ingresosDelPeriodo(periodo, trabajos: trabajos)
                 let gastosTotal = gMes.reduce(0.0) { $0 + ($1.monto ?? 0) }
                 titulo = "Reporte mensual — \(meses[mesActual - 1]) \(anioActual)"
 
-                let trabajosRows = tMes.isEmpty
-                    ? "<tr><td colspan=\"5\" style=\"padding:12px 0;color:#888\">Sin trabajos este mes</td></tr>"
-                    : tMes.map { t in
-                        "<tr><td style=\"padding:8px 0\">\(esc(t.cliente))</td><td>\(esc(t.servicio))</td><td>\(esc(t.fecha ?? "—"))</td><td style=\"text-align:right\">$\(fmt(t.monto ?? 0))</td><td style=\"text-align:right\">\(t.estado == "pagado" ? "✓ Pagado" : "Pendiente")</td></tr>"
+                let trabajosRows = aportes.isEmpty
+                    ? "<tr><td colspan=\"4\" style=\"padding:12px 0;color:#888\">Sin ingresos este mes</td></tr>"
+                    : aportes.map { aporte in
+                        "<tr><td style=\"padding:8px 0\">\(esc(aporte.trabajo.cliente))</td><td>\(esc(aporte.trabajo.servicio))</td><td>\(periodo)</td><td style=\"text-align:right\">$\(fmt(aporte.monto))</td></tr>"
                     }.joined()
                 let gastosRows = gMes.isEmpty
                     ? "<tr><td colspan=\"4\" style=\"padding:12px 0;color:#888\">Sin gastos este mes</td></tr>"
@@ -61,13 +60,18 @@ final class ReportesViewModel {
                   <div style="background:#f5f3ef;border-radius:8px;padding:16px"><div style="font-size:11px;color:#888;letter-spacing:1px">GASTOS</div><div style="font-size:22px;font-weight:600;color:#c0392b">$\(fmt(gastosTotal))</div></div>
                   <div style="background:#f5f3ef;border-radius:8px;padding:16px"><div style="font-size:11px;color:#888;letter-spacing:1px">GANANCIA NETA</div><div style="font-size:22px;font-weight:600;color:#27ae60">$\(fmt(ingresos - gastosTotal))</div></div>
                 </div>
-                <h3>TRABAJOS</h3>
-                <table style="margin-bottom:24px"><thead><tr><th>Cliente</th><th>Servicio</th><th>Fecha</th><th style="text-align:right">Monto</th><th style="text-align:right">Estado</th></tr></thead><tbody>\(trabajosRows)</tbody></table>
+                <p style="font-size:11px;color:#888">Criterio del Dashboard: sesiones y quincenas pagadas del mes; trabajos ordinarios fechados en el mes, aunque estén pendientes.</p>
+                <h3>INGRESOS DEL MES POR TRABAJO</h3>
+                <table style="margin-bottom:24px"><thead><tr><th>Cliente</th><th>Servicio</th><th>Periodo</th><th style="text-align:right">Ingreso del mes</th></tr></thead><tbody>\(trabajosRows)</tbody></table>
                 <h3>GASTOS</h3>
                 <table><thead><tr><th>Concepto</th><th>Categoría</th><th>Fecha</th><th style="text-align:right">Monto</th></tr></thead><tbody>\(gastosRows)</tbody></table>
                 """
             case "clientes":
-                titulo = "Reporte de clientes — \(FechaUtil.fechaCorta(isoToday()))"
+                async let t: [NoktaTrabajo] = NoktaAPI.get("/api/trabajos")
+                async let e: [NoktaClienteEstado] = NoktaAPI.get("/api/clientes-estados")
+                let (trabajos, estados) = try await (t, e)
+                let cobros = IngresosCalculator.cobrosPendientes(periodo, trabajos: trabajos, estados: estados)
+                titulo = "Reporte de cobros por cliente — \(periodo)"
                 var nombres: [String] = []
                 var seen = Set<String>()
                 for n in trabajos.map(\.cliente) where !seen.contains(n) { seen.insert(n); nombres.append(n) }
@@ -76,12 +80,16 @@ final class ReportesViewModel {
                     : nombres.map { n -> String in
                         let ts = trabajos.filter { $0.cliente == n }
                         let total = ts.reduce(0.0) { $0 + ($1.monto ?? 0) }
-                        let pend = ts.filter { $0.estado == "pendiente" }.reduce(0.0) { $0 + ($1.saldo ?? 0) }
+                        let pend = cobros.filter { $0.cliente == n }.reduce(0.0) { $0 + $1.monto }
                         let color = pend > 0 ? "#e67e22" : "#27ae60"
                         return "<tr><td style=\"padding:8px 0;font-weight:500\">\(esc(n))</td><td style=\"text-align:right\">\(ts.count)</td><td style=\"text-align:right\">$\(fmt(total))</td><td style=\"text-align:right;color:\(color)\">$\(fmt(pend))</td></tr>"
                     }.joined()
-                cuerpo = "<table style=\"margin-top:24px\"><thead><tr><th>Cliente</th><th style=\"text-align:right\">Trabajos</th><th style=\"text-align:right\">Total facturado</th><th style=\"text-align:right\">Pendiente</th></tr></thead><tbody>\(rows)</tbody></table>"
+                cuerpo = """
+                <p style="font-size:11px;color:#888">Cobro: saldos de trabajos del mes y quincenas activas del mes, más solo la próxima sesión sin pagar por trabajo aunque quede fuera del mes. Excluye contratos pausados/cancelados y quincenas ocultas. Total facturado conserva el monto histórico registrado de los trabajos.</p>
+                <table style="margin-top:24px"><thead><tr><th>Cliente</th><th style="text-align:right">Trabajos</th><th style="text-align:right">Total facturado</th><th style="text-align:right">Cobro del mes / próxima sesión</th></tr></thead><tbody>\(rows)</tbody></table>
+                """
             default:
+                let clientes: [NoktaCliente] = try await NoktaAPI.get("/api/clientes")
                 titulo = "Reporte de galerías — \(FechaUtil.fechaCorta(isoToday()))"
                 let rows = clientes.isEmpty
                     ? "<tr><td colspan=\"5\" style=\"padding:12px 0;color:#888\">Sin galerías</td></tr>"
@@ -119,8 +127,8 @@ struct ReportesView: View {
     @State private var previewItem: ReportePreviewItem?
 
     private let reportes: [(tipo: String, titulo: String, detalle: String)] = [
-        ("mensual", "Reporte mensual de ingresos y gastos", "Resumen financiero del mes seleccionado"),
-        ("clientes", "Reporte de clientes del período", "Lista de clientes, trabajos y montos"),
+        ("mensual", "Reporte mensual de ingresos y gastos", "Resumen financiero del mes actual"),
+        ("clientes", "Reporte de clientes del período", "Facturado histórico y cobros: mes actual / próxima sesión"),
         ("galerias", "Reporte de galerías", "Galerías activas, expiradas y descargadas"),
     ]
 

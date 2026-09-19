@@ -123,7 +123,10 @@ enum PDFTemplates {
         let mes = String(parts.count > 1 ? parts[1] : "01")
         let mesIdx = (Int(mes) ?? 1) - 1
         let mesNombre = FechaUtil.mesesCompletos[max(0, min(11, mesIdx))]
-        let rango = q == 1 ? "1 al 15" : "15 al 30"
+        let calendario = Calendar(identifier: .gregorian)
+        let inicioMes = calendario.date(from: DateComponents(year: Int(anio) ?? 2000, month: Int(mes) ?? 1, day: 1))
+        let ultimoDia = inicioMes.flatMap { calendario.range(of: .day, in: .month, for: $0)?.count } ?? 30
+        let rango = q == 1 ? "1 al 15" : "16 al \(ultimoDia)"
         let fechaPagoLabel = fechaPago.flatMap { iso -> String? in
             let day = DateFormatter()
             day.locale = Locale(identifier: "en_US_POSIX")

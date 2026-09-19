@@ -1068,21 +1068,9 @@ function initMesSel(){
   }
 }
 
-async function loadDashboard(){
-  initMesSel();
-  allTrabajos = await api('/api/trabajos');
-  allGastos = await api('/api/gastos');
-  allAlertas = await api('/api/alertas');
-
-  const mes=parseInt(document.getElementById('dash-mes').value);
-  const year=new Date().getFullYear();
-  const periodoMes=`${year}-${String(mes+1).padStart(2,'0')}`;
-  const periodoPrev=`${year}-${String((mes===0?12:mes)).padStart(2,'0')}`;
-
-  // Ingresos del mes: solo quincenas/sesiones ya PAGADAS para B/recurrentes; monto real para otros grupos
-  function ingresosDelPeriodo(periodo){
+  function ingresosDelPeriodo(periodo, trabajos=allTrabajos){
     let total=0;
-    allTrabajos.forEach(t=>{
+    trabajos.forEach(t=>{
       const g=t.grupo||SVC_GRUPO[t.servicio]||'';
       if(g==='B'){
         (t.quincenas||[]).filter(q=>q.periodo===periodo&&q.estado==='pagado').forEach(q=>{
@@ -1103,6 +1091,44 @@ async function loadDashboard(){
     return total;
   }
 
+// Mismo criterio que IngresosCalculator de la app: una sola sesión siguiente.
+function cobrosPendientes(periodo, trabajos=allTrabajos, estados=allClienteEstados){
+  const cobros=[];
+  const periodoDe=f=>{ const ma=mesAnioDeFecha(f||''); return ma?`${ma.anio}-${String(ma.mes+1).padStart(2,'0')}`:''; };
+  for(const t of trabajos){
+    const agregar=(valor,concepto)=>{
+      const monto=Number(valor);
+      if(Number.isFinite(monto)&&monto>0) cobros.push({trabajoId:t.id,cliente:t.cliente,servicio:t.servicio,monto,concepto});
+    };
+    if((t.grupo||SVC_GRUPO[t.servicio]||'')==='B'){
+      const estado=(estados.find(e=>e.nombre===t.cliente)?.estado??t.estadoContrato??'activo').toLowerCase();
+      if(estado!=='activo'||(periodoDe(t.fechaInicio)&&periodo<periodoDe(t.fechaInicio))) continue;
+      for(const q of [1,2]){
+        const rec=(t.quincenas||[]).find(r=>r.periodo===periodo&&r.q===q);
+        if(rec?.estado==='pagado'||rec?.estado==='oculta') continue;
+        agregar(rec?.monto??Number(t.pagoMensual||0)/2,`Quincena ${q}, ${periodo}`);
+      }
+    } else if((t.sesiones||[]).length){
+      const siguiente=t.sesiones.filter(s=>!['pagado','oculta','cancelado'].includes(s.estado)).slice().sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''))[0];
+      if(siguiente) agregar(siguiente.monto,`Próxima sesión sin pagar: ${siguiente.fecha}${periodoDe(siguiente.fecha)===periodo?'':' (fuera del mes consultado)'}`);
+    } else if(periodoDe(t.fecha)===periodo&&t.estado==='pendiente') agregar(t.saldo,`Saldo del trabajo del ${t.fecha}`);
+  }
+  return cobros;
+}
+
+async function loadDashboard(){
+  initMesSel();
+  allTrabajos = await api('/api/trabajos');
+  allGastos = await api('/api/gastos');
+  allClienteEstados = await api('/api/clientes-estados');
+  allAlertas = await api('/api/alertas');
+
+  const mes=parseInt(document.getElementById('dash-mes').value);
+  const year=new Date().getFullYear();
+  const periodoMes=`${year}-${String(mes+1).padStart(2,'0')}`;
+  const periodoPrev=`${mes===0?year-1:year}-${String((mes===0?12:mes)).padStart(2,'0')}`;
+
+
   const tMes=allTrabajos.filter(t=>{ const ma=mesAnioDeFecha(t.fecha||t.fechaInicio||''); return ma&&ma.mes===mes && ma.anio===year; });
   const tPrev=allTrabajos.filter(t=>{ const ma=mesAnioDeFecha(t.fecha||t.fechaInicio||''); return ma&&ma.mes===(mes===0?11:mes-1) && ma.anio===year; });
   const gMes=allGastos.filter(g=>{ const ma=mesAnioDeFecha(g.fecha); return ma&&ma.mes===mes && ma.anio===year; });
@@ -1112,41 +1138,9 @@ async function loadDashboard(){
   const gastosTot=gMes.reduce((s,g)=>s+(parseFloat(g.monto)||0),0);
   const ganancia=ingresos-gastosTot;
 
-  // Pendiente: quincenas no pagadas del mes actual para B, saldo para otros
-  // Group B: generate both quincenas of current month even if not stored in DB
-  const pendiente=allTrabajos.reduce((s,t)=>{
-    const g=t.grupo||SVC_GRUPO[t.servicio]||'';
-    if(g==='B'){
-      const montoQ=parseFloat(t.pagoMensual||0)/2;
-      return s+[1,2].reduce((a,qi)=>{
-        const stored=(t.quincenas||[]).find(r=>r.periodo===periodoMes&&r.q===qi);
-        if(!stored) return a+montoQ; // not saved yet = pending by default
-        if(stored.estado!=='pagado'&&stored.estado!=='oculta') return a+parseFloat(stored.monto||montoQ);
-        return a;
-      },0);
-    }
-    if((t.sesiones||[]).length){
-      return s + t.sesiones.reduce((a,ses)=>{
-        const ma=mesAnioDeFecha(ses.fecha||''); const dp=ma?`${ma.anio}-${String(ma.mes+1).padStart(2,'0')}`:'';
-        return dp===periodoMes&&ses.estado!=='pagado' ? a+parseFloat(ses.monto||0) : a;
-      },0);
-    }
-    const ma=mesAnioDeFecha(t.fecha||''); const dp=ma?`${ma.anio}-${String(ma.mes+1).padStart(2,'0')}`:'';
-    return dp===periodoMes&&t.estado==='pendiente'?s+(parseFloat(t.saldo)||0):s;
-  },0);
-  const pendienteCount=allTrabajos.filter(t=>{
-    const g=t.grupo||SVC_GRUPO[t.servicio]||'';
-    if(g==='B') return [1,2].some(qi=>{
-      const stored=(t.quincenas||[]).find(r=>r.periodo===periodoMes&&r.q===qi);
-      return !stored||(stored.estado!=='pagado'&&stored.estado!=='oculta');
-    });
-    if((t.sesiones||[]).length) return t.sesiones.some(ses=>{
-      const ma=mesAnioDeFecha(ses.fecha||''); const dp=ma?`${ma.anio}-${String(ma.mes+1).padStart(2,'0')}`:'';
-      return dp===periodoMes && ses.estado!=='pagado';
-    });
-    const ma=mesAnioDeFecha(t.fecha||''); const dp=ma?`${ma.anio}-${String(ma.mes+1).padStart(2,'0')}`:'';
-    return dp===periodoMes&&t.estado==='pendiente';
-  }).length;
+  const cobros=cobrosPendientes(periodoMes);
+  const pendiente=cobros.reduce((s,c)=>s+c.monto,0);
+  const pendienteCount=new Set(cobros.map(c=>c.trabajoId)).size;
 
   document.getElementById('d-ingresos-prev').textContent='$'+ingresosPrev.toFixed(2);
   document.getElementById('d-ingresos-prev-sub').textContent=ingresosPrev>0?'Cobrado el mes anterior':'Sin ingresos el mes anterior';
@@ -1161,7 +1155,8 @@ async function loadDashboard(){
   document.getElementById('d-margen').textContent=(ingresos>0?(ganancia/ingresos*100).toFixed(0):0)+'% margen';
 
   document.getElementById('d-pendiente').textContent='$'+pendiente.toFixed(2);
-  document.getElementById('d-pendiente-sub').textContent=pendienteCount+' trabajo'+(pendienteCount!==1?'s':'');
+  document.getElementById('d-pendiente-sub').textContent=pendienteCount+' trabajo'+(pendienteCount!==1?'s':'')+' · clases: solo la próxima sesión';
+  document.getElementById('d-pendiente').title=cobros.map(c=>`${c.cliente}: $${c.monto.toFixed(2)} · ${c.concepto}`).join('\n');
 
   // Bar chart — last 4 months
   const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -1537,7 +1532,7 @@ async function openTrabajo(id){
     if(fresh) Object.assign(t, fresh);
     if(!(t.quincenas||[]).length) await _autoGenerarQuincenas(t);
   }
-  if(esRecurrente && !(t.sesiones||[]).length){
+  if(esRecurrente && !Array.isArray(t.sesiones)){
     await _autoGenerarSesiones(t);
   }
 
@@ -1676,7 +1671,8 @@ function renderSesionesPanel(t){
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="pill ${s.estado==='pagado'?'pill-green':'pill-yellow'}">${s.estado==='pagado'?'Pagado':'Pendiente'}</span>
-        ${s.estado!=='pagado'?`<button class="btn btn-sm" style="padding:5px 14px;font-size:12px;background:var(--green);color:#000;border-radius:6px" onclick="marcarSesionPagada('${t.id}','${s.id}')">Pagado</button>`:''}
+        ${s.estado!=='pagado'?`<button class="btn btn-sm" style="padding:5px 14px;font-size:12px;background:var(--green);color:#000;border-radius:6px" onclick="marcarSesionPagada('${t.id}','${s.id}')">Pagado</button>`:`<button class="btn btn-ghost btn-sm" onclick="revertirSesionPagada('${t.id}','${s.id}')">Revertir</button>`}
+        <button class="btn btn-ghost btn-sm" onclick="editarMontoSesion('${t.id}','${s.id}')">Editar monto</button>
         <button class="btn btn-sm" style="padding:5px 10px;background:transparent;border:1px solid #e55;border-radius:6px;line-height:0;cursor:pointer" onclick="eliminarSesion('${t.id}','${s.id}')" title="Eliminar sesión"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
       </div>
     </div>`).join('');
@@ -1689,26 +1685,82 @@ function renderSesionesPanel(t){
   </div>`;
 }
 
-async function _guardarSesiones(trabajoId, sesiones){
-  const t = allTrabajos.find(x=>x.id===trabajoId); if(!t) return;
-  const res = await api('/api/trabajos/'+trabajoId+'/sesiones',{method:'PATCH',body:JSON.stringify({sesiones})});
-  if(res.trabajo) Object.assign(t, res.trabajo);
-  await openTrabajo(trabajoId);
-  loadDashboard();
+const _sesionesGuardando = new Set();
+function _fechaSesionValida(fecha){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return false;
+  const d = new Date(fecha+'T00:00:00Z');
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0,10)===fecha;
+}
+
+async function _guardarSesiones(trabajoId, sesiones, mensaje='✓ Sesiones guardadas'){
+  if(_sesionesGuardando.has(trabajoId)){ toast('Espera a que termine el guardado','err'); return false; }
+  const t = allTrabajos.find(x=>x.id===trabajoId);
+  if(!t){ toast('No se encontró el trabajo. Actualiza la página.','err'); return false; }
+  if(sesiones.some(s=>!_fechaSesionValida(s.fecha) || !Number.isFinite(Number(s.monto)) || Number(s.monto)<=0)){
+    toast('Cada sesión debe tener fecha válida y monto mayor que cero','err'); return false;
+  }
+  _sesionesGuardando.add(trabajoId);
+  try{
+    const response = await fetch('/api/trabajos/'+encodeURIComponent(trabajoId)+'/sesiones', {
+      method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({sesiones})
+    });
+    const res = await response.json();
+    if(!response.ok || res.ok!==true || !res.trabajo || !Array.isArray(res.trabajo.sesiones)){
+      throw new Error(res.error || 'El servidor no confirmó el guardado');
+    }
+    Object.assign(t, res.trabajo);
+    try{
+      if(_panelTrabajoId===trabajoId) await openTrabajo(trabajoId);
+      await loadDashboard();
+      toast(mensaje);
+    }catch(error){
+      toast('Los cambios se guardaron, pero no se pudo actualizar la vista. Recarga la página.','err');
+    }
+    return true;
+  }catch(error){
+    toast('No se pudo confirmar el guardado: '+error.message+'. Revisa el estado antes de reintentar.','err');
+    return false;
+  }finally{
+    _sesionesGuardando.delete(trabajoId);
+  }
 }
 
 async function marcarSesionPagada(trabajoId, sesionId){
-  const t = allTrabajos.find(x=>x.id===trabajoId); if(!t) return;
-  const sesiones = (t.sesiones||[]).map(s => s.id===sesionId ? {...s, estado:'pagado', fechaPago:new Date().toISOString()} : s);
-  await _guardarSesiones(trabajoId, sesiones);
-  toast('✓ Sesión marcada como pagada');
+  const t = allTrabajos.find(x=>x.id===trabajoId);
+  const actual = t?.sesiones?.find(s=>s.id===sesionId);
+  if(!actual){ toast('No se encontró la sesión','err'); return; }
+  if(actual.estado==='pagado') return;
+  const sesiones = t.sesiones.map(s => s.id===sesionId ? {...s, estado:'pagado', fechaPago:new Date().toISOString()} : s);
+  await _guardarSesiones(trabajoId, sesiones, '✓ Sesión marcada como pagada');
+}
+
+async function revertirSesionPagada(trabajoId, sesionId){
+  const t = allTrabajos.find(x=>x.id===trabajoId);
+  const actual = t?.sesiones?.find(s=>s.id===sesionId);
+  if(!actual){ toast('No se encontró la sesión','err'); return; }
+  if(actual.estado!=='pagado') return;
+  const sesiones = t.sesiones.map(s => s.id===sesionId ? {...s, estado:'pendiente', fechaPago:null} : s);
+  await _guardarSesiones(trabajoId, sesiones, '✓ Sesión devuelta a pendiente');
+}
+
+async function editarMontoSesion(trabajoId, sesionId){
+  const t = allTrabajos.find(x=>x.id===trabajoId);
+  const actual = t?.sesiones?.find(s=>s.id===sesionId);
+  if(!actual){ toast('No se encontró la sesión','err'); return; }
+  const entrada = prompt('Monto de la sesión ($)', Number(actual.monto).toFixed(2));
+  if(entrada===null) return;
+  const monto = Number(entrada.trim());
+  if(!Number.isFinite(monto) || monto<=0){ toast('Ingresa un monto mayor que cero','err'); return; }
+  const sesiones = t.sesiones.map(s => s.id===sesionId ? {...s, monto} : s);
+  await _guardarSesiones(trabajoId, sesiones, '✓ Monto de sesión actualizado');
 }
 
 async function eliminarSesion(trabajoId, sesionId){
   if(!confirm('¿Eliminar esta sesión?')) return;
-  const t = allTrabajos.find(x=>x.id===trabajoId); if(!t) return;
-  const sesiones = (t.sesiones||[]).filter(s => s.id!==sesionId);
-  await _guardarSesiones(trabajoId, sesiones);
+  const t = allTrabajos.find(x=>x.id===trabajoId);
+  if(!t?.sesiones?.some(s=>s.id===sesionId)){ toast('No se encontró la sesión','err'); return; }
+  const sesiones = t.sesiones.filter(s => s.id!==sesionId);
+  await _guardarSesiones(trabajoId, sesiones, '✓ Sesión eliminada');
 }
 
 function abrirAgregarSesion(trabajoId){
@@ -1729,13 +1781,17 @@ function abrirAgregarSesion(trabajoId){
 let _asTrabajoId = null;
 async function confirmarAgregarSesion(){
   const fecha = document.getElementById('as-fecha').value;
-  const monto = parseFloat(document.getElementById('as-monto').value)||0;
-  if(!fecha){ toast('Selecciona una fecha','err'); return; }
-  const t = allTrabajos.find(x=>x.id===_asTrabajoId); if(!t) return;
-  const sesiones = [...(t.sesiones||[]), { id:'s'+Date.now(), fecha, monto, estado:'pendiente', fechaPago:null }];
-  closeModal('modal-agregar-sesion');
-  await _guardarSesiones(_asTrabajoId, sesiones);
-  toast('✓ Sesión agregada');
+  const monto = Number(document.getElementById('as-monto').value);
+  if(!_fechaSesionValida(fecha)){ toast('Selecciona una fecha válida','err'); return; }
+  if(!Number.isFinite(monto) || monto<=0){ toast('Ingresa un monto mayor que cero','err'); return; }
+  const trabajoId = _asTrabajoId;
+  const t = allTrabajos.find(x=>x.id===trabajoId);
+  if(!t){ toast('No se encontró el trabajo','err'); return; }
+  if((t.sesiones||[]).some(s=>s.fecha===fecha)){ toast('Ya existe una sesión en esa fecha','err'); return; }
+  const sesiones = [...(t.sesiones||[]), { id:'s'+crypto.randomUUID(), fecha, monto, estado:'pendiente', fechaPago:null }];
+  if(await _guardarSesiones(trabajoId, sesiones, '✓ Sesión agregada')){
+    if(_asTrabajoId===trabajoId) closeModal('modal-agregar-sesion');
+  }
 }
 
 function animateStatNums(){
@@ -1983,41 +2039,51 @@ async function _actualizarQuincena(trabajoId, periodo, q, datos){
 
 function generarFacturaQ(trabajoId, periodo, q){
   const t = allTrabajos.find(t=>t.id===trabajoId); if(!t) return;
+  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(periodo) || ![1,2].includes(q)) return;
   const rec = (t.quincenas||[]).find(r=>r.periodo===periodo&&r.q===q);
   const pm = parseFloat(t.pagoMensual)||0;
-  const monto = parseFloat(rec?.monto||pm/2).toFixed(2);
+  const monto = (parseFloat(rec?.monto ?? pm/2)||0).toFixed(2);
   const MESES_L = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const [yr,mn] = periodo.split('-');
   const mesNombre = MESES_L[parseInt(mn)-1];
-  const rango = q===1?'1 al 15':'15 al 30';
-  const fechaPago = rec?.fechaPago ? new Date(rec.fechaPago).toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'}) : '—';
+  const ultimoDia = new Date(Number(yr),Number(mn),0).getDate();
+  const rango = q===1?'1 al 15':`16 al ${ultimoDia}`;
+  let fechaPago = '—';
+  if(rec?.fechaPago){
+    const value = String(rec.fechaPago);
+    // Date-only values are calendar days, not midnight UTC instants.
+    const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    const date = day ? new Date(Number(day[1]),Number(day[2])-1,Number(day[3])) : new Date(value);
+    const validDay = !day || (date.getFullYear()===Number(day[1]) && date.getMonth()===Number(day[2])-1 && date.getDate()===Number(day[3]));
+    if(validDay && !Number.isNaN(date.getTime())) fechaPago = date.toLocaleDateString('es-SV',{day:'numeric',month:'long',year:'numeric'});
+  }
+  const logoUrl = location.origin+'/img/logo/nokta_lockup_color_transparent.png';
   const cliente = allClientes.find(c=>c._id===t.clienteId)||{nombre:t.cliente,empresa:t.empresa||''};
   const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Recibo · ${mesNombre} Q${q}</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Helvetica Neue',Arial,sans-serif;background:#fff;color:#111;padding:60px;max-width:680px;margin:0 auto}
-    .logo{font-size:28px;font-weight:900;letter-spacing:-.5px;margin-bottom:4px}
-    .subtitle{font-size:12px;color:#888;letter-spacing:.1em;text-transform:uppercase;margin-bottom:40px}
-    h2{font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:#888;margin-bottom:24px}
+    body{font-family:'Helvetica Neue',Arial,sans-serif;background:#fff;color:#1C1C1A;padding:60px;max-width:680px;margin:0 auto}
+    .logo{height:58px;width:auto;display:block}
+    .divider{border:0;border-top:2px solid #B85228;margin:28px 0 32px}
+    h2{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#B85228;font-weight:600;margin-bottom:16px}
     table{width:100%;border-collapse:collapse;margin-bottom:32px}
-    td{padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px}
+    td{padding:10px 0;border-bottom:1px solid #f0ebe5;font-size:14px}
     td:first-child{color:#888;width:45%}
     td:last-child{font-weight:600;text-align:right}
-    .total-row td{border-top:2px solid #111;border-bottom:none;padding-top:16px;font-size:18px}
-    .total-row td:first-child{color:#111;font-weight:700}
-    .footer{margin-top:60px;padding-top:24px;border-top:1px solid #eee;font-size:11px;color:#aaa;text-align:center}
+    .total-row td{border-top:2px solid #B85228;border-bottom:none;padding-top:16px;font-size:18px}
+    .total-row td:first-child{color:#1C1C1A;font-weight:700}
+    .total-row td:last-child{color:#B85228}
+    .footer{margin-top:60px;padding-top:24px;border-top:1px solid #e8e4df;font-size:11px;color:#aaa;text-align:center}
     @media print{body{padding:40px}.no-print{display:none}}
   </style></head><body>
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:48px">
-    <div>
-      <div class="logo">Nokta</div>
-      <div class="subtitle">Studio</div>
-    </div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <img class="logo" src="${esc(logoUrl)}" alt="Nokta Studio">
     <div style="text-align:right">
       <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.06em">Recibo de pago</div>
       <div style="font-size:22px;font-weight:800;margin-top:4px">#${yr}${mn}Q${q}</div>
     </div>
   </div>
+  <hr class="divider">
   <h2>Detalle del servicio</h2>
   <table>
     <tr><td>Cliente</td><td>${esc(cliente.nombre)}</td></tr>
@@ -2026,14 +2092,15 @@ function generarFacturaQ(trabajoId, periodo, q){
     <tr><td>Periodo</td><td>${mesNombre} ${yr} · del ${rango} de ${mesNombre}</td></tr>
     <tr><td>Quincena</td><td>Q${q} de 2</td></tr>
     <tr><td>Fecha de pago</td><td>${fechaPago}</td></tr>
-    <tr class="total-row"><td>Total</td><td>$${monto} MXN</td></tr>
+    <tr class="total-row"><td>Total</td><td>$${monto}</td></tr>
   </table>
   <div class="footer">Nokta Studio · contacto@noktastudio.com<br>Este documento es un comprobante interno de pago.</div>
   <div class="no-print" style="margin-top:32px;text-align:center">
-    <button onclick="window.print()" style="padding:10px 28px;background:#111;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer">Imprimir / Guardar PDF</button>
+    <button onclick="window.print()" style="padding:10px 28px;background:#B85228;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer">Imprimir / Guardar PDF</button>
   </div>
   </body></html>`;
   const win = window.open('','_blank','width=720,height=900');
+  if(!win){ toast('Permite las ventanas emergentes para abrir el recibo.','err'); return; }
   win.document.write(html);
   win.document.close();
 }
@@ -2651,6 +2718,7 @@ async function eliminarEquipo(id){ if(!confirm('¿Eliminar miembro?')) return; a
 // REPORTES
 // ═══════════════════════════════════════════════════════════
 async function genReporte(tipo){
+  allClienteEstados=await api('/api/clientes-estados');
   allTrabajos=await api('/api/trabajos'); allGastos=await api('/api/gastos'); allClientes=await api('/api/clientes');
   const now=new Date();
   const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -2658,9 +2726,10 @@ async function genReporte(tipo){
 
   if(tipo==='mensual'){
     const mes=now.getMonth(); const year=now.getFullYear();
-    const tMes=allTrabajos.filter(t=>{const ma=mesAnioDeFecha(t.fecha);return ma&&ma.mes===mes&&ma.anio===year;});
+    const periodo=`${year}-${String(mes+1).padStart(2,'0')}`;
+    const aportes=allTrabajos.map(t=>({t,monto:ingresosDelPeriodo(periodo,[t])})).filter(a=>a.monto!==0);
     const gMes=allGastos.filter(g=>{const ma=mesAnioDeFecha(g.fecha);return ma&&ma.mes===mes&&ma.anio===year;});
-    const ing=tMes.reduce((s,t)=>s+(parseFloat(t.monto)||0),0);
+    const ing=ingresosDelPeriodo(periodo);
     const gas=gMes.reduce((s,g)=>s+(parseFloat(g.monto)||0),0);
     titulo=`Reporte mensual — ${meses[mes]} ${year}`;
     cuerpo=`
@@ -2669,10 +2738,11 @@ async function genReporte(tipo){
         <div style="background:#f5f3ef;border-radius:8px;padding:16px"><div style="font-size:11px;color:#888;letter-spacing:1px">GASTOS</div><div style="font-size:22px;font-weight:600;color:#c0392b">$${gas.toFixed(2)}</div></div>
         <div style="background:#f5f3ef;border-radius:8px;padding:16px"><div style="font-size:11px;color:#888;letter-spacing:1px">GANANCIA NETA</div><div style="font-size:22px;font-weight:600;color:#27ae60">$${(ing-gas).toFixed(2)}</div></div>
       </div>
-      <h3 style="font-size:13px;letter-spacing:1px;color:#888;margin-bottom:8px">TRABAJOS</h3>
+      <h3 style="font-size:13px;letter-spacing:1px;color:#888;margin-bottom:8px">INGRESOS DEL MES POR TRABAJO</h3>
+      <p style="font-size:11px;color:#888;margin-bottom:12px">Criterio del Dashboard: sesiones y quincenas pagadas del mes; trabajos ordinarios fechados en el mes, aunque estén pendientes.</p>
       <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px">
-        <thead><tr style="border-bottom:2px solid #B85228"><th style="text-align:left;padding:8px 0">Cliente</th><th style="text-align:left">Servicio</th><th style="text-align:left">Fecha</th><th style="text-align:right">Monto</th><th style="text-align:right">Estado</th></tr></thead>
-        <tbody>${tMes.length?tMes.map(t=>`<tr style="border-bottom:1px solid #eee"><td style="padding:8px 0">${esc(t.cliente)}</td><td>${esc(t.servicio)}</td><td>${esc(t.fecha)}</td><td style="text-align:right">$${parseFloat(t.monto||0).toFixed(2)}</td><td style="text-align:right">${t.estado==='pagado'?'✓ Pagado':'Pendiente'}</td></tr>`).join(''):'<tr><td colspan="5" style="padding:12px 0;color:#888">Sin trabajos este mes</td></tr>'}</tbody>
+        <thead><tr style="border-bottom:2px solid #B85228"><th style="text-align:left;padding:8px 0">Cliente</th><th style="text-align:left">Servicio</th><th style="text-align:left">Periodo</th><th style="text-align:right">Ingreso del mes</th></tr></thead>
+        <tbody>${aportes.length?aportes.map(({t,monto})=>`<tr style="border-bottom:1px solid #eee"><td style="padding:8px 0">${esc(t.cliente)}</td><td>${esc(t.servicio)}</td><td>${periodo}</td><td style="text-align:right">$${monto.toFixed(2)}</td></tr>`).join(''):'<tr><td colspan="4" style="padding:12px 0;color:#888">Sin ingresos este mes</td></tr>'}</tbody>
       </table>
       <h3 style="font-size:13px;letter-spacing:1px;color:#888;margin-bottom:8px">GASTOS</h3>
       <table style="width:100%;border-collapse:collapse;font-size:13px">
@@ -2683,8 +2753,8 @@ async function genReporte(tipo){
     titulo=`Reporte de clientes — ${now.toLocaleDateString('es')}`;
     const nombres=[...new Set(allTrabajos.map(t=>t.cliente))];
     cuerpo=`<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:24px">
-      <thead><tr style="border-bottom:2px solid #B85228"><th style="text-align:left;padding:8px 0">Cliente</th><th style="text-align:right">Trabajos</th><th style="text-align:right">Total facturado</th><th style="text-align:right">Pendiente</th></tr></thead>
-      <tbody>${nombres.map(n=>{const ts=allTrabajos.filter(t=>t.cliente===n);const total=ts.reduce((s,t)=>s+(parseFloat(t.monto)||0),0);const pend=ts.filter(t=>t.estado==='pendiente').reduce((s,t)=>s+(parseFloat(t.saldo)||0),0);return `<tr style="border-bottom:1px solid #eee"><td style="padding:8px 0;font-weight:500">${esc(n)}</td><td style="text-align:right">${ts.length}</td><td style="text-align:right">$${total.toFixed(2)}</td><td style="text-align:right;color:${pend>0?'#e67e22':'#27ae60'}">$${pend.toFixed(2)}</td></tr>`;}).join('')||'<tr><td colspan="4" style="padding:12px 0;color:#888">Sin clientes</td></tr>'}</tbody>
+      <thead><tr style="border-bottom:2px solid #B85228"><th style="text-align:left;padding:8px 0">Cliente</th><th style="text-align:right">Trabajos</th><th style="text-align:right">Total facturado</th><th style="text-align:right">Cobro del mes / próxima sesión</th></tr></thead>
+      <tbody>${nombres.map(n=>{const ts=allTrabajos.filter(t=>t.cliente===n);const total=ts.reduce((s,t)=>s+(parseFloat(t.monto)||0),0);const pend=cobrosPendientes(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`,ts).reduce((s,c)=>s+c.monto,0);return `<tr style="border-bottom:1px solid #eee"><td style="padding:8px 0;font-weight:500">${esc(n)}</td><td style="text-align:right">${ts.length}</td><td style="text-align:right">$${total.toFixed(2)}</td><td style="text-align:right;color:${pend>0?'#e67e22':'#27ae60'}">$${pend.toFixed(2)}</td></tr>`;}).join('')||'<tr><td colspan="4" style="padding:12px 0;color:#888">Sin clientes</td></tr>'}</tbody>
     </table>`;
   } else {
     titulo=`Reporte de galerías — ${now.toLocaleDateString('es')}`;

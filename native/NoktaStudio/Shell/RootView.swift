@@ -57,7 +57,8 @@ enum NoktaSection: String, CaseIterable, Identifiable, Hashable {
     /// sidebar `onclick="nav('...')"` handlers for the exact id list.
     var webPageId: String? {
         switch self {
-        case .dashboard, .asistente, .trabajos, .nuevoTrabajo: nil
+        case .dashboard, .asistente, .trabajos, .nuevoTrabajo, .calendario, .alertas, .clientes, .galerias,
+             .gastos, .documentos, .reportes: nil
         default: rawValue
         }
     }
@@ -101,9 +102,19 @@ struct RootView: View {
             #endif
         }
         .task {
-            if let alertas: [NoktaAlerta] = try? await NoktaAPI.get("/api/alertas") {
-                unreadAlertas = alertas.filter { !$0.leida }.count
+            // Mirrors admin.html's `setInterval(...,30000)` — the badge is
+            // otherwise only fetched once at launch and goes stale as soon
+            // as alerts are read/created anywhere (native or web).
+            while !Task.isCancelled {
+                await refreshUnreadAlertas()
+                try? await Task.sleep(nanoseconds: 30_000_000_000)
             }
+        }
+    }
+
+    private func refreshUnreadAlertas() async {
+        if let alertas: [NoktaAlerta] = try? await NoktaAPI.get("/api/alertas") {
+            unreadAlertas = alertas.filter { !$0.leida }.count
         }
     }
 
@@ -112,6 +123,8 @@ struct RootView: View {
             pendingWebPage = pageId
             webView.evaluateJavaScript("if (typeof nav === 'function') { nav('\(pageId)'); }")
         }
+        // AlertasView reports its own count as soon as it loads (see
+        // `onUnreadChange`), so no separate refresh is needed here.
     }
 
     @ViewBuilder
@@ -122,6 +135,13 @@ struct RootView: View {
             case .asistente: AssistantView()
             case .nuevoTrabajo: NuevoTrabajoView()
             case .trabajos: TrabajosContainerView()
+            case .calendario: CalendarioView()
+            case .alertas: AlertasView(onUnreadChange: { unreadAlertas = $0 })
+            case .clientes: ClientesContainerView()
+            case .galerias: GaleriasView()
+            case .gastos: GastosView()
+            case .documentos: DocumentosView()
+            case .reportes: ReportesView()
             default: webPanel
             }
         }

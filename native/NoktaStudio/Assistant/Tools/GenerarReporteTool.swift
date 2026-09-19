@@ -22,14 +22,14 @@ struct GenerarReporteTool: Tool {
             async let trabajosTask: [NoktaTrabajo] = NoktaAPI.get("/api/trabajos")
             async let gastosTask: [NoktaGasto] = NoktaAPI.get("/api/gastos")
             let (trabajos, gastos) = try await (trabajosTask, gastosTask)
-            let mesActual = String(ISO8601DateFormatter().string(from: Date()).prefix(7))
+            let mesActual = IngresosCalculator.periodoActual
             let tMes = trabajos.filter { ($0.fecha ?? "").hasPrefix(mesActual) }
             let gMes = gastos.filter { $0.fecha.hasPrefix(mesActual) }
-            let ingresos = tMes.reduce(0.0) { $0 + ($1.monto ?? 0) }
+            let ingresos = IngresosCalculator.ingresosDelPeriodo(mesActual, trabajos: trabajos)
             let gastosTotal = gMes.reduce(0.0) { $0 + ($1.monto ?? 0) }
             return """
             Reporte mensual (\(mesActual)):
-            Ingresos: $\(String(format: "%.2f", ingresos))
+            Ingresos según Dashboard (incluye monto de trabajos ordinarios fechados en el mes, aunque estén pendientes): $\(String(format: "%.2f", ingresos))
             Gastos: $\(String(format: "%.2f", gastosTotal))
             Ganancia neta: $\(String(format: "%.2f", ingresos - gastosTotal))
             Trabajos del mes: \(tMes.count). Gastos del mes: \(gMes.count).
@@ -37,15 +37,10 @@ struct GenerarReporteTool: Tool {
             """
 
         case "clientes":
-            let trabajos: [NoktaTrabajo] = try await NoktaAPI.get("/api/trabajos")
-            let nombres = Set(trabajos.map(\.cliente)).sorted()
-            let lines = nombres.map { nombre -> String in
-                let ts = trabajos.filter { $0.cliente == nombre }
-                let total = ts.reduce(0.0) { $0 + ($1.monto ?? 0) }
-                let pendiente = ts.filter { $0.estado == "pendiente" }.reduce(0.0) { $0 + ($1.saldo ?? 0) }
-                return "- \(nombre): \(ts.count) trabajo(s), facturado $\(String(format: "%.2f", total)), pendiente $\(String(format: "%.2f", pendiente))"
-            }
-            return "Reporte de clientes:\n" + lines.joined(separator: "\n") + "\n\nNota: para el PDF descargable, andá a la sección Reportes."
+            async let t: [NoktaTrabajo] = NoktaAPI.get("/api/trabajos")
+            async let e: [NoktaClienteEstado] = NoktaAPI.get("/api/clientes-estados")
+            let (trabajos, estados) = try await (t, e)
+            return "Reporte de cobros por cliente:\n" + IngresosCalculator.resumenCobros(IngresosCalculator.periodoActual, trabajos: trabajos, estados: estados)
 
         case "galerias":
             let clientes: [NoktaCliente] = try await NoktaAPI.get("/api/clientes")

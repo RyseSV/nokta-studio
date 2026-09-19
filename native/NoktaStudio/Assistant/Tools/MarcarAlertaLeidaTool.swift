@@ -9,8 +9,7 @@ struct MarcarAlertaLeidaArgs {
     var descripcion: String?
 }
 
-/// Matches what the web UI's per-alert "Marcar leída" button actually does
-/// (DELETE, not the separate mark-read-by-id endpoint) — see AlertasStore.
+/// Preserve read records so automatic alerts are not recreated on the next fetch.
 struct MarcarAlertaLeidaTool: Tool {
     let name = "marcar_alerta_leida"
     let description = "Marca como leídas (o descarta) las alertas del panel: todas de una vez, o una específica que coincida con una descripción."
@@ -27,14 +26,14 @@ struct MarcarAlertaLeidaTool: Tool {
         }
         let alertas: [NoktaAlerta] = try await NoktaAPI.get("/api/alertas")
         guard let a = alertas.first(where: { alerta in
-            [alerta.datos.cliente, alerta.datos.nombre, alerta.datos.mensaje, alerta.datos.servicio]
+            !alerta.leida && [alerta.datos.cliente, alerta.datos.nombre, alerta.datos.mensaje, alerta.datos.servicio]
                 .compactMap { $0 }
                 .contains { $0.localizedCaseInsensitiveContains(descripcion) }
         }) else {
             return "No encontré una alerta que coincida con '\(descripcion)'."
         }
         struct Resp: Decodable { let ok: Bool }
-        let _: Resp = try await NoktaAPI.delete("/api/alertas/\(a.id)")
+        let _: Resp = try await NoktaAPI.put("/api/alertas/\(a.id)/leer", body: EmptyBody())
         return "Alerta marcada como leída."
     }
 }

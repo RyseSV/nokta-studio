@@ -26,7 +26,7 @@ def uid(key):
     _uuid_cache[key] = h
     return h
 
-RESOURCE_EXTENSIONS = (".ttf", ".otf")
+RESOURCE_EXTENSIONS = (".ttf", ".otf", ".png")
 
 def collect_files():
     swift_files = []

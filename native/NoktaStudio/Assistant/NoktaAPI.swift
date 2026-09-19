@@ -128,6 +128,27 @@ struct NoktaGasto: Codable {
     var fecha: String
 }
 
+struct NoktaServicioLinea: Codable {
+    var descripcion: String
+    @Flex var monto: Double?
+}
+
+/// Cotización o recibo guardado desde Documentos — mismo shape para ambas
+/// colecciones (Cotizacion/Recibo) del server.
+struct NoktaDocumento: Codable {
+    var id: String
+    var numero: String
+    var clienteNombre: String
+    var empresa: String?
+    var telefono: String?
+    var email: String?
+    var fechaEmision: String?
+    var fechaValidez: String?
+    var servicios: [NoktaServicioLinea]?
+    @Flex var total: Double?
+    var notas: String?
+}
+
 struct NoktaAlerta: Codable {
     var id: String
     var tipo: String
@@ -136,25 +157,74 @@ struct NoktaAlerta: Codable {
     var datos: NoktaAlertaDatos
 }
 struct NoktaAlertaDatos: Codable {
+    var id: String?
+    var codigo: String?
     var nombre: String?
     var cliente: String?
     var mensaje: String?
     var servicio: String?
+    var tipo: String?
+    var fecha: String?
+    var hora: String?
     @Flex var saldo: Double?
     var diasRestantes: Int?
+}
+
+/// Evento suelto en el calendario (no ligado a un trabajo) — ver
+/// admin.html's modal-evento / POST /api/eventos.
+struct NoktaEvento: Codable, Identifiable {
+    var id: String
+    var titulo: String?
+    var tipo: String?
+    var fecha: String
+    var horaInicio: String?
+    var horaFin: String?
+    var lugar: String?
+    @Flex var monto: Double?
+    @Flex var anticipo: Double?
+    @Flex var saldo: Double?
 }
 
 struct NoktaCliente: Codable {
     var codigo: String
     var nombre: String
     var estado: String
+    var tipo: String?
     var whatsapp: String?
+    var email: String?
+    var empresa: String?
+    var creado: String?
+    var expira: String?
+    var visitas: [NoktaClienteVisita]?
+    var descargas: [NoktaClienteDescarga]?
+    var reactivaciones: [NoktaReactivacion]?
+}
+/// Solo se usa para contar entradas — la forma exacta de cada visita no importa aquí.
+struct NoktaClienteVisita: Codable {}
+struct NoktaClienteDescarga: Codable {
+    var fecha: String
+    var tipo: String?
+}
+struct NoktaReactivacion: Codable {
+    var fecha: String
+    @FlexInt var dias: Int
 }
 
 struct NoktaClienteEstado: Codable {
     var nombre: String
     var estado: String
     var notas: String?
+}
+
+extension String {
+    /// Percent-encodes everything except RFC 3986 unreserved characters —
+    /// matches JS's `encodeURIComponent`, so a "/" (or "?", "&", etc.) in a
+    /// client name can't be misread as an extra path segment or query string
+    /// when building a REST path like `/api/clientes-estados/<nombre>`.
+    var urlPathComponentEncoded: String {
+        let unreserved = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
+        return addingPercentEncoding(withAllowedCharacters: unreserved) ?? self
+    }
 }
 
 enum NoktaAPIError: Error, LocalizedError {
@@ -203,7 +273,11 @@ enum NoktaAPI {
 
     private static func request<T: Decodable>(_ path: String, method: String, body: Data?) async throws -> T {
         await CookieSync.syncFromWebView()
-        var req = URLRequest(url: baseURL.appendingPathComponent(path))
+        // Callers encode individual path components; preserve those escapes.
+        guard let url = URL(string: path, relativeTo: baseURL)?.absoluteURL else {
+            throw NoktaAPIError.invalidURL
+        }
+        var req = URLRequest(url: url)
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Accept")
         if let body {

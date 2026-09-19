@@ -14,10 +14,13 @@ struct ConsultarTrabajosArgs {
 /// use — no separate data source to keep in sync.
 struct ConsultarTrabajosTool: Tool {
     let name = "consultar_trabajos"
-    let description = "Consulta los trabajos/proyectos de Nokta Studio: cliente, servicio, monto, saldo pendiente y estado. Útil para responder sobre ingresos, pagos pendientes o el historial de un cliente."
+    let description = "Consulta el historial de trabajos/proyectos: cliente, servicio, monto registrado y estado. Para cuánto deben o cobros actuales usa consultar_cobros; el saldo global de un trabajo recurrente no representa su cobro actual."
     typealias Arguments = ConsultarTrabajosArgs
 
     func call(arguments: ConsultarTrabajosArgs) async throws -> String {
+        if arguments.filtroEstado?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "pendiente" {
+            return try await ConsultarCobrosTool.consultar(cliente: arguments.filtroCliente)
+        }
         let trabajos: [NoktaTrabajo] = try await NoktaAPI.get("/api/trabajos")
         var filtered = trabajos
         if let fe = arguments.filtroEstado, !fe.isEmpty {
@@ -28,11 +31,10 @@ struct ConsultarTrabajosTool: Tool {
         }
         if filtered.isEmpty { return "No se encontraron trabajos con esos filtros." }
         let lines = filtered.prefix(60).map { t in
-            "- \(t.cliente) · \(t.servicio) · monto $\(fmt(t.monto)) · saldo $\(fmt(t.saldo)) · \(t.estado) · fecha \(t.fecha ?? "—")"
+            "- \(t.cliente) · \(t.servicio) · monto $\(fmt(t.monto)) · \(t.estado) · fecha \(t.fecha ?? "—")"
         }
         let totalMonto = filtered.reduce(0.0) { $0 + ($1.monto ?? 0) }
-        let totalSaldo = filtered.reduce(0.0) { $0 + ($1.saldo ?? 0) }
-        return "\(filtered.count) trabajo(s). Monto total: $\(fmt(totalMonto)). Saldo total pendiente: $\(fmt(totalSaldo)).\n" + lines.joined(separator: "\n")
+        return "\(filtered.count) trabajo(s). Monto histórico registrado: $\(fmt(totalMonto)) (no es deuda actual ni cobrado). Para cobros pendientes usa consultar_cobros.\n" + lines.joined(separator: "\n")
     }
 
     private func fmt(_ d: Double?) -> String { String(format: "%.2f", d ?? 0) }

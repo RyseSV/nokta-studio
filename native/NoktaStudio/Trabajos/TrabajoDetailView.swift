@@ -121,6 +121,16 @@ final class TrabajoDetailViewModel {
         await guardarQuincenas(qs)
     }
 
+    func editarMontoQuincena(periodo: String, q: Int, monto: Double) async {
+        var qs = trabajo?.quincenas ?? []
+        if let idx = qs.firstIndex(where: { $0.periodo == periodo && $0.q == q }) {
+            qs[idx] = NoktaQuincena(periodo: periodo, q: q, monto: monto, estado: qs[idx].estado, fechaPago: qs[idx].fechaPago)
+        } else {
+            qs.append(NoktaQuincena(periodo: periodo, q: q, monto: monto, estado: "pendiente", fechaPago: nil))
+        }
+        await guardarQuincenas(qs)
+    }
+
     func ocultarQuincena(periodo: String, q: Int) async {
         var qs = trabajo?.quincenas ?? []
         if let idx = qs.firstIndex(where: { $0.periodo == periodo && $0.q == q }) {
@@ -142,6 +152,20 @@ final class TrabajoDetailViewModel {
     func marcarSesionPagada(_ sesionId: String) async {
         let sesiones = (trabajo?.sesiones ?? []).map { s in
             s.id == sesionId ? NoktaSesion(id: s.id, fecha: s.fecha, monto: s.monto, estado: "pagado", fechaPago: FechaUtil.ahoraISO()) : s
+        }
+        await guardarSesiones(sesiones)
+    }
+
+    func revertirSesion(_ sesionId: String) async {
+        let sesiones = (trabajo?.sesiones ?? []).map { s in
+            s.id == sesionId ? NoktaSesion(id: s.id, fecha: s.fecha, monto: s.monto, estado: "pendiente", fechaPago: nil) : s
+        }
+        await guardarSesiones(sesiones)
+    }
+
+    func editarMontoSesion(_ sesionId: String, monto: Double) async {
+        let sesiones = (trabajo?.sesiones ?? []).map { s in
+            s.id == sesionId ? NoktaSesion(id: s.id, fecha: s.fecha, monto: monto, estado: s.estado, fechaPago: s.fechaPago) : s
         }
         await guardarSesiones(sesiones)
     }
@@ -173,7 +197,13 @@ struct TrabajoDetailView: View {
     var onBack: () -> Void = {}
     @State private var vm: TrabajoDetailViewModel
     @State private var pagoQuincenaCtx: (periodo: String, q: Int)?
+    @State private var editarQuincenaCtx: (periodo: String, q: Int)?
+    @State private var editarSesionCtx: String?
     @State private var agregarSesionShown = false
+    @State private var facturaPreview: FacturaPreviewItem?
+    @State private var facturaErrorMessage: String?
+    @State private var eliminarTrabajoConfirm = false
+    @State private var eliminarSesionConfirm: String?
 
     init(trabajoId: String, onBack: @escaping () -> Void = {}) {
         self.trabajoId = trabajoId
@@ -225,6 +255,54 @@ struct TrabajoDetailView: View {
                 agregarSesionShown = false
             }
         }
+        .sheet(item: Binding(get: {
+            editarQuincenaCtx.map { PagoQuincenaContext(periodo: $0.periodo, q: $0.q) }
+        }, set: { if $0 == nil { editarQuincenaCtx = nil } })) { ctx in
+            EditarMontoSheet(monto: vm.quincena(periodo: ctx.periodo, q: ctx.q).monto ?? 0) { monto in
+                Task { await vm.editarMontoQuincena(periodo: ctx.periodo, q: ctx.q, monto: monto) }
+                editarQuincenaCtx = nil
+            }
+        }
+        .sheet(item: Binding(get: {
+            editarSesionCtx.map { EditarSesionContext(id: $0) }
+        }, set: { if $0 == nil { editarSesionCtx = nil } })) { ctx in
+            EditarMontoSheet(monto: (vm.trabajo?.sesiones ?? []).first { $0.id == ctx.id }?.monto ?? 0) { monto in
+                Task { await vm.editarMontoSesion(ctx.id, monto: monto) }
+                editarSesionCtx = nil
+            }
+        }
+        .sheet(item: $facturaPreview) { item in
+            PDFPreviewSheet(url: item.url, title: item.title)
+        }
+        .alert("No se pudo generar la factura", isPresented: Binding(get: { facturaErrorMessage != nil }, set: { if !$0 { facturaErrorMessage = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(facturaErrorMessage ?? "")
+        }
+        .alert("¿Eliminar este trabajo?", isPresented: $eliminarTrabajoConfirm) {
+            Button("Cancelar", role: .cancel) {}
+            Button("Eliminar", role: .destructive) { Task { await vm.eliminar() } }
+        }
+        .alert("¿Eliminar esta sesión?", isPresented: Binding(get: { eliminarSesionConfirm != nil }, set: { if !$0 { eliminarSesionConfirm = nil } })) {
+            Button("Cancelar", role: .cancel) {}
+            Button("Eliminar", role: .destructive) {
+                if let id = eliminarSesionConfirm { Task { await vm.eliminarSesion(id) } }
+            }
+        }
+    }
+
+    private func generarFacturaQ(periodo: String, q: Int, rec: NoktaQuincena, montoQ: Double) async {
+        guard let t = vm.trabajo else { return }
+        let html = PDFTemplates.facturaQuincena(
+            cliente: t.cliente, empresa: t.empresa, servicio: t.servicio,
+            periodo: periodo, q: q, monto: rec.monto ?? montoQ, fechaPago: rec.fechaPago
+        )
+        do {
+            let url = try await PDFRenderer().renderToPDF(html: html, suggestedName: "Recibo_\(periodo)_Q\(q)_\(t.cliente)")
+            facturaPreview = FacturaPreviewItem(url: url, title: "Recibo · Q\(q)")
+        } catch {
+            facturaErrorMessage = error.localizedDescription
+        }
     }
 
     private var header: some View {
@@ -236,7 +314,7 @@ struct TrabajoDetailView: View {
                 Button("✓ Marcar pagado") { Task { await vm.marcarPagado() } }
                     .buttonStyle(.glassProminent).tint(NoktaPalette.green)
             }
-            Button("🗑 Eliminar", role: .destructive) { Task { await vm.eliminar() } }
+            Button("🗑 Eliminar", role: .destructive) { eliminarTrabajoConfirm = true }
                 .buttonStyle(.glass)
         }
     }
@@ -361,6 +439,12 @@ struct TrabajoDetailView: View {
                         .buttonStyle(.glass)
                 }
             }
+            if rec.estado == "pagado" {
+                Button("📄 Factura") { Task { await generarFacturaQ(periodo: periodo, q: q, rec: rec, montoQ: montoQ) } }
+                    .buttonStyle(.glass)
+            }
+            Button("✎ Editar") { editarQuincenaCtx = (periodo, q) }
+                .buttonStyle(.glass)
             Button(role: .destructive) { Task { await vm.ocultarQuincena(periodo: periodo, q: q) } } label: {
                 Image(systemName: "trash")
             }.buttonStyle(.glass)
@@ -393,8 +477,13 @@ struct TrabajoDetailView: View {
                     if !pagado {
                         Button("Pagado") { Task { await vm.marcarSesionPagada(s.id) } }
                             .buttonStyle(.glass).tint(NoktaPalette.green)
+                    } else {
+                        Button("Revertir") { Task { await vm.revertirSesion(s.id) } }
+                            .buttonStyle(.glass)
                     }
-                    Button(role: .destructive) { Task { await vm.eliminarSesion(s.id) } } label: {
+                    Button("✎ Editar") { editarSesionCtx = s.id }
+                        .buttonStyle(.glass)
+                    Button(role: .destructive) { eliminarSesionConfirm = s.id } label: {
                         Image(systemName: "trash")
                     }.buttonStyle(.glass)
                 }
@@ -410,9 +499,32 @@ struct TrabajoDetailView: View {
     }
 }
 
-private let ESTADO_CLIENTE_LABEL: [String: String] = ["activo": "Activo", "pausado": "Pausado", "cancelado": "Cancelado"]
-
 private struct PagoQuincenaContext: Identifiable { let periodo: String; let q: Int; var id: String { "\(periodo)-\(q)" } }
+private struct EditarSesionContext: Identifiable { let id: String }
+private struct FacturaPreviewItem: Identifiable { let id = UUID(); let url: URL; let title: String }
+
+private struct EditarMontoSheet: View {
+    @State var monto: Double
+    let onConfirm: (Double) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Editar monto").font(.system(size: 16, weight: .semibold))
+            TextField("Monto", value: $monto, format: .number).textFieldStyle(.roundedBorder)
+            HStack {
+                Button("Cancelar") { dismiss() }
+                Spacer()
+                Button("✓ Guardar") {
+                    onConfirm(monto)
+                    dismiss()
+                }.buttonStyle(.glassProminent).tint(NoktaPalette.ember)
+            }
+        }
+        .padding(24)
+        .frame(width: 320)
+    }
+}
 
 private struct PagoQuincenaSheet: View {
     @State var monto: Double

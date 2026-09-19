@@ -262,7 +262,7 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
 <section class="page" id="page-alertas">
   <div class="page-header">
     <div class="page-title">Alertas</div>
-    <button class="btn btn-ghost btn-sm" onclick="marcarTodasLeidas()">✓ Marcar todas leídas</button>
+    <button class="btn btn-ghost btn-sm" onclick="marcarTodasLeidas(this)">✓ Marcar todas leídas</button>
   </div>
   <div id="alertas-list"></div>
 </section>
@@ -1269,7 +1269,10 @@ async function eliminarEvento(id){
 const alertIcons={descarga:'📥',link_venciendo:'⏰',pago_pendiente:'💰',evento_proximo:'📅',quincena_vencida:'🔔'};
 const alertLabels={descarga:'Descarga de galería',link_venciendo:'Link próximo a vencer',pago_pendiente:'Pago pendiente',evento_proximo:'Evento próximo',quincena_vencida:'Quincena sin pagar'};
 async function loadAlertas(){
-  allAlertas = await api('/api/alertas');
+  try {
+  const alertas = await api('/api/alertas');
+  if(!Array.isArray(alertas)) throw new Error(alertas?.error || 'Respuesta inválida');
+  allAlertas = alertas.filter(a=>!a.leida);
   updateBadge(allAlertas);
   const list=document.getElementById('alertas-list');
   if(!allAlertas.length){ list.innerHTML='<div class="empty">No hay alertas</div>'; return; }
@@ -1299,18 +1302,32 @@ async function loadAlertas(){
       </div>
     </div>`;
   }).join('');
+  } catch(err) { toast('No se pudieron cargar las alertas: '+err.message,'err'); }
 }
 async function leerAlerta(id,btn){
-  await api('/api/alertas/'+id,{method:'DELETE'});
+  btn.disabled=true;
+  try {
+  const result=await api('/api/alertas/'+id+'/leer',{method:'PUT'});
+  if(!result?.ok) throw new Error(result?.error || 'No se guardó el cambio');
   btn.closest('.alert-item').remove();
   allAlertas = allAlertas.filter(a=>a.id!==id);
   updateBadge(allAlertas);
   if(!document.querySelectorAll('.alert-item').length)
     document.getElementById('alertas-list').innerHTML='<div class="empty">No hay alertas</div>';
+  } catch(err) { toast('No se pudo marcar la alerta como leída: '+err.message,'err'); }
+  finally { btn.disabled=false; }
 }
-async function marcarTodasLeidas(){
-  await api('/api/alertas/leer',{method:'PUT'});
-  await loadAlertas();
+async function marcarTodasLeidas(btn){
+  btn.disabled=true;
+  try {
+    const result=await api('/api/alertas/leer',{method:'PUT'});
+    if(!result?.ok) throw new Error(result?.error || 'No se guardó el cambio');
+    allAlertas=[];
+    updateBadge(allAlertas);
+    document.getElementById('alertas-list').innerHTML='<div class="empty">No hay alertas</div>';
+    await loadAlertas();
+  } catch(err) { toast('No se pudieron marcar las alertas como leídas: '+err.message,'err'); }
+  finally { btn.disabled=false; }
 }
 function updateBadge(alertas){
   const n=(alertas||[]).filter(a=>!a.leida).length;

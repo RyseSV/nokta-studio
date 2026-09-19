@@ -698,7 +698,11 @@ app.delete('/api/documentos/:tipo/:id', requireAdmin, async (req, res) => {
 app.get('/api/alertas', requireAdmin, async (req, res) => {
   try {
     await checkAlerts();
-    res.json(await Alerta.find({}).sort({ fecha: -1 }).lean());
+    const estados = await ClienteEstado.find({}).lean();
+    const inactivos = new Set(estados.filter(e => e.estado === 'pausado' || e.estado === 'cancelado').map(e => e.nombre));
+    const alertas = await Alerta.find({}).sort({ fecha: -1 }).lean();
+    // Hide existing overdue alerts too, while retaining their read/deduplication state.
+    res.json(alertas.filter(a => a.tipo !== 'quincena_vencida' || !inactivos.has(a.datos?.cliente)));
   } catch (err) { handleError(res, err); }
 });
 

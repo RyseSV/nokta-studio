@@ -206,7 +206,6 @@ struct NuevoTrabajoView: View {
                 }
             }
             .padding(32)
-            .frame(maxWidth: 560, alignment: .leading)
         }
         .background(NoktaPalette.bg)
     }

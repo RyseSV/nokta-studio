@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		41AFBA97D65AE57A7DB4AFFD /* AlertasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAD2111EEC191ABB2041A543 /* AlertasView.swift */; };
 		9397FEA0DBE9FFD102A5950F /* NoktaStudioApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 753E68B7B4953F70C848178A /* NoktaStudioApp.swift */; };
 		AB61B9B599B9180919DF2DA6 /* ConsultarAlertasIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858048089CEAD4965706E81B /* ConsultarAlertasIntent.swift */; };
 		6C1B6451DCFBFBCA07990364 /* ConsultarSaldoIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07EC58114CA7D5F292B71FD0 /* ConsultarSaldoIntent.swift */; };
@@ -16,6 +17,7 @@
 		AE64043F81A1273A485D77FB /* RegistrarPagoQuincenaIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1160DB7241FD8F41E4E4ED28 /* RegistrarPagoQuincenaIntent.swift */; };
 		2CF199BCCE5FA20FD882EE4E /* AssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC409B385F5212B5029A38D /* AssistantView.swift */; };
 		FEEC2077D8D9D2981ABC75CE /* AssistantViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1394EADB007D0E620DA32187 /* AssistantViewModel.swift */; };
+		88F9F4A0A845AB6F5956E87C /* ConsultaCobrosRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F02009FC71425D242AA52D1F /* ConsultaCobrosRouting.swift */; };
 		073EDAEB78CC5AABD638B868 /* CookieSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751561F8F0E2C02DF152640B /* CookieSync.swift */; };
 		61E623B32794DB3F0925C011 /* NoktaAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6745B2EA3513D45539F64210 /* NoktaAPI.swift */; };
 		F62C1948A394196C83300D72 /* PDFPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9463634CD2DA67DD57D9E98 /* PDFPreviewView.swift */; };
@@ -24,6 +26,7 @@
 		141309C1CB8E5F9BC3B026BA /* CambiarEstadoClienteTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E84E455F10E06F1D2096901 /* CambiarEstadoClienteTool.swift */; };
 		F4C66DEF5D85EAC58B01AA70 /* ConsultarAlertasTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08A99BF681144F42507A2111 /* ConsultarAlertasTool.swift */; };
 		FC2029F6DD001773CB206F3D /* ConsultarClientesTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0637902F49B83A0774A27133 /* ConsultarClientesTool.swift */; };
+		E1B723B42D3F68BE560845BF /* ConsultarCobrosTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AE371D650533EC0FEE84DAE /* ConsultarCobrosTool.swift */; };
 		B52F8639E63419049C439C1F /* ConsultarGastosTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DF5A84CAF7620594C1E5E89 /* ConsultarGastosTool.swift */; };
 		CE4E8F4B42CAC9A4E5785F57 /* ConsultarTrabajosTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9225E5685B0871020A1BC9 /* ConsultarTrabajosTool.swift */; };
 		6C33188F9EA710C38B68770A /* CrearClienteTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59EB51D589C0CA23A0CE2228 /* CrearClienteTool.swift */; };
@@ -40,15 +43,23 @@
 		DB76EF3A1907D1F4BEE55E51 /* RegistrarGastoTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33760DA275F4C57B9E4ABC0A /* RegistrarGastoTool.swift */; };
 		D9B021527C697A8E4BC61989 /* RegistrarPagoQuincenaTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F65C68B171E6BFB2AAC9B58 /* RegistrarPagoQuincenaTool.swift */; };
 		F1B1FD5100B51C037F238B5F /* ServicioGrupoMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86DE2959682B0A4B679E693D /* ServicioGrupoMap.swift */; };
+		E3BCFB118F9EA95C5E599314 /* CalendarioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5000467C6514B6D97D7684F8 /* CalendarioView.swift */; };
+		1FD4A6E0FB4AD1D4C1A5639B /* ClienteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D2D36E0696839A722B94434 /* ClienteDetailView.swift */; };
+		C39D7050DF31ED75C2AD6CA5 /* ClientesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 653F12C5FBDCFFDF9A77419D /* ClientesView.swift */; };
+		CC3CA470BDC9BEA7557505BA /* GaleriasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B2738B2E23301A6DBF6A1B /* GaleriasView.swift */; };
 		EC3617447E8154DA68742268 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91B271F66E0C9D033658882F /* DesignSystem.swift */; };
 		EAAF3A63BB14AF394CAE8F97 /* Ingresos.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBF1E26111ECB99F91A8D12 /* Ingresos.swift */; };
 		F28609B92C560C59DA99381C /* QuincenaEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E16B11E88470515D85E279B /* QuincenaEngine.swift */; };
 		3AE504125F87E4AD848630F8 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105203992F135ED07A66C361 /* DashboardView.swift */; };
+		FCCDA1043D0340D0B3B6A1CA /* DocumentosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0197788E6AE654ACBE843B5E /* DocumentosView.swift */; };
+		86E7393265B78580C32A14E3 /* GastosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BC42EEFE6416D5D3DACAFA1 /* GastosView.swift */; };
+		372BAD6D62CE491C1A8CB067 /* ReportesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3401324A922ADD8337A286F /* ReportesView.swift */; };
 		CA7D0ADF52ECAA67A5CCF214 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F2D2F148896334509E9E1F /* RootView.swift */; };
 		B7569B9A572370D8D0D915E3 /* NuevoTrabajoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 125BBBEECEAB091A06BFE255 /* NuevoTrabajoView.swift */; };
 		B5722BE55D88076EA0635743 /* TrabajoDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D78967E806CF23153390A44 /* TrabajoDetailView.swift */; };
 		D698C5BFEE2A09EBBFABCD56 /* TrabajosListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 782030FFE8B32DDA3562A562 /* TrabajosListView.swift */; };
 		831A7066B0F64F0101EF1A1E /* NoktaWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB38ED61BB052E334C9FBAA6 /* NoktaWebView.swift */; };
+		58497FCDE13489145EEB693B /* AlertasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAD2111EEC191ABB2041A543 /* AlertasView.swift */; };
 		7A98018EB868FB65026A8ACD /* NoktaStudioApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 753E68B7B4953F70C848178A /* NoktaStudioApp.swift */; };
 		F6BE16DD9EC99473CF0C791E /* ConsultarAlertasIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858048089CEAD4965706E81B /* ConsultarAlertasIntent.swift */; };
 		80519CF00769BDC5D752CA4F /* ConsultarSaldoIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07EC58114CA7D5F292B71FD0 /* ConsultarSaldoIntent.swift */; };
@@ -58,6 +69,7 @@
 		57878F9CA82066D9113BF487 /* RegistrarPagoQuincenaIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1160DB7241FD8F41E4E4ED28 /* RegistrarPagoQuincenaIntent.swift */; };
 		CE30A17E8698C99620B77EDA /* AssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC409B385F5212B5029A38D /* AssistantView.swift */; };
 		12D7B9B254871A690214CA3B /* AssistantViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1394EADB007D0E620DA32187 /* AssistantViewModel.swift */; };
+		AF81FD3036066AC1AFADC9EC /* ConsultaCobrosRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F02009FC71425D242AA52D1F /* ConsultaCobrosRouting.swift */; };
 		682BEC41C11C881169355152 /* CookieSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751561F8F0E2C02DF152640B /* CookieSync.swift */; };
 		18EF569F41F44BADCDED4A31 /* NoktaAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6745B2EA3513D45539F64210 /* NoktaAPI.swift */; };
 		6C78A0D35DCE5A86FA9FFED9 /* PDFPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9463634CD2DA67DD57D9E98 /* PDFPreviewView.swift */; };
@@ -66,6 +78,7 @@
 		8FA68061F048E81B8C95CDC7 /* CambiarEstadoClienteTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E84E455F10E06F1D2096901 /* CambiarEstadoClienteTool.swift */; };
 		3101A6C0EE05DD174AD90DF9 /* ConsultarAlertasTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08A99BF681144F42507A2111 /* ConsultarAlertasTool.swift */; };
 		8A8F98C80D50AEAC6A7740B3 /* ConsultarClientesTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0637902F49B83A0774A27133 /* ConsultarClientesTool.swift */; };
+		8E3189C44F205CC72212ED55 /* ConsultarCobrosTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AE371D650533EC0FEE84DAE /* ConsultarCobrosTool.swift */; };
 		F91747BD90AFD417B43BAA74 /* ConsultarGastosTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DF5A84CAF7620594C1E5E89 /* ConsultarGastosTool.swift */; };
 		457DAAEAE16887EAD063E040 /* ConsultarTrabajosTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9225E5685B0871020A1BC9 /* ConsultarTrabajosTool.swift */; };
 		1E8BE4F32987C3D874BBDB2C /* CrearClienteTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59EB51D589C0CA23A0CE2228 /* CrearClienteTool.swift */; };
@@ -82,10 +95,17 @@
 		8999649F3BD3506AF5455475 /* RegistrarGastoTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33760DA275F4C57B9E4ABC0A /* RegistrarGastoTool.swift */; };
 		2EA466B3640F392A4CF9C045 /* RegistrarPagoQuincenaTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F65C68B171E6BFB2AAC9B58 /* RegistrarPagoQuincenaTool.swift */; };
 		494107E3D498EA5D86E7852C /* ServicioGrupoMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86DE2959682B0A4B679E693D /* ServicioGrupoMap.swift */; };
+		C5F75C851DB98BF8252F0D9E /* CalendarioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5000467C6514B6D97D7684F8 /* CalendarioView.swift */; };
+		1E3447A29CAF91A4D7FCA3C4 /* ClienteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D2D36E0696839A722B94434 /* ClienteDetailView.swift */; };
+		A50CAA74D55086320CCB27EA /* ClientesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 653F12C5FBDCFFDF9A77419D /* ClientesView.swift */; };
+		803AE00A07484800E4D05E0E /* GaleriasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B2738B2E23301A6DBF6A1B /* GaleriasView.swift */; };
 		DFF256C3C42D973B6257D35D /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91B271F66E0C9D033658882F /* DesignSystem.swift */; };
 		53BE993D03FC5C8ACC4238FE /* Ingresos.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBF1E26111ECB99F91A8D12 /* Ingresos.swift */; };
 		83D5FF69F03D4C697ECB9E70 /* QuincenaEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E16B11E88470515D85E279B /* QuincenaEngine.swift */; };
 		5805B630C9630207E29320B4 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105203992F135ED07A66C361 /* DashboardView.swift */; };
+		EE10ADFB3FCBB135CDB531E3 /* DocumentosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0197788E6AE654ACBE843B5E /* DocumentosView.swift */; };
+		1BDC4298ACE967EFF3826FD3 /* GastosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BC42EEFE6416D5D3DACAFA1 /* GastosView.swift */; };
+		DA2F3FCDD415DF6BDD9029BA /* ReportesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3401324A922ADD8337A286F /* ReportesView.swift */; };
 		87A0FACA3BA5E454FB360EA9 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F2D2F148896334509E9E1F /* RootView.swift */; };
 		6768A10C9CCB501DA9B88204 /* NuevoTrabajoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 125BBBEECEAB091A06BFE255 /* NuevoTrabajoView.swift */; };
 		E8FC4CA34462C93A4FD4D837 /* TrabajoDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D78967E806CF23153390A44 /* TrabajoDetailView.swift */; };
@@ -98,14 +118,17 @@
 		E4C41564F6C25D863BC06471 /* Poppins-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 39085646C607B488D1B05BC6 /* Poppins-Medium.ttf */; };
 		44FFB2741CA8CB7851C5BE21 /* Poppins-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FBFB3B639E73FF10CC45E165 /* Poppins-Regular.ttf */; };
 		AF2A50FDD0BA8C44EF4E9EDF /* Poppins-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D52C631B6BC70C7720ECB67E /* Poppins-SemiBold.ttf */; };
+		8C588A57E63CAA6C6D082A74 /* nokta_lockup_color_transparent.png in Resources */ = {isa = PBXBuildFile; fileRef = E92C95E73DD220F2AC49BEC0 /* nokta_lockup_color_transparent.png */; };
 		259DC3EB93B4D9F5BBDEFF02 /* Poppins-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6EE96B676F11A1B72FB10D74 /* Poppins-Bold.ttf */; };
 		A990D0BB1AA266CB7F42DF55 /* Poppins-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 44296FB7088CFED343CFF1EE /* Poppins-Light.ttf */; };
 		00E0C497A38B0C1551EAC377 /* Poppins-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 39085646C607B488D1B05BC6 /* Poppins-Medium.ttf */; };
 		DEDA7ED8EF4A506B838B657B /* Poppins-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FBFB3B639E73FF10CC45E165 /* Poppins-Regular.ttf */; };
 		F6741603D137B6294C23A0F6 /* Poppins-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D52C631B6BC70C7720ECB67E /* Poppins-SemiBold.ttf */; };
+		6F48D09971F47561B96C7342 /* nokta_lockup_color_transparent.png in Resources */ = {isa = PBXBuildFile; fileRef = E92C95E73DD220F2AC49BEC0 /* nokta_lockup_color_transparent.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		EAD2111EEC191ABB2041A543 /* AlertasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertasView.swift; sourceTree = "<group>"; };
 		753E68B7B4953F70C848178A /* NoktaStudioApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoktaStudioApp.swift; sourceTree = "<group>"; };
 		858048089CEAD4965706E81B /* ConsultarAlertasIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultarAlertasIntent.swift; sourceTree = "<group>"; };
 		07EC58114CA7D5F292B71FD0 /* ConsultarSaldoIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultarSaldoIntent.swift; sourceTree = "<group>"; };
@@ -115,6 +138,7 @@
 		1160DB7241FD8F41E4E4ED28 /* RegistrarPagoQuincenaIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegistrarPagoQuincenaIntent.swift; sourceTree = "<group>"; };
 		5FC409B385F5212B5029A38D /* AssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantView.swift; sourceTree = "<group>"; };
 		1394EADB007D0E620DA32187 /* AssistantViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantViewModel.swift; sourceTree = "<group>"; };
+		F02009FC71425D242AA52D1F /* ConsultaCobrosRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultaCobrosRouting.swift; sourceTree = "<group>"; };
 		751561F8F0E2C02DF152640B /* CookieSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CookieSync.swift; sourceTree = "<group>"; };
 		6745B2EA3513D45539F64210 /* NoktaAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoktaAPI.swift; sourceTree = "<group>"; };
 		C9463634CD2DA67DD57D9E98 /* PDFPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFPreviewView.swift; sourceTree = "<group>"; };
@@ -123,6 +147,7 @@
 		9E84E455F10E06F1D2096901 /* CambiarEstadoClienteTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CambiarEstadoClienteTool.swift; sourceTree = "<group>"; };
 		08A99BF681144F42507A2111 /* ConsultarAlertasTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultarAlertasTool.swift; sourceTree = "<group>"; };
 		0637902F49B83A0774A27133 /* ConsultarClientesTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultarClientesTool.swift; sourceTree = "<group>"; };
+		6AE371D650533EC0FEE84DAE /* ConsultarCobrosTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultarCobrosTool.swift; sourceTree = "<group>"; };
 		9DF5A84CAF7620594C1E5E89 /* ConsultarGastosTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultarGastosTool.swift; sourceTree = "<group>"; };
 		4D9225E5685B0871020A1BC9 /* ConsultarTrabajosTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultarTrabajosTool.swift; sourceTree = "<group>"; };
 		59EB51D589C0CA23A0CE2228 /* CrearClienteTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrearClienteTool.swift; sourceTree = "<group>"; };
@@ -139,10 +164,17 @@
 		33760DA275F4C57B9E4ABC0A /* RegistrarGastoTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegistrarGastoTool.swift; sourceTree = "<group>"; };
 		7F65C68B171E6BFB2AAC9B58 /* RegistrarPagoQuincenaTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegistrarPagoQuincenaTool.swift; sourceTree = "<group>"; };
 		86DE2959682B0A4B679E693D /* ServicioGrupoMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServicioGrupoMap.swift; sourceTree = "<group>"; };
+		5000467C6514B6D97D7684F8 /* CalendarioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarioView.swift; sourceTree = "<group>"; };
+		7D2D36E0696839A722B94434 /* ClienteDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClienteDetailView.swift; sourceTree = "<group>"; };
+		653F12C5FBDCFFDF9A77419D /* ClientesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientesView.swift; sourceTree = "<group>"; };
+		25B2738B2E23301A6DBF6A1B /* GaleriasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaleriasView.swift; sourceTree = "<group>"; };
 		91B271F66E0C9D033658882F /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		BEBF1E26111ECB99F91A8D12 /* Ingresos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ingresos.swift; sourceTree = "<group>"; };
 		5E16B11E88470515D85E279B /* QuincenaEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuincenaEngine.swift; sourceTree = "<group>"; };
 		105203992F135ED07A66C361 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		0197788E6AE654ACBE843B5E /* DocumentosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentosView.swift; sourceTree = "<group>"; };
+		4BC42EEFE6416D5D3DACAFA1 /* GastosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GastosView.swift; sourceTree = "<group>"; };
+		D3401324A922ADD8337A286F /* ReportesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportesView.swift; sourceTree = "<group>"; };
 		33F2D2F148896334509E9E1F /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		125BBBEECEAB091A06BFE255 /* NuevoTrabajoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NuevoTrabajoView.swift; sourceTree = "<group>"; };
 		1D78967E806CF23153390A44 /* TrabajoDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrabajoDetailView.swift; sourceTree = "<group>"; };
@@ -153,6 +185,7 @@
 		39085646C607B488D1B05BC6 /* Poppins-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Poppins-Medium.ttf; sourceTree = "<group>"; };
 		FBFB3B639E73FF10CC45E165 /* Poppins-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Poppins-Regular.ttf; sourceTree = "<group>"; };
 		D52C631B6BC70C7720ECB67E /* Poppins-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Poppins-SemiBold.ttf; sourceTree = "<group>"; };
+		E92C95E73DD220F2AC49BEC0 /* nokta_lockup_color_transparent.png */ = {isa = PBXFileReference; lastKnownFileType = file; path = nokta_lockup_color_transparent.png; sourceTree = "<group>"; };
 		CFDBAC21689581B04CB7ABB5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		57157261AC48F9302A3B476E /* NoktaStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "NoktaStudio.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B0BB3AAC6141AA5CDB947A5 /* NoktaStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "NoktaStudio.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -179,11 +212,17 @@
 		E50290A24C49A459B43487C5 = {
 			isa = PBXGroup;
 			children = (
+				690315808D2A7727A8BF8CDD,
 				1C48CE29E4E135EE62951B22,
 				FDCEBBF9DA95BEB2A4BFD3EE,
 				B650B6C384DB426CDB6DABB8,
+				0698FA5AE11F699BD4375CE6,
+				896D24AA78D9F3BA62648CD0,
 				410188F9DC6E499FEC68BCF6,
 				E1A8163F06C67BC7F1F82BB0,
+				8415FBCAB41AD52DEDE614B7,
+				E18C414122F8336A8A7A47BC,
+				8AD564B41A355B3926B74668,
 				A024F06580C79B7582C3806A,
 				72B4D395CBFFB3EEC69CDEB6,
 				518371CAC0C183E82510C847,
@@ -192,6 +231,14 @@
 				5151B46607EBC8890D8DFCC2,
 			);
 			path = NoktaStudio;
+			sourceTree = "<group>";
+		};
+		690315808D2A7727A8BF8CDD = {
+			isa = PBXGroup;
+			children = (
+				EAD2111EEC191ABB2041A543,
+			);
+			path = "Alertas";
 			sourceTree = "<group>";
 		};
 		1C48CE29E4E135EE62951B22 = {
@@ -221,6 +268,7 @@
 				9E84E455F10E06F1D2096901,
 				08A99BF681144F42507A2111,
 				0637902F49B83A0774A27133,
+				6AE371D650533EC0FEE84DAE,
 				9DF5A84CAF7620594C1E5E89,
 				4D9225E5685B0871020A1BC9,
 				59EB51D589C0CA23A0CE2228,
@@ -247,6 +295,7 @@
 				4A4F979EFE18D673EE72C0B4,
 				5FC409B385F5212B5029A38D,
 				1394EADB007D0E620DA32187,
+				F02009FC71425D242AA52D1F,
 				751561F8F0E2C02DF152640B,
 				6745B2EA3513D45539F64210,
 				C9463634CD2DA67DD57D9E98,
@@ -254,6 +303,24 @@
 				594CFFCAD36731E896892538,
 			);
 			path = "Assistant";
+			sourceTree = "<group>";
+		};
+		0698FA5AE11F699BD4375CE6 = {
+			isa = PBXGroup;
+			children = (
+				5000467C6514B6D97D7684F8,
+			);
+			path = "Calendario";
+			sourceTree = "<group>";
+		};
+		896D24AA78D9F3BA62648CD0 = {
+			isa = PBXGroup;
+			children = (
+				7D2D36E0696839A722B94434,
+				653F12C5FBDCFFDF9A77419D,
+				25B2738B2E23301A6DBF6A1B,
+			);
+			path = "Clientes";
 			sourceTree = "<group>";
 		};
 		410188F9DC6E499FEC68BCF6 = {
@@ -274,6 +341,30 @@
 			path = "Dashboard";
 			sourceTree = "<group>";
 		};
+		8415FBCAB41AD52DEDE614B7 = {
+			isa = PBXGroup;
+			children = (
+				0197788E6AE654ACBE843B5E,
+			);
+			path = "Documentos";
+			sourceTree = "<group>";
+		};
+		E18C414122F8336A8A7A47BC = {
+			isa = PBXGroup;
+			children = (
+				4BC42EEFE6416D5D3DACAFA1,
+			);
+			path = "Gastos";
+			sourceTree = "<group>";
+		};
+		8AD564B41A355B3926B74668 = {
+			isa = PBXGroup;
+			children = (
+				D3401324A922ADD8337A286F,
+			);
+			path = "Reportes";
+			sourceTree = "<group>";
+		};
 		D05438F98A27BC39A60EE06E = {
 			isa = PBXGroup;
 			children = (
@@ -286,10 +377,19 @@
 			path = "Fonts";
 			sourceTree = "<group>";
 		};
+		590E010C3C18CA86164CF40D = {
+			isa = PBXGroup;
+			children = (
+				E92C95E73DD220F2AC49BEC0,
+			);
+			path = "Images";
+			sourceTree = "<group>";
+		};
 		A024F06580C79B7582C3806A = {
 			isa = PBXGroup;
 			children = (
 				D05438F98A27BC39A60EE06E,
+				590E010C3C18CA86164CF40D,
 			);
 			path = "Resources";
 			sourceTree = "<group>";
@@ -406,6 +506,7 @@
 				E4C41564F6C25D863BC06471 /* Poppins-Medium.ttf in Resources */,
 				44FFB2741CA8CB7851C5BE21 /* Poppins-Regular.ttf in Resources */,
 				AF2A50FDD0BA8C44EF4E9EDF /* Poppins-SemiBold.ttf in Resources */,
+				8C588A57E63CAA6C6D082A74 /* nokta_lockup_color_transparent.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -419,6 +520,7 @@
 				00E0C497A38B0C1551EAC377 /* Poppins-Medium.ttf in Resources */,
 				DEDA7ED8EF4A506B838B657B /* Poppins-Regular.ttf in Resources */,
 				F6741603D137B6294C23A0F6 /* Poppins-SemiBold.ttf in Resources */,
+				6F48D09971F47561B96C7342 /* nokta_lockup_color_transparent.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -429,6 +531,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				41AFBA97D65AE57A7DB4AFFD /* AlertasView.swift in Sources */,
 				9397FEA0DBE9FFD102A5950F /* NoktaStudioApp.swift in Sources */,
 				AB61B9B599B9180919DF2DA6 /* ConsultarAlertasIntent.swift in Sources */,
 				6C1B6451DCFBFBCA07990364 /* ConsultarSaldoIntent.swift in Sources */,
@@ -438,6 +541,7 @@
 				AE64043F81A1273A485D77FB /* RegistrarPagoQuincenaIntent.swift in Sources */,
 				2CF199BCCE5FA20FD882EE4E /* AssistantView.swift in Sources */,
 				FEEC2077D8D9D2981ABC75CE /* AssistantViewModel.swift in Sources */,
+				88F9F4A0A845AB6F5956E87C /* ConsultaCobrosRouting.swift in Sources */,
 				073EDAEB78CC5AABD638B868 /* CookieSync.swift in Sources */,
 				61E623B32794DB3F0925C011 /* NoktaAPI.swift in Sources */,
 				F62C1948A394196C83300D72 /* PDFPreviewView.swift in Sources */,
@@ -446,6 +550,7 @@
 				141309C1CB8E5F9BC3B026BA /* CambiarEstadoClienteTool.swift in Sources */,
 				F4C66DEF5D85EAC58B01AA70 /* ConsultarAlertasTool.swift in Sources */,
 				FC2029F6DD001773CB206F3D /* ConsultarClientesTool.swift in Sources */,
+				E1B723B42D3F68BE560845BF /* ConsultarCobrosTool.swift in Sources */,
 				B52F8639E63419049C439C1F /* ConsultarGastosTool.swift in Sources */,
 				CE4E8F4B42CAC9A4E5785F57 /* ConsultarTrabajosTool.swift in Sources */,
 				6C33188F9EA710C38B68770A /* CrearClienteTool.swift in Sources */,
@@ -462,10 +567,17 @@
 				DB76EF3A1907D1F4BEE55E51 /* RegistrarGastoTool.swift in Sources */,
 				D9B021527C697A8E4BC61989 /* RegistrarPagoQuincenaTool.swift in Sources */,
 				F1B1FD5100B51C037F238B5F /* ServicioGrupoMap.swift in Sources */,
+				E3BCFB118F9EA95C5E599314 /* CalendarioView.swift in Sources */,
+				1FD4A6E0FB4AD1D4C1A5639B /* ClienteDetailView.swift in Sources */,
+				C39D7050DF31ED75C2AD6CA5 /* ClientesView.swift in Sources */,
+				CC3CA470BDC9BEA7557505BA /* GaleriasView.swift in Sources */,
 				EC3617447E8154DA68742268 /* DesignSystem.swift in Sources */,
 				EAAF3A63BB14AF394CAE8F97 /* Ingresos.swift in Sources */,
 				F28609B92C560C59DA99381C /* QuincenaEngine.swift in Sources */,
 				3AE504125F87E4AD848630F8 /* DashboardView.swift in Sources */,
+				FCCDA1043D0340D0B3B6A1CA /* DocumentosView.swift in Sources */,
+				86E7393265B78580C32A14E3 /* GastosView.swift in Sources */,
+				372BAD6D62CE491C1A8CB067 /* ReportesView.swift in Sources */,
 				CA7D0ADF52ECAA67A5CCF214 /* RootView.swift in Sources */,
 				B7569B9A572370D8D0D915E3 /* NuevoTrabajoView.swift in Sources */,
 				B5722BE55D88076EA0635743 /* TrabajoDetailView.swift in Sources */,
@@ -478,6 +590,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				58497FCDE13489145EEB693B /* AlertasView.swift in Sources */,
 				7A98018EB868FB65026A8ACD /* NoktaStudioApp.swift in Sources */,
 				F6BE16DD9EC99473CF0C791E /* ConsultarAlertasIntent.swift in Sources */,
 				80519CF00769BDC5D752CA4F /* ConsultarSaldoIntent.swift in Sources */,
@@ -487,6 +600,7 @@
 				57878F9CA82066D9113BF487 /* RegistrarPagoQuincenaIntent.swift in Sources */,
 				CE30A17E8698C99620B77EDA /* AssistantView.swift in Sources */,
 				12D7B9B254871A690214CA3B /* AssistantViewModel.swift in Sources */,
+				AF81FD3036066AC1AFADC9EC /* ConsultaCobrosRouting.swift in Sources */,
 				682BEC41C11C881169355152 /* CookieSync.swift in Sources */,
 				18EF569F41F44BADCDED4A31 /* NoktaAPI.swift in Sources */,
 				6C78A0D35DCE5A86FA9FFED9 /* PDFPreviewView.swift in Sources */,
@@ -495,6 +609,7 @@
 				8FA68061F048E81B8C95CDC7 /* CambiarEstadoClienteTool.swift in Sources */,
 				3101A6C0EE05DD174AD90DF9 /* ConsultarAlertasTool.swift in Sources */,
 				8A8F98C80D50AEAC6A7740B3 /* ConsultarClientesTool.swift in Sources */,
+				8E3189C44F205CC72212ED55 /* ConsultarCobrosTool.swift in Sources */,
 				F91747BD90AFD417B43BAA74 /* ConsultarGastosTool.swift in Sources */,
 				457DAAEAE16887EAD063E040 /* ConsultarTrabajosTool.swift in Sources */,
 				1E8BE4F32987C3D874BBDB2C /* CrearClienteTool.swift in Sources */,
@@ -511,10 +626,17 @@
 				8999649F3BD3506AF5455475 /* RegistrarGastoTool.swift in Sources */,
 				2EA466B3640F392A4CF9C045 /* RegistrarPagoQuincenaTool.swift in Sources */,
 				494107E3D498EA5D86E7852C /* ServicioGrupoMap.swift in Sources */,
+				C5F75C851DB98BF8252F0D9E /* CalendarioView.swift in Sources */,
+				1E3447A29CAF91A4D7FCA3C4 /* ClienteDetailView.swift in Sources */,
+				A50CAA74D55086320CCB27EA /* ClientesView.swift in Sources */,
+				803AE00A07484800E4D05E0E /* GaleriasView.swift in Sources */,
 				DFF256C3C42D973B6257D35D /* DesignSystem.swift in Sources */,
 				53BE993D03FC5C8ACC4238FE /* Ingresos.swift in Sources */,
 				83D5FF69F03D4C697ECB9E70 /* QuincenaEngine.swift in Sources */,
 				5805B630C9630207E29320B4 /* DashboardView.swift in Sources */,
+				EE10ADFB3FCBB135CDB531E3 /* DocumentosView.swift in Sources */,
+				1BDC4298ACE967EFF3826FD3 /* GastosView.swift in Sources */,
+				DA2F3FCDD415DF6BDD9029BA /* ReportesView.swift in Sources */,
 				87A0FACA3BA5E454FB360EA9 /* RootView.swift in Sources */,
 				6768A10C9CCB501DA9B88204 /* NuevoTrabajoView.swift in Sources */,
 				E8FC4CA34462C93A4FD4D837 /* TrabajoDetailView.swift in Sources */,

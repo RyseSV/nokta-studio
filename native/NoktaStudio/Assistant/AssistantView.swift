@@ -73,6 +73,7 @@ struct AssistantView: View {
                 }
                 .buttonStyle(.glass)
                 .help("Nueva conversación")
+                .disabled(vm.isResponding)
             }
         }
         .sheet(item: $previewing) { item in
@@ -129,7 +130,7 @@ struct AssistantView: View {
             if let pdfURL = message.pdfURL {
                 pdfCard(url: pdfURL, title: message.pdfTitle ?? "Documento")
             } else {
-                Text(message.text)
+                Text((try? AttributedString(markdown: message.text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(message.text))
                     .font(.callout)
                     .foregroundStyle(message.role == .system ? .red : Palette.cream)
                     .padding(.horizontal, 14).padding(.vertical, 10)

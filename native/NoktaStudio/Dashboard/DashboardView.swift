@@ -8,6 +8,7 @@ private struct PieDatum: Identifiable { let id = UUID(); let servicio: String; l
 final class DashboardViewModel {
     var trabajos: [NoktaTrabajo] = []
     var gastos: [NoktaGasto] = []
+    var estados: [NoktaClienteEstado] = []
     var mesSeleccionado: Int = Calendar.current.component(.month, from: Date()) - 1 // 0-based
     var isLoading = false
     var errorMessage: String?
@@ -20,7 +21,8 @@ final class DashboardViewModel {
         do {
             async let t: [NoktaTrabajo] = NoktaAPI.get("/api/trabajos")
             async let g: [NoktaGasto] = NoktaAPI.get("/api/gastos")
-            (trabajos, gastos) = try await (t, g)
+            async let e: [NoktaClienteEstado] = NoktaAPI.get("/api/clientes-estados")
+            (trabajos, gastos, estados) = try await (t, g, e)
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
@@ -46,7 +48,7 @@ final class DashboardViewModel {
     var ganancia: Double { ingresos - gastosDelMes }
 
     var pendiente: (monto: Double, count: Int) {
-        IngresosCalculator.pendienteDelMes(periodoMes, trabajos: trabajos)
+        IngresosCalculator.pendienteDelMes(periodoMes, trabajos: trabajos, estados: estados)
     }
 
     var pctVsMesAnterior: Double {

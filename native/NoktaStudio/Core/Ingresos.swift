@@ -40,7 +40,15 @@ enum FechaUtil {
 /// same asymmetries the web has (e.g. an unpaid grupo A/C/D/E job still
 /// counts as "ingreso" for the month it's dated in) — this is not a bug fix,
 /// it's a parity port, so native and web always show the same numbers.
+///
+/// One deliberate exception: `pendienteDelMes`'s sesiones branch shows only
+/// the single next unpaid session ("el cobro del siguiente sábado"), not
+/// every unpaid session in the month like the web does. Confirmed with the
+/// business owner — summing the whole month overstated what's actually
+/// owed right now (e.g. showed $40 instead of $20 counting two classes that
+/// hadn't even happened yet).
 enum IngresosCalculator {
+
     /// Revenue counted for a given "YYYY-MM" period.
     static func ingresosDelPeriodo(_ periodo: String, trabajos: [NoktaTrabajo]) -> Double {
         var total = 0.0
@@ -60,40 +68,62 @@ enum IngresosCalculator {
         return total
     }
 
-    /// Pending-collection amount + job count for the *current* selected month only.
-    static func pendienteDelMes(_ periodoMes: String, trabajos: [NoktaTrabajo]) -> (monto: Double, count: Int) {
-        var monto = 0.0
-        var count = 0
+    struct CobroPendiente {
+        let trabajoID: String
+        let cliente: String
+        let servicio: String
+        let concepto: String
+        let monto: Double
+    }
+
+    /// One source of truth for the dashboard and assistant. Recurring classes
+    /// intentionally contribute only their earliest unpaid session, even outside
+    /// the selected month; the breakdown makes that exception explicit.
+    static func cobrosPendientes(_ periodoMes: String, trabajos: [NoktaTrabajo], estados: [NoktaClienteEstado] = []) -> [CobroPendiente] {
+        var cobros: [CobroPendiente] = []
         for t in trabajos {
+            func agregar(_ monto: Double, _ concepto: String) {
+                guard monto.isFinite, monto > 0 else { return }
+                cobros.append(CobroPendiente(trabajoID: t.id, cliente: t.cliente, servicio: t.servicio, concepto: concepto, monto: monto))
+            }
             if t.grupoResuelto == "B" {
-                let montoQ = (t.pagoMensual ?? 0) / 2
-                var pendienteEsteTrabajo = false
+                let estado = (estados.first { $0.nombre == t.cliente }?.estado ?? t.estadoContrato ?? "activo").lowercased()
+                guard estado == "activo" else { continue }
+                if let inicio = FechaUtil.periodoDeFecha(t.fechaInicio), periodoMes < inicio { continue }
                 for q in [1, 2] {
                     let stored = (t.quincenas ?? []).first { $0.periodo == periodoMes && $0.q == q }
-                    if let stored {
-                        if stored.estado != "pagado" && stored.estado != "oculta" {
-                            monto += stored.monto ?? montoQ
-                            pendienteEsteTrabajo = true
-                        }
-                    } else {
-                        monto += montoQ
-                        pendienteEsteTrabajo = true
-                    }
+                    guard stored?.estado != "pagado", stored?.estado != "oculta" else { continue }
+                    agregar(stored?.monto ?? (t.pagoMensual ?? 0) / 2, "quincena \(q), \(periodoMes)")
                 }
-                if pendienteEsteTrabajo { count += 1 }
             } else if let sesiones = t.sesiones, !sesiones.isEmpty {
-                var pendienteEsteTrabajo = false
-                for s in sesiones where s.estado != "pagado" && FechaUtil.periodoDeFecha(s.fecha) == periodoMes {
-                    monto += s.monto ?? 0
-                    pendienteEsteTrabajo = true
+                if let proxima = sesiones.filter({ $0.estado != "pagado" && $0.estado != "oculta" && $0.estado != "cancelado" }).min(by: { $0.fecha < $1.fecha }) {
+                    let fuera = FechaUtil.periodoDeFecha(proxima.fecha) == periodoMes ? "" : " (fuera del mes consultado)"
+                    agregar(proxima.monto ?? 0, "próxima sesión sin pagar: \(proxima.fecha)\(fuera)")
                 }
-                if pendienteEsteTrabajo { count += 1 }
             } else if FechaUtil.periodoDeFecha(t.fecha) == periodoMes && t.estado == "pendiente" {
-                monto += t.saldo ?? 0
-                count += 1
+                agregar(t.saldo ?? 0, "saldo del trabajo del \(t.fecha ?? periodoMes)")
             }
         }
-        return (monto, count)
+        return cobros
+    }
+
+    static func pendienteDelMes(_ periodoMes: String, trabajos: [NoktaTrabajo], estados: [NoktaClienteEstado] = []) -> (monto: Double, count: Int) {
+        let cobros = cobrosPendientes(periodoMes, trabajos: trabajos, estados: estados)
+        return (cobros.reduce(0) { $0 + $1.monto }, Set(cobros.map(\.trabajoID)).count)
+    }
+
+    static var periodoActual: String {
+        let cal = Calendar.current
+        return FechaUtil.periodo(anio: cal.component(.year, from: Date()), mes: cal.component(.month, from: Date()))
+    }
+
+    static func resumenCobros(_ periodo: String, trabajos: [NoktaTrabajo], estados: [NoktaClienteEstado]) -> String {
+        let cobros = cobrosPendientes(periodo, trabajos: trabajos, estados: estados)
+        let total = cobros.reduce(0) { $0 + $1.monto }
+        let detalle = cobros.map { "- \($0.cliente) · \($0.servicio): $\(String(format: "%.2f", $0.monto)) · \($0.concepto)." }.joined(separator: "\n")
+        return "Pendiente de cobro (\(periodo)): $\(String(format: "%.2f", total)).\n"
+            + (cobros.isEmpty ? "No hay cobros pendientes según estos criterios." : detalle)
+            + "\nCriterio: trabajos del mes, quincenas activas del mes sin pagar ni ocultar y solo la próxima sesión sin pagar de cada trabajo, aunque esté fuera del mes. No incluye contratos pausados/cancelados ni suma los saldos globales de clases."
     }
 
     /// "Por tipo de servicio" pie — lifetime sum of `monto` grouped by

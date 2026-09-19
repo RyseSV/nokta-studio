@@ -15,6 +15,8 @@
 		BD8860F27899C93740308AC4 /* NoktaShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DAEDB860F1CBF121B240F3B /* NoktaShortcuts.swift */; };
 		F271DA5C6FD3758481A46E0E /* RegistrarGastoIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B72479151E32C5EB7E9D6991 /* RegistrarGastoIntent.swift */; };
 		AE64043F81A1273A485D77FB /* RegistrarPagoQuincenaIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1160DB7241FD8F41E4E4ED28 /* RegistrarPagoQuincenaIntent.swift */; };
+		311E4A994DE42CEADA7FFD08 /* AssistantConversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6108E927A60356452E7176FC /* AssistantConversation.swift */; };
+		59BFBB7D17405FCF0826D7E7 /* AssistantPayment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 250E13B3747A01E92BF468CC /* AssistantPayment.swift */; };
 		2CF199BCCE5FA20FD882EE4E /* AssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC409B385F5212B5029A38D /* AssistantView.swift */; };
 		FEEC2077D8D9D2981ABC75CE /* AssistantViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1394EADB007D0E620DA32187 /* AssistantViewModel.swift */; };
 		88F9F4A0A845AB6F5956E87C /* ConsultaCobrosRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F02009FC71425D242AA52D1F /* ConsultaCobrosRouting.swift */; };
@@ -24,6 +26,7 @@
 		CB96D4EC6629E5F6CD037BD8 /* PDFRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E40A46AAE4902C8C42F04D6 /* PDFRenderer.swift */; };
 		9DEA7FCEEF33A2ACC1D82CA6 /* PDFTemplates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 594CFFCAD36731E896892538 /* PDFTemplates.swift */; };
 		141309C1CB8E5F9BC3B026BA /* CambiarEstadoClienteTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E84E455F10E06F1D2096901 /* CambiarEstadoClienteTool.swift */; };
+		E822A44CAFAB18015B1E3DBC /* ClienteResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F88D665553B26B1A2E904718 /* ClienteResolver.swift */; };
 		F4C66DEF5D85EAC58B01AA70 /* ConsultarAlertasTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08A99BF681144F42507A2111 /* ConsultarAlertasTool.swift */; };
 		FC2029F6DD001773CB206F3D /* ConsultarClientesTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0637902F49B83A0774A27133 /* ConsultarClientesTool.swift */; };
 		E1B723B42D3F68BE560845BF /* ConsultarCobrosTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AE371D650533EC0FEE84DAE /* ConsultarCobrosTool.swift */; };
@@ -67,6 +70,8 @@
 		849295743207401CD8C57BB9 /* NoktaShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DAEDB860F1CBF121B240F3B /* NoktaShortcuts.swift */; };
 		CE51D1AC41DF70BC4E4B95ED /* RegistrarGastoIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B72479151E32C5EB7E9D6991 /* RegistrarGastoIntent.swift */; };
 		57878F9CA82066D9113BF487 /* RegistrarPagoQuincenaIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1160DB7241FD8F41E4E4ED28 /* RegistrarPagoQuincenaIntent.swift */; };
+		1C418B21595E1F206334E283 /* AssistantConversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6108E927A60356452E7176FC /* AssistantConversation.swift */; };
+		8F06A43A1C6A9A949A0D1C8A /* AssistantPayment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 250E13B3747A01E92BF468CC /* AssistantPayment.swift */; };
 		CE30A17E8698C99620B77EDA /* AssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC409B385F5212B5029A38D /* AssistantView.swift */; };
 		12D7B9B254871A690214CA3B /* AssistantViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1394EADB007D0E620DA32187 /* AssistantViewModel.swift */; };
 		AF81FD3036066AC1AFADC9EC /* ConsultaCobrosRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F02009FC71425D242AA52D1F /* ConsultaCobrosRouting.swift */; };
@@ -76,6 +81,7 @@
 		5DDD7214A9535ACF02462E24 /* PDFRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E40A46AAE4902C8C42F04D6 /* PDFRenderer.swift */; };
 		F6D5F6F6281D509563426186 /* PDFTemplates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 594CFFCAD36731E896892538 /* PDFTemplates.swift */; };
 		8FA68061F048E81B8C95CDC7 /* CambiarEstadoClienteTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E84E455F10E06F1D2096901 /* CambiarEstadoClienteTool.swift */; };
+		4D066CB3023C0C98295FEB27 /* ClienteResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F88D665553B26B1A2E904718 /* ClienteResolver.swift */; };
 		3101A6C0EE05DD174AD90DF9 /* ConsultarAlertasTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08A99BF681144F42507A2111 /* ConsultarAlertasTool.swift */; };
 		8A8F98C80D50AEAC6A7740B3 /* ConsultarClientesTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0637902F49B83A0774A27133 /* ConsultarClientesTool.swift */; };
 		8E3189C44F205CC72212ED55 /* ConsultarCobrosTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AE371D650533EC0FEE84DAE /* ConsultarCobrosTool.swift */; };
@@ -136,6 +142,8 @@
 		0DAEDB860F1CBF121B240F3B /* NoktaShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoktaShortcuts.swift; sourceTree = "<group>"; };
 		B72479151E32C5EB7E9D6991 /* RegistrarGastoIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegistrarGastoIntent.swift; sourceTree = "<group>"; };
 		1160DB7241FD8F41E4E4ED28 /* RegistrarPagoQuincenaIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegistrarPagoQuincenaIntent.swift; sourceTree = "<group>"; };
+		6108E927A60356452E7176FC /* AssistantConversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantConversation.swift; sourceTree = "<group>"; };
+		250E13B3747A01E92BF468CC /* AssistantPayment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantPayment.swift; sourceTree = "<group>"; };
 		5FC409B385F5212B5029A38D /* AssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantView.swift; sourceTree = "<group>"; };
 		1394EADB007D0E620DA32187 /* AssistantViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantViewModel.swift; sourceTree = "<group>"; };
 		F02009FC71425D242AA52D1F /* ConsultaCobrosRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultaCobrosRouting.swift; sourceTree = "<group>"; };
@@ -145,6 +153,7 @@
 		0E40A46AAE4902C8C42F04D6 /* PDFRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFRenderer.swift; sourceTree = "<group>"; };
 		594CFFCAD36731E896892538 /* PDFTemplates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFTemplates.swift; sourceTree = "<group>"; };
 		9E84E455F10E06F1D2096901 /* CambiarEstadoClienteTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CambiarEstadoClienteTool.swift; sourceTree = "<group>"; };
+		F88D665553B26B1A2E904718 /* ClienteResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClienteResolver.swift; sourceTree = "<group>"; };
 		08A99BF681144F42507A2111 /* ConsultarAlertasTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultarAlertasTool.swift; sourceTree = "<group>"; };
 		0637902F49B83A0774A27133 /* ConsultarClientesTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultarClientesTool.swift; sourceTree = "<group>"; };
 		6AE371D650533EC0FEE84DAE /* ConsultarCobrosTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultarCobrosTool.swift; sourceTree = "<group>"; };
@@ -266,6 +275,7 @@
 			isa = PBXGroup;
 			children = (
 				9E84E455F10E06F1D2096901,
+				F88D665553B26B1A2E904718,
 				08A99BF681144F42507A2111,
 				0637902F49B83A0774A27133,
 				6AE371D650533EC0FEE84DAE,
@@ -293,6 +303,8 @@
 			isa = PBXGroup;
 			children = (
 				4A4F979EFE18D673EE72C0B4,
+				6108E927A60356452E7176FC,
+				250E13B3747A01E92BF468CC,
 				5FC409B385F5212B5029A38D,
 				1394EADB007D0E620DA32187,
 				F02009FC71425D242AA52D1F,
@@ -539,6 +551,8 @@
 				BD8860F27899C93740308AC4 /* NoktaShortcuts.swift in Sources */,
 				F271DA5C6FD3758481A46E0E /* RegistrarGastoIntent.swift in Sources */,
 				AE64043F81A1273A485D77FB /* RegistrarPagoQuincenaIntent.swift in Sources */,
+				311E4A994DE42CEADA7FFD08 /* AssistantConversation.swift in Sources */,
+				59BFBB7D17405FCF0826D7E7 /* AssistantPayment.swift in Sources */,
 				2CF199BCCE5FA20FD882EE4E /* AssistantView.swift in Sources */,
 				FEEC2077D8D9D2981ABC75CE /* AssistantViewModel.swift in Sources */,
 				88F9F4A0A845AB6F5956E87C /* ConsultaCobrosRouting.swift in Sources */,
@@ -548,6 +562,7 @@
 				CB96D4EC6629E5F6CD037BD8 /* PDFRenderer.swift in Sources */,
 				9DEA7FCEEF33A2ACC1D82CA6 /* PDFTemplates.swift in Sources */,
 				141309C1CB8E5F9BC3B026BA /* CambiarEstadoClienteTool.swift in Sources */,
+				E822A44CAFAB18015B1E3DBC /* ClienteResolver.swift in Sources */,
 				F4C66DEF5D85EAC58B01AA70 /* ConsultarAlertasTool.swift in Sources */,
 				FC2029F6DD001773CB206F3D /* ConsultarClientesTool.swift in Sources */,
 				E1B723B42D3F68BE560845BF /* ConsultarCobrosTool.swift in Sources */,
@@ -598,6 +613,8 @@
 				849295743207401CD8C57BB9 /* NoktaShortcuts.swift in Sources */,
 				CE51D1AC41DF70BC4E4B95ED /* RegistrarGastoIntent.swift in Sources */,
 				57878F9CA82066D9113BF487 /* RegistrarPagoQuincenaIntent.swift in Sources */,
+				1C418B21595E1F206334E283 /* AssistantConversation.swift in Sources */,
+				8F06A43A1C6A9A949A0D1C8A /* AssistantPayment.swift in Sources */,
 				CE30A17E8698C99620B77EDA /* AssistantView.swift in Sources */,
 				12D7B9B254871A690214CA3B /* AssistantViewModel.swift in Sources */,
 				AF81FD3036066AC1AFADC9EC /* ConsultaCobrosRouting.swift in Sources */,
@@ -607,6 +624,7 @@
 				5DDD7214A9535ACF02462E24 /* PDFRenderer.swift in Sources */,
 				F6D5F6F6281D509563426186 /* PDFTemplates.swift in Sources */,
 				8FA68061F048E81B8C95CDC7 /* CambiarEstadoClienteTool.swift in Sources */,
+				4D066CB3023C0C98295FEB27 /* ClienteResolver.swift in Sources */,
 				3101A6C0EE05DD174AD90DF9 /* ConsultarAlertasTool.swift in Sources */,
 				8A8F98C80D50AEAC6A7740B3 /* ConsultarClientesTool.swift in Sources */,
 				8E3189C44F205CC72212ED55 /* ConsultarCobrosTool.swift in Sources */,

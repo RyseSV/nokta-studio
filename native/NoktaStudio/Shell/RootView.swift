@@ -83,6 +83,7 @@ private final class RootShell {
 }
 
 struct RootView: View {
+    @State private var assistant = AssistantViewModel()
     @State private var webView = WKWebView(frame: .zero, configuration: makeNoktaWebViewConfiguration())
     @State private var isLoading = false
     @State private var canGoBack = false
@@ -132,7 +133,7 @@ struct RootView: View {
         Group {
             switch item {
             case .dashboard: DashboardView()
-            case .asistente: AssistantView()
+            case .asistente: AssistantView(vm: assistant)
             case .nuevoTrabajo: NuevoTrabajoView()
             case .trabajos: TrabajosContainerView()
             case .calendario: CalendarioView()

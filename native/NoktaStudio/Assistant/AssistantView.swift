@@ -16,7 +16,7 @@ private struct PDFPreviewItem: Identifiable {
 }
 
 struct AssistantView: View {
-    @State private var vm = AssistantViewModel()
+    @Bindable var vm: AssistantViewModel
     @FocusState private var inputFocused: Bool
     @State private var previewing: PDFPreviewItem?
 

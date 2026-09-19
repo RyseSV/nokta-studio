@@ -3,7 +3,7 @@ import FoundationModels
 
 @Generable
 struct CambiarEstadoClienteArgs {
-    @Guide(description: "Nombre exacto del cliente, tal como aparece en Nokta Studio")
+    @Guide(description: "Nombre del cliente mencionado por el usuario; se resolverá contra los clientes existentes, sin inventarlo")
     var nombre: String
     @Guide(description: "Nuevo estado de la relación: activo, pausado, o cancelado")
     var estado: String
@@ -20,17 +20,38 @@ struct CambiarEstadoClienteTool: Tool {
     typealias Arguments = CambiarEstadoClienteArgs
 
     func call(arguments: CambiarEstadoClienteArgs) async throws -> String {
-        guard ["activo", "pausado", "cancelado"].contains(arguments.estado) else {
-            return "Estado inválido: debe ser activo, pausado o cancelado."
+        let estado = arguments.estado.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard ["activo", "pausado", "cancelado"].contains(estado) else {
+            return "Estado inválido: debe ser activo, pausado o cancelado. No cambié ningún dato."
+        }
+        async let trabajos: [NoktaTrabajo] = NoktaAPI.get("/api/trabajos")
+        async let estados: [NoktaClienteEstado] = NoktaAPI.get("/api/clientes-estados")
+        async let clientes: [NoktaCliente] = NoktaAPI.get("/api/clientes")
+        let (listaTrabajos, listaEstados, listaClientes) = try await (trabajos, estados, clientes)
+        let resolucion = ClienteResolver.resolver(arguments.nombre, nombres: listaTrabajos.map(\.cliente) + listaEstados.map(\.nombre) + listaClientes.map(\.nombre))
+        guard case .encontrado(let nombre) = resolucion else {
+            return resolucion.mensajeSiNoResuelto ?? "Indica el cliente que quieres actualizar."
         }
         struct Body: Encodable { let estado: String; let notas: String? }
-        // Match JS's encodeURIComponent (used by the web's own call to this
-        // endpoint): encode everything except RFC 3986 unreserved chars, so
-        // a "/" in the name can't be misread as an extra path segment.
-        let unreserved = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
-        let encodedNombre = arguments.nombre.addingPercentEncoding(withAllowedCharacters: unreserved) ?? arguments.nombre
-        let path = "/api/clientes-estados/\(encodedNombre)"
-        let _: OKResponse = try await NoktaAPI.put(path, body: Body(estado: arguments.estado, notas: arguments.notas))
-        return "Cliente '\(arguments.nombre)' actualizado a estado: \(arguments.estado)."
+        struct Respuesta: Decodable { let ok: Bool; let clienteEstado: NoktaClienteEstado }
+        // The live relationship state is authoritative for dashboard and alerts.
+        // Omitted notes are not sent, so pausing/reactivating preserves existing notes.
+        let respuesta: Respuesta = try await NoktaAPI.put(
+            "/api/clientes-estados/\(nombre.urlPathComponentEncoded)",
+            body: Body(estado: estado, notas: arguments.notas)
+        )
+        guard respuesta.ok, respuesta.clienteEstado.nombre == nombre,
+              respuesta.clienteEstado.estado == estado,
+              arguments.notas == nil || respuesta.clienteEstado.notas == arguments.notas else {
+            throw CambioError.respuestaNoConfirmada
+        }
+        return "Cliente '\(nombre)' actualizado a estado: \(estado)."
+    }
+
+    enum CambioError: LocalizedError {
+        case respuestaNoConfirmada
+        var errorDescription: String? {
+            "El servidor no confirmó el estado y la nota solicitados. Consulta el cliente antes de reintentar."
+        }
     }
 }

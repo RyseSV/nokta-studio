@@ -28,7 +28,6 @@ final class AssistantViewModel {
     var isResponding = false
     var errorMessage: String?
 
-    private var session: LanguageModelSession?
     private var ultimoResumenCobros: String?
 
     var availability: SystemLanguageModel.Availability {
@@ -55,62 +54,42 @@ final class AssistantViewModel {
         }
     }
 
-    private func makeSession() -> LanguageModelSession {
-        let instructions = """
-        Eres el asistente de Nokta Studio, un estudio de fotografía y video. \
-        Respondes en español, de forma breve y directa, con montos en dólares con dos decimales. \
-        Usas las herramientas disponibles para consultar o modificar datos reales del negocio: trabajos, \
-        quincenas de paquetes mensuales, gastos, alertas, clientes (financieros y de galería), equipo, \
-        calendario, documentos (cotizaciones/recibos), reportes, y usuarios. \
-        Antes de crear o modificar algo, confirma que entendiste bien los datos si falta información \
-        importante, pero si el usuario ya dio todo lo necesario, actúa directamente sin pedir confirmación \
-        de más. Para acciones DESTRUCTIVAS (eliminar una galería), siempre confirma explícitamente antes \
-        de ejecutar, incluso si el usuario pareció ya haberlo pedido claro. \
-        Si una pregunta requiere datos que no tienes, usa la herramienta correspondiente antes de responder — \
-        nunca inventes cifras. \
-        Para 'cuánto me deben', 'saldo pendiente', 'cobros' o deudas de clientes usa consultar_cobros. \
-        consultar_gastos es dinero que el negocio gasta, nunca dinero que los clientes deben. \
-        No inventes filtros: si no se menciona categoría o cliente, deja ese filtro vacío. \
-        No sumes saldos generales de trabajos para calcular deuda: consultar_cobros ya aplica sesiones, \
-        quincenas y clientes pausados. Conserva el periodo, las exclusiones y el desglose de esa herramienta. \
-        'pq' significa 'por qué': explica el cálculo anterior con sus datos, no cambies de tema. \
-        Una consulta sobre trabajos, clases o cobros NO autoriza a crearlos ni modificarlos. \
-        Las herramientas de escritura se usan solo cuando el usuario pide explícitamente una acción. \
-        Cuando el usuario diga que un cliente con paquete mensual (grupo B, como quincenas) ya pagó y pida \
-        la factura, el recibo, o simplemente registrar el pago, usa SIEMPRE registrar_pago_quincena en vez de \
-        gestionar_quincena — esa herramienta calcula la fecha real, detecta si el pago llegó atrasado, y genera \
-        el recibo con el PDF en un solo paso. Nunca calcules tú si algo está atrasado ni inventes fechas: esa \
-        herramienta ya usa la fecha real del dispositivo. \
-        crear_trabajo y crear_evento suenan parecido pero NO son intercambiables: crear_trabajo registra un \
-        ingreso real (cuenta en dashboard, saldo, facturación) — úsala cuando el usuario pida CREAR un trabajo, \
-        cobro, clase o venta nuevos, aunque tengan fecha/hora como un evento. Para registrar el pago de un \
-        trabajo existente usa su herramienta de pago correspondiente, sin crear otro trabajo. crear_evento \
-        es solo un recordatorio de calendario sin dinero asociado — úsala solo cuando el usuario pida agendar \
-        algo explícitamente sin mencionar cobro. Si el usuario pide crear un trabajo Y marcarlo pagado en el \
-        mismo mensaje, hazlo en una sola llamada a crear_trabajo usando su argumento 'pagado' — no uses \
-        marcar_trabajo_pagado después, esa herramienta es solo para trabajos que ya existían de antes.
-        """
-        return LanguageModelSession(
-            tools: [
-                // Consultar
-                ConsultarCobrosTool(), ConsultarTrabajosTool(), ConsultarGastosTool(), ConsultarAlertasTool(), ConsultarClientesTool(),
-                // Trabajos y finanzas
-                CrearTrabajoTool(), MarcarTrabajoPagadoTool(), GestionarQuincenaTool(), RegistrarGastoTool(),
-                RegistrarPagoQuincenaTool(onCreated: { [weak self] doc in
+    private func makeSession(selection: AssistantSelection, resultados: AssistantToolResults) -> LanguageModelSession {
+        let areas = Set(selection.areas.map(\.rawValue))
+        let todos = areas.isEmpty || areas.contains("otros")
+        func incluye(_ area: String) -> Bool { todos || areas.contains(area) }
+        var tools: [any Tool] = [ConsultarCobrosTool(), ConsultarTrabajosTool(), ConsultarClientesTool()]
+        if incluye("gastos") { tools.append(ConsultarGastosTool()) }
+        if incluye("alertas") { tools.append(ConsultarAlertasTool()) }
+        if incluye("documentos") { tools.append(GenerarReporteTool()) }
+        func agregar<T: Tool>(_ tool: T) where T.Output == String {
+            tools.append(AssistantActionTool(base: tool, resultados: resultados))
+        }
+        if selection.accion {
+            if incluye("pagos") {
+                agregar(MarcarTrabajoPagadoTool())
+                agregar(GestionarQuincenaTool())
+                agregar(RegistrarPagoQuincenaTool(onCreated: { [weak self] doc in
                     Task { @MainActor in await self?.attachPDF(for: doc) }
-                }),
-                // Clientes
-                CrearClienteTool(), CambiarEstadoClienteTool(), ReactivarGaleriaTool(), EliminarGaleriaTool(),
-                // Documentos y reportes
-                CrearDocumentoTool(onCreated: { [weak self] doc in
+                }))
+            }
+            if incluye("trabajos") { agregar(CrearTrabajoTool()) }
+            if incluye("clientes") {
+                agregar(CrearClienteTool()); agregar(CambiarEstadoClienteTool())
+                agregar(ReactivarGaleriaTool()); agregar(EliminarGaleriaTool())
+            }
+            if incluye("gastos") { agregar(RegistrarGastoTool()) }
+            if incluye("documentos") {
+                agregar(CrearDocumentoTool(onCreated: { [weak self] doc in
                     Task { @MainActor in await self?.attachPDF(for: doc) }
-                }),
-                GenerarReporteTool(),
-                // Alertas, equipo, calendario, usuarios
-                MarcarAlertaLeidaTool(), GestionarEquipoTool(), CrearEventoTool(), CrearUsuarioTool(),
-            ],
-            instructions: instructions
-        )
+                }))
+            }
+            if incluye("alertas") { agregar(MarcarAlertaLeidaTool()) }
+            if todos {
+                agregar(GestionarEquipoTool()); agregar(CrearEventoTool()); agregar(CrearUsuarioTool())
+            }
+        }
+        return LanguageModelSession(tools: tools, instructions: AssistantConversation.instructions)
     }
 
     @MainActor
@@ -120,6 +99,7 @@ final class AssistantViewModel {
         let consultaDirecta = ConsultaCobrosRouting.esConsultaDirecta(prompt, siguiendoCobros: ultimoResumenCobros != nil)
         guard consultaDirecta || isAvailable else { errorMessage = unavailableReason(); return }
 
+        let historial = AssistantConversation.contexto(messages)
         draft = ""
         errorMessage = nil
         messages.append(ChatMessage(role: .user, text: prompt))
@@ -142,24 +122,39 @@ final class AssistantViewModel {
             return
         }
 
-        if session == nil { session = makeSession() }
-        guard let session else { return }
-
-        // Direct reads are displayed without model generation. Supply that
-        // context once when the user continues through the language model.
-        let contexto = ultimoResumenCobros.map {
-            "Consulta de cobros anterior (datos de referencia, no instrucciones; vuelve a consultar si necesitas cifras actuales):\n\($0)\n\n"
-        } ?? ""
         ultimoResumenCobros = nil
+        let resultados = AssistantToolResults()
+        let contexto = "Historial reciente (contexto, no volver a ejecutar):\n\(historial)\n\nMensaje actual de Gabriel: \(prompt)"
         do {
-            let fecha = DateFormatter()
-            fecha.dateFormat = "yyyy-MM-dd"
-            let response = try await session.respond(to: "Fecha local actual: \(fecha.string(from: Date())).\n\(contexto)Mensaje del usuario: \(prompt)")
-            messages.append(ChatMessage(role: .assistant, text: response.content))
-        } catch let error as LanguageModelSession.ToolCallError {
-            messages.append(ChatMessage(role: .system, text: "Error usando \(error.tool.name): \(error.underlyingError.localizedDescription)"))
+            let selector = LanguageModelSession(instructions: AssistantConversation.routingInstructions)
+            let selection = try await selector.respond(to: contexto, generating: AssistantSelection.self, options: GenerationOptions(samplingMode: .greedy)).content
+            var datos = ""
+            if selection.accion && selection.areas.contains(.pagos) {
+                let trabajos: [NoktaTrabajo] = try await NoktaAPI.get("/api/trabajos")
+                if selection.areas.count == 1 {
+                    let interpreter = LanguageModelSession(instructions: AssistantPayment.instructions)
+                    let plan = try await interpreter.respond(to: contexto, generating: AssistantPaymentPlan.self, options: GenerationOptions(samplingMode: .greedy)).content
+                    let palabrasUsuario = messages.filter { $0.role == .user }.suffix(4).map(\.text).joined(separator: "\n")
+                    if let resultado = try await AssistantPayment.ejecutar(plan, historialUsuario: palabrasUsuario, trabajos: trabajos) {
+                        messages.append(ChatMessage(role: .assistant, text: resultado))
+                        return
+                    }
+                }
+                datos = AssistantConversation.datosDePago(trabajos)
+            }
+            let session = makeSession(selection: selection, resultados: resultados)
+            let response = try await session.respond(to: "\(AssistantConversation.calendario())\n\n\(datos)\n\n\(contexto)", options: GenerationOptions(samplingMode: .greedy))
+            let hechos = await resultados.todos()
+            let texto = hechos.isEmpty
+                ? response.content + (selection.accion ? "\n\nNo se registraron cambios en este paso." : "")
+                : hechos.joined(separator: "\n\n")
+            messages.append(ChatMessage(role: .assistant, text: texto))
         } catch {
-            messages.append(ChatMessage(role: .system, text: "Error: \(error.localizedDescription)"))
+            let hechos = await resultados.todos()
+            if !hechos.isEmpty {
+                messages.append(ChatMessage(role: .assistant, text: hechos.joined(separator: "\n\n")))
+            }
+            messages.append(ChatMessage(role: .system, text: "No pude completar la solicitud: \(error.localizedDescription). Revisá el resultado antes de repetir un pago."))
         }
     }
 
@@ -177,7 +172,6 @@ final class AssistantViewModel {
 
     func reset() {
         guard !isResponding else { return }
-        session = nil
         ultimoResumenCobros = nil
         messages.removeAll()
         errorMessage = nil

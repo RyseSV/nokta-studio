@@ -44,5 +44,9 @@ vm.createContext(sandbox);vm.runInContext(code,sandbox);
   // Real openTrabajo must leave an explicitly empty collection empty after deletion.
   const openCode=html.slice(html.indexOf('async function openTrabajo('),html.indexOf("document.getElementById('td-title')",html.indexOf('async function openTrabajo(')));
   assert(openCode.includes('esRecurrente && !Array.isArray(t.sesiones)'));
+  t.sesiones=[{id:'legacy1',fecha:'2026-09-19',monto:0,estado:'pendiente'},{id:'legacy2',fecha:'2026-09-26',monto:0,estado:'pendiente'}];
+  previous=calls;await sandbox.editarMontoSesion('t1','legacy1');assert.equal(calls,previous+1);assert.equal(t.sesiones[0].monto,35);assert.equal(t.sesiones[1].monto,0);
+  t.sesiones[0].monto=0;previous=calls;await sandbox.eliminarSesion('t1','legacy1');assert.equal(calls,previous+1);assert.equal(t.sesiones.length,1);
+  console.log('PASS: legacy invalid sessions can be repaired/deleted individually');
   console.log('PASS: pay/revert/edit, failures preserve state/modal, invalid/duplicate creation, double submit lock, last deletion stays empty');
 })().catch(e=>{console.error(e);process.exitCode=1});

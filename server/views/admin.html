@@ -1696,7 +1696,12 @@ async function _guardarSesiones(trabajoId, sesiones, mensaje='✓ Sesiones guard
   if(_sesionesGuardando.has(trabajoId)){ toast('Espera a que termine el guardado','err'); return false; }
   const t = allTrabajos.find(x=>x.id===trabajoId);
   if(!t){ toast('No se encontró el trabajo. Actualiza la página.','err'); return false; }
-  if(sesiones.some(s=>!_fechaSesionValida(s.fecha) || !Number.isFinite(Number(s.monto)) || Number(s.monto)<=0)){
+  // Preserve unchanged legacy records so one invalid row cannot block repairing another.
+  const modificadas=sesiones.filter(s=>{
+    const anterior=(t.sesiones||[]).find(a=>a.id===s.id);
+    return !anterior || JSON.stringify(anterior)!==JSON.stringify(s);
+  });
+  if(modificadas.some(s=>!_fechaSesionValida(s.fecha) || !Number.isFinite(Number(s.monto)) || Number(s.monto)<=0)){
     toast('Cada sesión debe tener fecha válida y monto mayor que cero','err'); return false;
   }
   _sesionesGuardando.add(trabajoId);

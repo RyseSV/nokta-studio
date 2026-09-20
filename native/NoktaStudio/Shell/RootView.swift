@@ -6,7 +6,7 @@ import WebKit
 /// driven to the matching page via its `nav(id)` JS router.
 enum NoktaSection: String, CaseIterable, Identifiable, Hashable {
     case dashboard, calendario, alertas
-    case nuevoTrabajo, trabajos, gastos, documentos
+    case nuevoTrabajo, trabajos, gastos, documentos, contratos
     case clientes, galerias
     case analiticas, equipo, reportes
     case usuarios
@@ -23,6 +23,7 @@ enum NoktaSection: String, CaseIterable, Identifiable, Hashable {
         case .trabajos: "Trabajos"
         case .gastos: "Gastos"
         case .documentos: "Documentos"
+        case .contratos: "Contratos"
         case .clientes: "Clientes"
         case .galerias: "Galerías"
         case .analiticas: "Analíticas"
@@ -42,6 +43,7 @@ enum NoktaSection: String, CaseIterable, Identifiable, Hashable {
         case .trabajos: "💼"
         case .gastos: "💸"
         case .documentos: "📄"
+        case .contratos: "📜"
         case .clientes: "👤"
         case .galerias: "🖼"
         case .analiticas: "📊"
@@ -58,7 +60,7 @@ enum NoktaSection: String, CaseIterable, Identifiable, Hashable {
     var webPageId: String? {
         switch self {
         case .dashboard, .asistente, .trabajos, .nuevoTrabajo, .calendario, .alertas, .clientes, .galerias,
-             .gastos, .documentos, .reportes: nil
+             .gastos, .documentos, .contratos, .reportes: nil
         default: rawValue
         }
     }
@@ -67,7 +69,7 @@ enum NoktaSection: String, CaseIterable, Identifiable, Hashable {
 private struct SidebarGroup { let title: String; let items: [NoktaSection] }
 private let sidebarGroups: [SidebarGroup] = [
     SidebarGroup(title: "PRINCIPAL", items: [.dashboard, .calendario, .alertas]),
-    SidebarGroup(title: "FINANZAS", items: [.nuevoTrabajo, .trabajos, .gastos, .documentos]),
+    SidebarGroup(title: "FINANZAS", items: [.nuevoTrabajo, .trabajos, .gastos, .documentos, .contratos]),
     SidebarGroup(title: "CLIENTES", items: [.clientes, .galerias]),
     SidebarGroup(title: "NEGOCIO", items: [.analiticas, .equipo, .reportes]),
     SidebarGroup(title: "ADMINISTRACIÓN", items: [.usuarios]),
@@ -142,6 +144,7 @@ struct RootView: View {
             case .galerias: GaleriasView()
             case .gastos: GastosView()
             case .documentos: DocumentosView()
+            case .contratos: ContratosView()
             case .reportes: ReportesView()
             default: webPanel
             }

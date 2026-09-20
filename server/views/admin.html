@@ -194,6 +194,7 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
   <div class="sb-link" onclick="nav('trabajos')"><span class="icon">💼</span> Trabajos</div>
   <div class="sb-link" onclick="nav('gastos')"><span class="icon">💸</span> Gastos</div>
   <div class="sb-link" onclick="nav('documentos')"><span class="icon">📄</span> Documentos</div>
+  <div class="sb-link" onclick="nav('contratos')"><span class="icon">📜</span> Contratos</div>
   <div class="sb-section">Clientes</div>
   <div class="sb-link" onclick="nav('clientes')"><span class="icon">👤</span> Clientes</div>
   <div class="sb-link" onclick="nav('galerias')"><span class="icon">🖼</span> Galerías</div>
@@ -509,6 +510,18 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
         <button class="btn btn-primary btn-sm" style="margin-top:16px" onclick="imprimirDoc()">⬇ Descargar PDF</button>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ═══════════════ CONTRATOS ═══════════════ -->
+<section class="page" id="page-contratos">
+  <div class="page-header">
+    <div class="page-title">Contratos</div>
+    <div style="font-size:12px;color:var(--muted)">Generados desde el detalle de cada trabajo — aquí solo se listan.</div>
+  </div>
+  <div class="table-card">
+    <table><thead><tr><th>Cliente</th><th>Servicio</th><th>Total</th><th>Fecha del contrato</th><th>Generado</th><th></th></tr></thead>
+    <tbody id="contratos-tbody"></tbody></table>
   </div>
 </section>
 
@@ -928,6 +941,7 @@ function loadSection(id){
   else if(id==='usuarios') loadUsuarios();
   else if(id==='nuevo-trabajo') { if(!allClientes.length) api('/api/clientes').then(cs=>{ allClientes=cs; }); }
   else if(id==='documentos') { fillClientesDatalist2(); initDocForm(); }
+  else if(id==='contratos') loadContratos();
 }
 
 async function logout(){ await fetch('/api/admin/logout',{method:'POST'}); location.href='/admin'; }
@@ -2319,9 +2333,10 @@ function fmtFechaLarga(f){
   return isNaN(d) ? f : d.toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
 }
 
-function confirmarContrato(){
+async function confirmarContrato(){
   const val = id => document.getElementById(id).value;
   const datos = {
+    trabajoId: _contratoTrabajoId,
     ciudad: val('ct-ciudad'),
     fechaContrato: fmtFechaLarga(val('ct-fecha')) || val('ct-fecha'),
     clienteNombre: val('ct-cliente-nombre'),
@@ -2345,6 +2360,42 @@ function confirmarContrato(){
   win.document.write(contratoHTML(datos));
   win.document.close();
   closeModal('modal-contrato');
+  try { await api('/api/contratos',{method:'POST',body:JSON.stringify(datos)}); }
+  catch(e) { toast('El contrato se generó, pero no se pudo guardar en el historial.','err'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// HISTORIAL DE CONTRATOS (solo lectura — la generación vive en el detalle
+// de cada Trabajo, donde ya está el contexto del cliente).
+// ═══════════════════════════════════════════════════════════
+let allContratos = [];
+async function loadContratos(){
+  allContratos = await api('/api/contratos');
+  const tbody = document.getElementById('contratos-tbody');
+  tbody.innerHTML = allContratos.length ? allContratos.map(c => `
+    <tr>
+      <td>${esc(c.clienteNombre||'—')}</td>
+      <td>${esc(c.servicioTipo||'—')}</td>
+      <td>$${((parseFloat(c.anticipoMonto)||0)+(parseFloat(c.saldoMonto)||0)).toFixed(2)}</td>
+      <td>${esc(c.fechaContrato||'—')}</td>
+      <td>${fmtDateTime(c.creado)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" onclick="verContrato('${c.id}')">👁 Ver</button>
+        <button class="btn btn-sm" style="padding:5px 10px;background:transparent;border:1px solid #e55;border-radius:6px;cursor:pointer" onclick="eliminarContrato('${c.id}')" title="Eliminar">🗑</button>
+      </td>
+    </tr>`).join('') : '<tr><td colspan="6" class="empty">Sin contratos generados todavía</td></tr>';
+}
+function verContrato(id){
+  const c = allContratos.find(x=>x.id===id); if(!c) return;
+  const win = window.open('','_blank','width=820,height=1000');
+  if(!win){ toast('Permite las ventanas emergentes para abrir el contrato.','err'); return; }
+  win.document.write(contratoHTML(c));
+  win.document.close();
+}
+async function eliminarContrato(id){
+  if(!confirm('¿Eliminar este contrato del historial? El PDF ya generado no se ve afectado.')) return;
+  await api('/api/contratos/'+id,{method:'DELETE'});
+  await loadContratos();
 }
 
 async function marcarPagado(id){

@@ -315,6 +315,11 @@ struct TrabajoDetailView: View {
         } catch {
             contratoErrorMessage = error.localizedDescription
         }
+        // Best-effort: the PDF above is already generated and shown either
+        // way — a failed save here shouldn't block or alarm about the PDF
+        // the user already has in hand, just leave it out of the history list.
+        struct Resp: Decodable { let ok: Bool? }
+        let _: Resp? = try? await NoktaAPI.post("/api/contratos", body: datos)
     }
 
     private func generarFacturaQ(periodo: String, q: Int, rec: NoktaQuincena, montoQ: Double) async {
@@ -700,7 +705,7 @@ private struct ContratoSheet: View {
     @State private var saldoMonto: Double
     @State private var saldoFecha = Date()
     @State private var plazoDias = "7"
-    @State private var moraPorDia: Double = 10
+    @State private var mora: Double = 10
 
     init(trabajo: NoktaTrabajo, onGenerar: @escaping (ContratoParaPDF) -> Void) {
         self.trabajo = trabajo
@@ -757,7 +762,7 @@ private struct ContratoSheet: View {
                 }
                 HStack(spacing: 10) {
                     row("Plazo de entrega (días hábiles)", $plazoDias)
-                    moneyRow("Mora por día (USD)", $moraPorDia)
+                    moneyRow("Mora por día (USD)", $mora)
                 }
 
                 HStack {
@@ -766,13 +771,13 @@ private struct ContratoSheet: View {
                     Button("📜 Generar PDF") {
                         let f = DateFormatter(); f.dateFormat = "d 'de' MMMM 'de' yyyy"; f.locale = Locale(identifier: "es_MX")
                         onGenerar(ContratoParaPDF(
-                            ciudad: ciudad, fechaContrato: f.string(from: fechaContrato),
+                            trabajoId: trabajo.id, ciudad: ciudad, fechaContrato: f.string(from: fechaContrato),
                             clienteNombre: clienteNombre, clienteDui: clienteDui, clienteTelefono: clienteTelefono,
                             clienteEmail: clienteEmail, clienteDireccion: clienteDireccion,
                             servicioTipo: servicioTipo, servicioFecha: servicioFecha, servicioLugar: servicioLugar,
                             entregables: entregables, anticipoMonto: anticipoMonto,
                             anticipoFecha: f.string(from: anticipoFecha), saldoMonto: saldoMonto,
-                            saldoFecha: f.string(from: saldoFecha), plazoDias: plazoDias, moraPorDia: moraPorDia
+                            saldoFecha: f.string(from: saldoFecha), plazoDias: plazoDias, mora: mora
                         ))
                     }.buttonStyle(.glassProminent).tint(NoktaPalette.ember)
                 }

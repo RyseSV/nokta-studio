@@ -11,7 +11,8 @@ for (const [, script] of scripts) if (script.trim()) new vm.Script(script);
 console.log('PASS: no syntax errors in any inline <script>');
 
 const esc = s => String(s ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-const code = html.slice(html.indexOf('function contratoHTML'), html.indexOf('function confirmarContrato'));
+const endMarker = html.includes('async function confirmarContrato') ? 'async function confirmarContrato' : 'function confirmarContrato';
+const code = html.slice(html.indexOf('function contratoHTML'), html.indexOf(endMarker));
 const ctx = { esc, location: { origin: 'https://example.test' } };
 vm.createContext(ctx);
 vm.runInContext(code, ctx);

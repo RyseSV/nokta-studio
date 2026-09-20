@@ -20,7 +20,8 @@ struct DocumentoParaPDF {
 /// Fields for the client services contract — see `PDFTemplates.contrato()`.
 /// Mirrors admin.html's `contratoHTML()` field-for-field so a contract
 /// generated from either platform reads identically.
-struct ContratoParaPDF {
+struct ContratoParaPDF: Encodable {
+    var trabajoId: String?
     var ciudad: String
     var fechaContrato: String
     var clienteNombre: String
@@ -37,7 +38,7 @@ struct ContratoParaPDF {
     var saldoMonto: Double
     var saldoFecha: String
     var plazoDias: String
-    var moraPorDia: Double = 10
+    var mora: Double = 10
 
     var fileName: String { "Contrato_\(clienteNombre)" }
 }
@@ -306,11 +307,11 @@ enum PDFTemplates {
             """))
 
         \(clause(3, "Mora por pago tardío",
-            "si el pago se atrasa, se cobran $\(fmt(d.moraPorDia)) extra por cada día de retraso.",
+            "si el pago se atrasa, se cobran $\(fmt(d.mora)) extra por cada día de retraso.",
             """
             <p>En caso de que el Cliente no realice el pago (anticipo o saldo) en la fecha límite pactada, se
-            aplicará una multa por mora de <span class="hit">\(fmt(d.moraPorDia)) DÓLARES DE LOS ESTADOS UNIDOS
-            DE AMÉRICA (US$\(fmt(d.moraPorDia)).00)</span> por cada día calendario de atraso, contado a partir
+            aplicará una multa por mora de <span class="hit">\(fmt(d.mora)) DÓLARES DE LOS ESTADOS UNIDOS
+            DE AMÉRICA (US$\(fmt(d.mora)).00)</span> por cada día calendario de atraso, contado a partir
             del día siguiente a la fecha límite establecida, hasta la fecha en que se haga efectivo el pago
             total adeudado. El Prestador de Servicios podrá suspender el servicio o retener los entregables
             mientras el pago y la mora acumulada no estén cubiertos en su totalidad.</p>

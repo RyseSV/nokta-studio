@@ -149,6 +149,35 @@ struct NoktaDocumento: Codable {
     var notas: String?
 }
 
+/// A saved record of a generated contract — see `PDFTemplates.contrato()`
+/// for the fields this mirrors, and `ContratosView` for the read-only
+/// history list (generation itself lives in TrabajoDetailView, where the
+/// client context already is).
+struct NoktaContrato: Codable, Identifiable {
+    var id: String
+    var trabajoId: String?
+    var ciudad: String?
+    var fechaContrato: String?
+    var clienteNombre: String?
+    var clienteDui: String?
+    var clienteTelefono: String?
+    var clienteEmail: String?
+    var clienteDireccion: String?
+    var servicioTipo: String?
+    var servicioFecha: String?
+    var servicioLugar: String?
+    var entregables: String?
+    @Flex var anticipoMonto: Double?
+    var anticipoFecha: String?
+    @Flex var saldoMonto: Double?
+    var saldoFecha: String?
+    var plazoDias: String?
+    @Flex var mora: Double?
+    var creado: String?
+
+    var total: Double { (anticipoMonto ?? 0) + (saldoMonto ?? 0) }
+}
+
 struct NoktaAlerta: Codable {
     var id: String
     var tipo: String

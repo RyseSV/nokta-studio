@@ -60,6 +60,7 @@ const trabajoSchema = new mongoose.Schema({ id: { type: String, unique: true } }
 const gastoSchema   = new mongoose.Schema({ id: { type: String, unique: true } }, { strict: false });
 const cotSchema     = new mongoose.Schema({ id: { type: String, unique: true } }, { strict: false });
 const reciboSchema  = new mongoose.Schema({ id: { type: String, unique: true } }, { strict: false });
+const contratoSchema = new mongoose.Schema({ id: { type: String, unique: true } }, { strict: false });
 const alertaSchema  = new mongoose.Schema({ id: { type: String, unique: true } }, { strict: false });
 const equipoSchema  = new mongoose.Schema({ id: { type: String, unique: true } }, { strict: false });
 const eventoSchema  = new mongoose.Schema({ id: { type: String, unique: true } }, { strict: false });
@@ -73,6 +74,7 @@ const Trabajo       = mongoose.model('Trabajo',       trabajoSchema);
 const Gasto         = mongoose.model('Gasto',         gastoSchema);
 const Cotizacion    = mongoose.model('Cotizacion',    cotSchema);
 const Recibo        = mongoose.model('Recibo',        reciboSchema);
+const Contrato      = mongoose.model('Contrato',      contratoSchema);
 const Alerta        = mongoose.model('Alerta',        alertaSchema);
 const Equipo        = mongoose.model('Equipo',        equipoSchema);
 const Evento        = mongoose.model('Evento',        eventoSchema);
@@ -138,6 +140,11 @@ const TRABAJO_FIELDS = [
 const GASTO_FIELDS = ['concepto', 'categoria', 'monto', 'fecha'];
 const EQUIPO_FIELDS = ['nombre', 'rol', 'tipo', 'comision', 'pagado', 'pendiente'];
 const DOCUMENTO_FIELDS = ['clienteNombre', 'empresa', 'telefono', 'email', 'fechaEmision', 'fechaValidez', 'servicios', 'total', 'notas'];
+const CONTRATO_FIELDS = [
+  'trabajoId', 'ciudad', 'fechaContrato', 'clienteNombre', 'clienteDui', 'clienteTelefono',
+  'clienteEmail', 'clienteDireccion', 'servicioTipo', 'servicioFecha', 'servicioLugar',
+  'entregables', 'anticipoMonto', 'anticipoFecha', 'saldoMonto', 'saldoFecha', 'plazoDias', 'mora',
+];
 const EVENTO_FIELDS = ['titulo', 'tipo', 'fecha', 'horaInicio', 'horaFin', 'lugar', 'monto', 'anticipo', 'saldo'];
 let sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret) {
@@ -687,6 +694,32 @@ app.delete('/api/documentos/:tipo/:id', requireAdmin, async (req, res) => {
     if (tipo !== 'cotizacion' && tipo !== 'recibo') return res.status(400).json({ error: 'Tipo inválido' });
     const Model = tipo === 'cotizacion' ? Cotizacion : Recibo;
     await Model.deleteOne({ id });
+    res.json({ ok: true });
+  } catch (err) { handleError(res, err); }
+});
+
+// ══════════════════════════════════════════════════════════════
+// CONTRATOS API — historial de contratos generados desde un Trabajo
+// (ver PDFTemplates.contrato() en la app / contratoHTML() en admin.html,
+// que renderizan estos mismos campos).
+// ══════════════════════════════════════════════════════════════
+
+app.get('/api/contratos', requireAdmin, async (req, res) => {
+  try { res.json(await Contrato.find({}).sort({ creado: -1 }).lean()); }
+  catch (err) { handleError(res, err); }
+});
+
+app.post('/api/contratos', requireAdmin, async (req, res) => {
+  try {
+    const datos = pick(req.body, CONTRATO_FIELDS);
+    const contrato = await Contrato.create({ id: `con${Date.now()}`, ...datos, creado: new Date().toISOString() });
+    res.json({ ok: true, contrato });
+  } catch (err) { handleError(res, err); }
+});
+
+app.delete('/api/contratos/:id', requireAdmin, async (req, res) => {
+  try {
+    await Contrato.deleteOne({ id: req.params.id });
     res.json({ ok: true });
   } catch (err) { handleError(res, err); }
 });

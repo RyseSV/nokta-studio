@@ -54,6 +54,7 @@
 		EAAF3A63BB14AF394CAE8F97 /* Ingresos.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBF1E26111ECB99F91A8D12 /* Ingresos.swift */; };
 		F28609B92C560C59DA99381C /* QuincenaEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E16B11E88470515D85E279B /* QuincenaEngine.swift */; };
 		3AE504125F87E4AD848630F8 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105203992F135ED07A66C361 /* DashboardView.swift */; };
+		784B126DB513A475B3EEA8E6 /* ContratosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A9CFCAA9829E8E32685CB5 /* ContratosView.swift */; };
 		FCCDA1043D0340D0B3B6A1CA /* DocumentosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0197788E6AE654ACBE843B5E /* DocumentosView.swift */; };
 		86E7393265B78580C32A14E3 /* GastosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BC42EEFE6416D5D3DACAFA1 /* GastosView.swift */; };
 		372BAD6D62CE491C1A8CB067 /* ReportesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3401324A922ADD8337A286F /* ReportesView.swift */; };
@@ -109,6 +110,7 @@
 		53BE993D03FC5C8ACC4238FE /* Ingresos.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBF1E26111ECB99F91A8D12 /* Ingresos.swift */; };
 		83D5FF69F03D4C697ECB9E70 /* QuincenaEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E16B11E88470515D85E279B /* QuincenaEngine.swift */; };
 		5805B630C9630207E29320B4 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105203992F135ED07A66C361 /* DashboardView.swift */; };
+		EE30F24F00A0B413CD1BD1DE /* ContratosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A9CFCAA9829E8E32685CB5 /* ContratosView.swift */; };
 		EE10ADFB3FCBB135CDB531E3 /* DocumentosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0197788E6AE654ACBE843B5E /* DocumentosView.swift */; };
 		1BDC4298ACE967EFF3826FD3 /* GastosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BC42EEFE6416D5D3DACAFA1 /* GastosView.swift */; };
 		DA2F3FCDD415DF6BDD9029BA /* ReportesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3401324A922ADD8337A286F /* ReportesView.swift */; };
@@ -181,6 +183,7 @@
 		BEBF1E26111ECB99F91A8D12 /* Ingresos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ingresos.swift; sourceTree = "<group>"; };
 		5E16B11E88470515D85E279B /* QuincenaEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuincenaEngine.swift; sourceTree = "<group>"; };
 		105203992F135ED07A66C361 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		A1A9CFCAA9829E8E32685CB5 /* ContratosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContratosView.swift; sourceTree = "<group>"; };
 		0197788E6AE654ACBE843B5E /* DocumentosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentosView.swift; sourceTree = "<group>"; };
 		4BC42EEFE6416D5D3DACAFA1 /* GastosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GastosView.swift; sourceTree = "<group>"; };
 		D3401324A922ADD8337A286F /* ReportesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportesView.swift; sourceTree = "<group>"; };
@@ -356,6 +359,7 @@
 		8415FBCAB41AD52DEDE614B7 = {
 			isa = PBXGroup;
 			children = (
+				A1A9CFCAA9829E8E32685CB5,
 				0197788E6AE654ACBE843B5E,
 			);
 			path = "Documentos";
@@ -590,6 +594,7 @@
 				EAAF3A63BB14AF394CAE8F97 /* Ingresos.swift in Sources */,
 				F28609B92C560C59DA99381C /* QuincenaEngine.swift in Sources */,
 				3AE504125F87E4AD848630F8 /* DashboardView.swift in Sources */,
+				784B126DB513A475B3EEA8E6 /* ContratosView.swift in Sources */,
 				FCCDA1043D0340D0B3B6A1CA /* DocumentosView.swift in Sources */,
 				86E7393265B78580C32A14E3 /* GastosView.swift in Sources */,
 				372BAD6D62CE491C1A8CB067 /* ReportesView.swift in Sources */,
@@ -652,6 +657,7 @@
 				53BE993D03FC5C8ACC4238FE /* Ingresos.swift in Sources */,
 				83D5FF69F03D4C697ECB9E70 /* QuincenaEngine.swift in Sources */,
 				5805B630C9630207E29320B4 /* DashboardView.swift in Sources */,
+				EE30F24F00A0B413CD1BD1DE /* ContratosView.swift in Sources */,
 				EE10ADFB3FCBB135CDB531E3 /* DocumentosView.swift in Sources */,
 				1BDC4298ACE967EFF3826FD3 /* GastosView.swift in Sources */,
 				DA2F3FCDD415DF6BDD9029BA /* ReportesView.swift in Sources */,

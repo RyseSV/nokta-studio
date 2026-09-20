@@ -412,7 +412,7 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
     </select>
   </div>
   <div class="table-card">
-    <table><thead><tr><th>Cliente</th><th>Servicio</th><th>Fecha</th><th>Monto</th><th>Anticipo</th><th>Saldo</th><th>Estado</th></tr></thead>
+    <table><thead><tr><th>Cliente</th><th>Servicio</th><th>Fecha</th><th>Monto</th><th>Pagos / anticipo</th><th>Saldo total</th><th>Estado</th></tr></thead>
     <tbody id="trabajos-tbody"></tbody></table>
   </div>
 </section>
@@ -1515,7 +1515,7 @@ async function loadTrabajos(){
   tbody.innerHTML=fil.length?fil.map(t=>{
     const g=t.grupo||SVC_GRUPO[t.servicio]||'';
     const badge=g?`<span style="font-size:10px;color:var(--muted)"> · ${GRUPO_NOMBRES[g]||g}</span>`:'';
-    return `<tr onclick="openTrabajo('${t.id}')"><td>${esc(t.cliente)}</td><td>${esc(t.servicio)}${badge}</td><td>${fmtFecha(t.fecha)}</td><td>$${parseFloat(t.monto||0).toFixed(2)}</td><td>$${parseFloat(t.anticipo||0).toFixed(2)}</td><td style="color:var(--yellow)">$${parseFloat(t.saldo||0).toFixed(2)}</td><td><span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span></td></tr>`;
+    return `<tr onclick="openTrabajo('${t.id}')"><td>${esc(t.cliente)}</td><td>${esc(t.servicio)}${badge}</td><td>${fmtFecha(t.fecha)}</td><td>$${parseFloat(t.monto||0).toFixed(2)}</td><td>$${(t.servicio==='Clases'?(t.sesiones||[]).filter(s=>s.estado==='pagado').reduce((a,s)=>a+(Number(s.monto)||0),0):parseFloat(t.anticipo||0)).toFixed(2)}${t.servicio==='Clases'?'<small style="display:block;color:var(--muted)">Pagos de sesiones</small>':''}</td><td style="color:var(--yellow)">$${parseFloat(t.saldo||0).toFixed(2)}</td><td><span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span></td></tr>`;
   }).join(''):
     '<tr><td colspan="7" class="empty">No hay trabajos</td></tr>';
 }
@@ -1553,7 +1553,18 @@ async function openTrabajo(id){
       <div style="font-size:14px;font-weight:600">${esc(t.servicio)} <span style="font-size:11px;color:var(--muted);font-weight:400">${GRUPO_NOMBRES[g]||''}</span></div>
     </div>`;
 
-  if(g==='A'){
+  if(esRecurrente){
+    const sesiones=t.sesiones||[];
+    const suma=items=>items.reduce((total,s)=>total+(Number(s.monto)||0),0);
+    const pagadas=sesiones.filter(s=>s.estado==='pagado');
+    const pendientes=sesiones.filter(s=>!['pagado','oculta','cancelado'].includes(s.estado));
+    const siguiente=[...pendientes].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''))[0];
+    infoFields+=pf('TOTAL DE SESIONES PROGRAMADAS','$'+suma([...pagadas,...pendientes]).toFixed(2));
+    infoFields+=pf('PAGOS DE SESIONES','$'+suma(pagadas).toFixed(2));
+    infoFields+=pf('SESIONES SIN PAGAR (TOTAL)','$'+suma(pendientes).toFixed(2));
+    infoFields+=pf('PRÓXIMA SESIÓN SIN PAGAR',siguiente?`${fmtFecha(siguiente.fecha)} · $${Number(siguiente.monto||0).toFixed(2)}`:'Ninguna');
+    infoFields+='<p style="font-size:12px;color:var(--muted);padding-top:12px">Los pagos corresponden a sesiones marcadas como pagadas. El total sin pagar incluye clases futuras; no es un anticipo ni un cobro inmediato por todas.</p>';
+  } else if(g==='A'){
     infoFields += pf('FECHA', fmtFecha(t.fecha)) + pf('HORARIO', t.horaInicio?(t.horaInicio+(t.horaFin?' → '+t.horaFin:'')):'') + pf('LUGAR', t.lugar);
     infoFields += `
       <div style="padding:14px 0;border-bottom:1px solid var(--border)">

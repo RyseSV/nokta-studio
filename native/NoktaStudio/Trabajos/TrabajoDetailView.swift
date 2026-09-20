@@ -324,31 +324,46 @@ struct TrabajoDetailView: View {
     private func infoCard(_ t: NoktaTrabajo) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             pf("SERVICIO", t.servicio + (t.grupoNombre.map { " · \($0)" } ?? ""))
-            switch vm.grupo {
-            case "A":
-                pf("FECHA", FechaUtil.fechaCorta(t.fecha))
-                if let hi = t.horaInicio, !hi.isEmpty { pf("HORARIO", hi + (t.horaFin.map { " → \($0)" } ?? "")) }
-                if let l = t.lugar, !l.isEmpty { pf("LUGAR", l) }
-                bigNumber("MONTO TOTAL", t.monto ?? 0, NoktaPalette.cream)
-                pf("ANTICIPO", "$" + String(format: "%.2f", t.anticipo ?? 0))
-                bigNumber("SALDO PENDIENTE", t.saldo ?? 0, NoktaPalette.yellow, size: 18)
-            case "B":
-                if let e = t.empresa, !e.isEmpty { pf("EMPRESA", e) }
-                bigNumber("PAGO MENSUAL", t.pagoMensual ?? 0, NoktaPalette.cream)
-                pf("INICIO CONTRATO", FechaUtil.fechaCorta(t.fechaInicio))
-                pf("ESTADO CONTRATO", ESTADO_CLIENTE_LABEL[vm.estadoRelacion] ?? vm.estadoRelacion)
-            case "C":
-                if let cp = t.cantPiezas, !cp.isEmpty { pf("PIEZAS", cp) }
-                if let f = t.formato { pf("FORMATO", f) }
-                pf("ENTREGA ESTIMADA", FechaUtil.fechaCorta(t.fechaEntrega))
-                bigNumber("MONTO TOTAL", t.monto ?? 0, NoktaPalette.cream)
-                bigNumber("SALDO", t.saldo ?? 0, NoktaPalette.yellow, size: 18)
-            default:
-                if let e = t.empresa, !e.isEmpty { pf("EMPRESA", e) }
-                pf("ENTREGA ESTIMADA", FechaUtil.fechaCorta(t.fechaEntrega))
-                if let a = t.alcance, !a.isEmpty { pf("ALCANCE", a) }
-                bigNumber("MONTO TOTAL", t.monto ?? 0, NoktaPalette.cream)
-                bigNumber("SALDO", t.saldo ?? 0, NoktaPalette.yellow, size: 18)
+            if vm.esRecurrente || !(t.sesiones ?? []).isEmpty {
+                let sesiones = (t.sesiones ?? []).filter { $0.estado != "oculta" && $0.estado != "cancelado" }
+                let pagadas = sesiones.filter { $0.estado == "pagado" }
+                let sinPagar = sesiones.filter { $0.estado != "pagado" }
+                bigNumber("TOTAL DE SESIONES PROGRAMADAS", sesiones.reduce(0) { $0 + ($1.monto ?? 0) }, NoktaPalette.cream)
+                bigNumber("PAGOS DE SESIONES", pagadas.reduce(0) { $0 + ($1.monto ?? 0) }, NoktaPalette.green, size: 18)
+                bigNumber("SESIONES SIN PAGAR (TOTAL)", sinPagar.reduce(0) { $0 + ($1.monto ?? 0) }, NoktaPalette.yellow, size: 18)
+                Text("Incluye todas las sesiones futuras sin pagar.")
+                    .font(.system(size: 11)).foregroundStyle(NoktaPalette.muted)
+                    .padding(.vertical, 8)
+                if let proxima = sinPagar.min(by: { $0.fecha < $1.fecha }) {
+                    pf("PRÓXIMA SESIÓN SIN PAGAR · \(FechaUtil.fechaCorta(proxima.fecha))", "$" + String(format: "%.2f", proxima.monto ?? 0))
+                }
+            } else {
+                switch vm.grupo {
+                case "A":
+                    pf("FECHA", FechaUtil.fechaCorta(t.fecha))
+                    if let hi = t.horaInicio, !hi.isEmpty { pf("HORARIO", hi + (t.horaFin.map { " → \($0)" } ?? "")) }
+                    if let l = t.lugar, !l.isEmpty { pf("LUGAR", l) }
+                    bigNumber("MONTO TOTAL", t.monto ?? 0, NoktaPalette.cream)
+                    pf("ANTICIPO", "$" + String(format: "%.2f", t.anticipo ?? 0))
+                    bigNumber("SALDO PENDIENTE", t.saldo ?? 0, NoktaPalette.yellow, size: 18)
+                case "B":
+                    if let e = t.empresa, !e.isEmpty { pf("EMPRESA", e) }
+                    bigNumber("PAGO MENSUAL", t.pagoMensual ?? 0, NoktaPalette.cream)
+                    pf("INICIO CONTRATO", FechaUtil.fechaCorta(t.fechaInicio))
+                    pf("ESTADO CONTRATO", ESTADO_CLIENTE_LABEL[vm.estadoRelacion] ?? vm.estadoRelacion)
+                case "C":
+                    if let cp = t.cantPiezas, !cp.isEmpty { pf("PIEZAS", cp) }
+                    if let f = t.formato { pf("FORMATO", f) }
+                    pf("ENTREGA ESTIMADA", FechaUtil.fechaCorta(t.fechaEntrega))
+                    bigNumber("MONTO TOTAL", t.monto ?? 0, NoktaPalette.cream)
+                    bigNumber("SALDO", t.saldo ?? 0, NoktaPalette.yellow, size: 18)
+                default:
+                    if let e = t.empresa, !e.isEmpty { pf("EMPRESA", e) }
+                    pf("ENTREGA ESTIMADA", FechaUtil.fechaCorta(t.fechaEntrega))
+                    if let a = t.alcance, !a.isEmpty { pf("ALCANCE", a) }
+                    bigNumber("MONTO TOTAL", t.monto ?? 0, NoktaPalette.cream)
+                    bigNumber("SALDO", t.saldo ?? 0, NoktaPalette.yellow, size: 18)
+                }
             }
 
             if vm.grupo == "B" || vm.esRecurrente {

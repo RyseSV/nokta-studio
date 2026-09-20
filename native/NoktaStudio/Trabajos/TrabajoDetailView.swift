@@ -204,6 +204,8 @@ struct TrabajoDetailView: View {
     @State private var facturaErrorMessage: String?
     @State private var eliminarTrabajoConfirm = false
     @State private var eliminarSesionConfirm: String?
+    @State private var contratoSheetShown = false
+    @State private var contratoErrorMessage: String?
 
     init(trabajoId: String, onBack: @escaping () -> Void = {}) {
         self.trabajoId = trabajoId
@@ -217,19 +219,20 @@ struct TrabajoDetailView: View {
                 header
 
                 if let t = vm.trabajo {
+                    // Mac has the room for the info card and the periodic-payments
+                    // panel side by side; on iPhone's ~390-430pt width that leaves
+                    // almost nothing after the card's own 300pt, so it stacks instead.
+                    #if os(iOS)
+                    VStack(alignment: .leading, spacing: 20) {
+                        infoCard(t)
+                        periodoPanel(t)
+                    }
+                    #else
                     HStack(alignment: .top, spacing: 20) {
                         infoCard(t)
-                        if vm.grupo == "B" {
-                            quincenasPanel(t)
-                        } else if vm.esRecurrente {
-                            sesionesPanel(t)
-                        } else {
-                            Text("Sin pagos periódicos para este tipo de servicio.")
-                                .font(.system(size: 14)).foregroundStyle(NoktaPalette.muted)
-                                .frame(maxWidth: .infinity, minHeight: 120)
-                                .glassEffect(.regular.tint(NoktaPalette.card), in: RoundedRectangle(cornerRadius: NoktaRadius.card))
-                        }
+                        periodoPanel(t)
                     }
+                    #endif
                 } else if let error = vm.errorMessage {
                     Text(error).foregroundStyle(NoktaPalette.red)
                 } else {
@@ -289,6 +292,29 @@ struct TrabajoDetailView: View {
                 if let id = eliminarSesionConfirm { Task { await vm.eliminarSesion(id) } }
             }
         }
+        .sheet(isPresented: $contratoSheetShown) {
+            if let t = vm.trabajo {
+                ContratoSheet(trabajo: t) { datos in
+                    Task { await generarContrato(datos) }
+                    contratoSheetShown = false
+                }
+            }
+        }
+        .alert("No se pudo generar el contrato", isPresented: Binding(get: { contratoErrorMessage != nil }, set: { if !$0 { contratoErrorMessage = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(contratoErrorMessage ?? "")
+        }
+    }
+
+    private func generarContrato(_ datos: ContratoParaPDF) async {
+        let html = PDFTemplates.contrato(datos)
+        do {
+            let url = try await PDFRenderer().renderToPDF(html: html, suggestedName: datos.fileName)
+            facturaPreview = FacturaPreviewItem(url: url, title: "Contrato · \(datos.clienteNombre)")
+        } catch {
+            contratoErrorMessage = error.localizedDescription
+        }
     }
 
     private func generarFacturaQ(periodo: String, q: Int, rec: NoktaQuincena, montoQ: Double) async {
@@ -314,8 +340,28 @@ struct TrabajoDetailView: View {
                 Button("✓ Marcar pagado") { Task { await vm.marcarPagado() } }
                     .buttonStyle(.glassProminent).tint(NoktaPalette.green)
             }
+            if vm.trabajo != nil {
+                Button("📜 Contrato") { contratoSheetShown = true }
+                    .buttonStyle(.glass)
+            }
             Button("🗑 Eliminar", role: .destructive) { eliminarTrabajoConfirm = true }
                 .buttonStyle(.glass)
+        }
+    }
+
+    // MARK: - Periodic-payments panel (quincenas / sesiones / placeholder)
+
+    @ViewBuilder
+    private func periodoPanel(_ t: NoktaTrabajo) -> some View {
+        if vm.grupo == "B" {
+            quincenasPanel(t)
+        } else if vm.esRecurrente {
+            sesionesPanel(t)
+        } else {
+            Text("Sin pagos periódicos para este tipo de servicio.")
+                .font(.system(size: 14)).foregroundStyle(NoktaPalette.muted)
+                .frame(maxWidth: .infinity, minHeight: 120)
+                .glassEffect(.regular.tint(NoktaPalette.card), in: RoundedRectangle(cornerRadius: NoktaRadius.card))
         }
     }
 
@@ -375,7 +421,11 @@ struct TrabajoDetailView: View {
             if let notas = t.notas, !notas.isEmpty { pf("NOTAS", notas) }
         }
         .padding(20)
+        #if os(iOS)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        #else
         .frame(width: 300, alignment: .leading)
+        #endif
         .glassEffect(.regular.tint(NoktaPalette.card), in: RoundedRectangle(cornerRadius: NoktaRadius.card))
     }
 
@@ -437,7 +487,7 @@ struct TrabajoDetailView: View {
         let mesIdx = (Int(parts.count > 1 ? parts[1] : "1") ?? 1) - 1
         let mesLabel = "\(mesesL[max(0, min(11, mesIdx))]) \(parts.first ?? "")"
         let color: Color = rec.estado == "pagado" ? NoktaPalette.green : rec.estado == "retrasado" ? NoktaPalette.overdue : NoktaPalette.yellow
-        return HStack {
+        let info = HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(mesLabel).font(.system(size: 14, weight: .semibold)).foregroundStyle(NoktaPalette.cream)
                 Text(QuincenaEngine.labelDeQ(q)).font(.system(size: 11)).foregroundStyle(NoktaPalette.muted)
@@ -446,6 +496,8 @@ struct TrabajoDetailView: View {
             Text(rec.estado == "pagado" ? "Pagado" : rec.estado == "retrasado" ? "Retrasado" : "Pendiente")
                 .font(.system(size: 12, weight: .medium)).foregroundStyle(color)
                 .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        let buttons = HStack {
             if rec.estado != "pagado" {
                 Button("Pagado") { pagoQuincenaCtx = (periodo, q) }
                     .buttonStyle(.glass).tint(NoktaPalette.green)
@@ -464,7 +516,19 @@ struct TrabajoDetailView: View {
                 Image(systemName: "trash")
             }.buttonStyle(.glass)
         }
+        // Mac's window is wide enough for info + all four action buttons in one
+        // row; on iPhone that same row would overflow, so the buttons move to
+        // their own horizontally-scrollable row instead of getting clipped.
+        #if os(iOS)
+        return VStack(alignment: .leading, spacing: 8) {
+            info
+            ScrollView(.horizontal, showsIndicators: false) { buttons }
+        }
         .padding(.horizontal, 16).padding(.vertical, 10)
+        #else
+        return HStack { info; buttons }
+            .padding(.horizontal, 16).padding(.vertical, 10)
+        #endif
     }
 
     // MARK: - Sesiones
@@ -478,31 +542,7 @@ struct TrabajoDetailView: View {
                     .frame(maxWidth: .infinity, alignment: .center).padding(24)
             }
             ForEach(sesiones, id: \.id) { s in
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(FechaUtil.fechaCorta(s.fecha)).font(.system(size: 14, weight: .semibold)).foregroundStyle(NoktaPalette.cream)
-                        Text("$" + String(format: "%.2f", s.monto ?? 0)).font(.system(size: 12)).foregroundStyle(NoktaPalette.muted)
-                    }
-                    Spacer()
-                    let pagado = s.estado == "pagado"
-                    Text(pagado ? "Pagado" : "Pendiente")
-                        .font(NoktaFont.pill).foregroundStyle(pagado ? NoktaPalette.green : NoktaPalette.yellow)
-                        .padding(.horizontal, 10).padding(.vertical, 3)
-                        .background((pagado ? NoktaPalette.green : NoktaPalette.yellow).opacity(0.15), in: Capsule())
-                    if !pagado {
-                        Button("Pagado") { Task { await vm.marcarSesionPagada(s.id) } }
-                            .buttonStyle(.glass).tint(NoktaPalette.green)
-                    } else {
-                        Button("Revertir") { Task { await vm.revertirSesion(s.id) } }
-                            .buttonStyle(.glass)
-                    }
-                    Button("✎ Editar") { editarSesionCtx = s.id }
-                        .buttonStyle(.glass)
-                    Button(role: .destructive) { eliminarSesionConfirm = s.id } label: {
-                        Image(systemName: "trash")
-                    }.buttonStyle(.glass)
-                }
-                .padding(.horizontal, 16).padding(.vertical, 10)
+                sesionRow(s)
                 Divider().overlay(NoktaPalette.border)
             }
             Button("＋ Agregar sesión") { agregarSesionShown = true }
@@ -511,6 +551,47 @@ struct TrabajoDetailView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassEffect(.regular.tint(NoktaPalette.card), in: RoundedRectangle(cornerRadius: NoktaRadius.card))
+    }
+
+    private func sesionRow(_ s: NoktaSesion) -> some View {
+        let pagado = s.estado == "pagado"
+        let info = HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(FechaUtil.fechaCorta(s.fecha)).font(.system(size: 14, weight: .semibold)).foregroundStyle(NoktaPalette.cream)
+                Text("$" + String(format: "%.2f", s.monto ?? 0)).font(.system(size: 12)).foregroundStyle(NoktaPalette.muted)
+            }
+            Spacer()
+            Text(pagado ? "Pagado" : "Pendiente")
+                .font(NoktaFont.pill).foregroundStyle(pagado ? NoktaPalette.green : NoktaPalette.yellow)
+                .padding(.horizontal, 10).padding(.vertical, 3)
+                .background((pagado ? NoktaPalette.green : NoktaPalette.yellow).opacity(0.15), in: Capsule())
+        }
+        let buttons = HStack {
+            if !pagado {
+                Button("Pagado") { Task { await vm.marcarSesionPagada(s.id) } }
+                    .buttonStyle(.glass).tint(NoktaPalette.green)
+            } else {
+                Button("Revertir") { Task { await vm.revertirSesion(s.id) } }
+                    .buttonStyle(.glass)
+            }
+            Button("✎ Editar") { editarSesionCtx = s.id }
+                .buttonStyle(.glass)
+            Button(role: .destructive) { eliminarSesionConfirm = s.id } label: {
+                Image(systemName: "trash")
+            }.buttonStyle(.glass)
+        }
+        // Same overflow concern as quincenaRow: Mac fits info + buttons on one
+        // line, iPhone needs the buttons on their own scrollable row.
+        #if os(iOS)
+        return VStack(alignment: .leading, spacing: 8) {
+            info
+            ScrollView(.horizontal, showsIndicators: false) { buttons }
+        }
+        .padding(.horizontal, 16).padding(.vertical, 10)
+        #else
+        return HStack { info; buttons }
+            .padding(.horizontal, 16).padding(.vertical, 10)
+        #endif
     }
 }
 
@@ -590,5 +671,114 @@ private struct AgregarSesionSheet: View {
         }
         .padding(24)
         .frame(width: 320)
+    }
+}
+
+/// Editable fields for a contract before it's rendered to PDF — pre-filled
+/// from the trabajo where the data already exists (cliente, servicio,
+/// fecha, monto), left blank where it doesn't (DUI, dirección, entregables)
+/// so the user fills those in per client. This is where "editable" lives:
+/// the generated PDF itself is a filled document, not a fillable form.
+private struct ContratoSheet: View {
+    let trabajo: NoktaTrabajo
+    let onGenerar: (ContratoParaPDF) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var ciudad = "San Salvador"
+    @State private var fechaContrato = Date()
+    @State private var clienteNombre: String
+    @State private var clienteDui = ""
+    @State private var clienteTelefono = ""
+    @State private var clienteEmail = ""
+    @State private var clienteDireccion = ""
+    @State private var servicioTipo: String
+    @State private var servicioFecha: String
+    @State private var servicioLugar: String
+    @State private var entregables = ""
+    @State private var anticipoMonto: Double
+    @State private var anticipoFecha = Date()
+    @State private var saldoMonto: Double
+    @State private var saldoFecha = Date()
+    @State private var plazoDias = "7"
+    @State private var moraPorDia: Double = 10
+
+    init(trabajo: NoktaTrabajo, onGenerar: @escaping (ContratoParaPDF) -> Void) {
+        self.trabajo = trabajo
+        self.onGenerar = onGenerar
+        _clienteNombre = State(initialValue: trabajo.cliente)
+        _servicioTipo = State(initialValue: trabajo.servicio)
+        _servicioFecha = State(initialValue: FechaUtil.fechaCorta(trabajo.fecha ?? trabajo.fechaInicio))
+        _servicioLugar = State(initialValue: trabajo.lugar ?? "")
+        let total = trabajo.monto ?? trabajo.pagoMensual ?? 0
+        _anticipoMonto = State(initialValue: (total / 2).rounded())
+        _saldoMonto = State(initialValue: total - (total / 2).rounded())
+    }
+
+    private func row(_ label: String, _ text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label).font(.system(size: 11)).foregroundStyle(NoktaPalette.muted)
+            TextField(label, text: text).textFieldStyle(.roundedBorder)
+        }
+    }
+
+    private func moneyRow(_ label: String, _ value: Binding<Double>) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label).font(.system(size: 11)).foregroundStyle(NoktaPalette.muted)
+            TextField(label, value: value, format: .number).textFieldStyle(.roundedBorder)
+        }
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Generar contrato").font(.system(size: 17, weight: .semibold)).foregroundStyle(NoktaPalette.cream)
+                Text("Se llena con los datos del cliente; ajusta lo que haga falta antes de generar el PDF.")
+                    .font(.system(size: 12)).foregroundStyle(NoktaPalette.muted)
+
+                row("Ciudad del contrato", $ciudad)
+                DatePicker("Fecha del contrato", selection: $fechaContrato, displayedComponents: .date)
+
+                row("Nombre del cliente", $clienteNombre)
+                HStack(spacing: 10) { row("DUI", $clienteDui); row("Teléfono", $clienteTelefono) }
+                row("Correo electrónico", $clienteEmail)
+                row("Dirección", $clienteDireccion)
+
+                row("Servicio contratado", $servicioTipo)
+                HStack(spacing: 10) { row("Fecha del servicio", $servicioFecha); row("Lugar", $servicioLugar) }
+                row("Entregables", $entregables)
+
+                HStack(spacing: 10) {
+                    moneyRow("Anticipo (USD)", $anticipoMonto)
+                    DatePicker("Fecha límite anticipo", selection: $anticipoFecha, displayedComponents: .date)
+                }
+                HStack(spacing: 10) {
+                    moneyRow("Saldo (USD)", $saldoMonto)
+                    DatePicker("Fecha límite saldo", selection: $saldoFecha, displayedComponents: .date)
+                }
+                HStack(spacing: 10) {
+                    row("Plazo de entrega (días hábiles)", $plazoDias)
+                    moneyRow("Mora por día (USD)", $moraPorDia)
+                }
+
+                HStack {
+                    Button("Cancelar") { dismiss() }
+                    Spacer()
+                    Button("📜 Generar PDF") {
+                        let f = DateFormatter(); f.dateFormat = "d 'de' MMMM 'de' yyyy"; f.locale = Locale(identifier: "es_MX")
+                        onGenerar(ContratoParaPDF(
+                            ciudad: ciudad, fechaContrato: f.string(from: fechaContrato),
+                            clienteNombre: clienteNombre, clienteDui: clienteDui, clienteTelefono: clienteTelefono,
+                            clienteEmail: clienteEmail, clienteDireccion: clienteDireccion,
+                            servicioTipo: servicioTipo, servicioFecha: servicioFecha, servicioLugar: servicioLugar,
+                            entregables: entregables, anticipoMonto: anticipoMonto,
+                            anticipoFecha: f.string(from: anticipoFecha), saldoMonto: saldoMonto,
+                            saldoFecha: f.string(from: saldoFecha), plazoDias: plazoDias, moraPorDia: moraPorDia
+                        ))
+                    }.buttonStyle(.glassProminent).tint(NoktaPalette.ember)
+                }
+            }
+            .padding(24)
+        }
+        .frame(maxWidth: 460, maxHeight: 640)
     }
 }

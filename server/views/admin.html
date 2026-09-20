@@ -836,6 +836,45 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
   </div>
 </div>
 
+<!-- ═══ MODAL CONTRATO ═══ -->
+<div class="modal-overlay" id="modal-contrato">
+  <div class="modal" style="max-width:560px;max-height:86vh;overflow-y:auto">
+    <div class="modal-title">Generar contrato</div>
+    <p style="font-size:12px;color:var(--muted);margin-top:4px">Se llena con los datos del cliente; ajusta lo que haga falta antes de generar el PDF.</p>
+    <div class="form-group" style="margin-top:12px"><label>Ciudad del contrato</label><input id="ct-ciudad" style="width:100%" value="San Salvador"></div>
+    <div class="form-group" style="margin-top:12px"><label>Fecha del contrato</label><input type="date" id="ct-fecha" style="width:100%"></div>
+    <div class="form-group" style="margin-top:12px"><label>Nombre del cliente</label><input id="ct-cliente-nombre" style="width:100%"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+      <div class="form-group"><label>DUI</label><input id="ct-dui" style="width:100%"></div>
+      <div class="form-group"><label>Teléfono</label><input id="ct-telefono" style="width:100%"></div>
+    </div>
+    <div class="form-group" style="margin-top:12px"><label>Correo electrónico</label><input id="ct-email" style="width:100%"></div>
+    <div class="form-group" style="margin-top:12px"><label>Dirección</label><input id="ct-direccion" style="width:100%"></div>
+    <div class="form-group" style="margin-top:12px"><label>Servicio contratado</label><input id="ct-servicio" style="width:100%"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+      <div class="form-group"><label>Fecha del servicio</label><input id="ct-servicio-fecha" style="width:100%"></div>
+      <div class="form-group"><label>Lugar</label><input id="ct-servicio-lugar" style="width:100%"></div>
+    </div>
+    <div class="form-group" style="margin-top:12px"><label>Entregables</label><input id="ct-entregables" style="width:100%"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+      <div class="form-group"><label>Anticipo (USD)</label><input type="number" id="ct-anticipo-monto" step="0.01" style="width:100%"></div>
+      <div class="form-group"><label>Fecha límite anticipo</label><input type="date" id="ct-anticipo-fecha" style="width:100%"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+      <div class="form-group"><label>Saldo (USD)</label><input type="number" id="ct-saldo-monto" step="0.01" style="width:100%"></div>
+      <div class="form-group"><label>Fecha límite saldo</label><input type="date" id="ct-saldo-fecha" style="width:100%"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+      <div class="form-group"><label>Plazo de entrega (días hábiles)</label><input id="ct-plazo" value="7" style="width:100%"></div>
+      <div class="form-group"><label>Mora por día (USD)</label><input type="number" id="ct-mora" value="10" step="0.01" style="width:100%"></div>
+    </div>
+    <div class="form-actions" style="margin-top:20px">
+      <button class="btn btn-primary" onclick="confirmarContrato()">📜 Generar PDF</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-contrato')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ REPORTE PRINT ═══ -->
 <div id="reporte-print" style="display:none"></div>
 
@@ -1544,6 +1583,7 @@ async function openTrabajo(id){
   document.getElementById('td-title').textContent = t.cliente;
   document.getElementById('td-actions').innerHTML = `
     ${g!=='B'&&!esRecurrente&&t.estado!=='pagado'?`<button class="btn btn-primary btn-sm" onclick="marcarPagado('${t.id}')">✓ Marcar pagado</button>`:''}
+    <button class="btn btn-ghost btn-sm" onclick="abrirContrato('${t.id}')">📜 Contrato</button>
     <button class="btn btn-danger btn-sm" onclick="eliminarTrabajo('${t.id}')">🗑 Eliminar</button>`;
 
   const pf = (label, val) => val ? `
@@ -2125,6 +2165,188 @@ function generarFacturaQ(trabajoId, periodo, q){
   win.document.write(html);
   win.document.close();
 }
+
+// ═══════════════════════════════════════════════════════════
+// CONTRATO — mismas cláusulas/diseño que PDFTemplates.contrato() en la app
+// nativa, ya lleno con los datos del trabajo en vez de dejarlos en blanco.
+// ═══════════════════════════════════════════════════════════
+let _contratoTrabajoId = null;
+function abrirContrato(trabajoId){
+  const t = allTrabajos.find(x=>x.id===trabajoId); if(!t) return;
+  _contratoTrabajoId = trabajoId;
+  const total = parseFloat(t.monto||t.pagoMensual||0);
+  const mitad = Math.round(total/2);
+  document.getElementById('ct-fecha').value = new Date().toISOString().slice(0,10);
+  document.getElementById('ct-cliente-nombre').value = t.cliente||'';
+  document.getElementById('ct-dui').value = '';
+  document.getElementById('ct-telefono').value = '';
+  document.getElementById('ct-email').value = '';
+  document.getElementById('ct-direccion').value = '';
+  document.getElementById('ct-servicio').value = t.servicio||'';
+  document.getElementById('ct-servicio-fecha').value = fmtFecha(t.fecha||t.fechaInicio);
+  document.getElementById('ct-servicio-lugar').value = t.lugar||'';
+  document.getElementById('ct-entregables').value = '';
+  document.getElementById('ct-anticipo-monto').value = mitad;
+  document.getElementById('ct-anticipo-fecha').value = '';
+  document.getElementById('ct-saldo-monto').value = total-mitad;
+  document.getElementById('ct-saldo-fecha').value = '';
+  document.getElementById('ct-plazo').value = '7';
+  document.getElementById('ct-mora').value = '10';
+  openModal('modal-contrato');
+}
+
+function contratoHTML(d){
+  const clause = (n,titulo,explica,cuerpo) => `
+    <div class="clause">
+      <h2><span class="num">${n}</span> ${esc(titulo)}</h2>
+      <p class="explain">En palabras simples: ${esc(explica)}</p>
+      ${cuerpo}
+    </div>`;
+  const row = (label,value) => `<tr><td>${esc(label)}</td><td>${value?esc(value):'—'}</td></tr>`;
+  const fmt = v => (parseFloat(v)||0).toFixed(2);
+  const logoUrl = location.origin+'/img/logo/nokta_lockup_color_transparent.png';
+  const total = (parseFloat(d.anticipoMonto)||0)+(parseFloat(d.saldoMonto)||0);
+  const mora = parseFloat(d.mora)||10;
+
+  const cuerpo = `
+    <div class="mast">
+      <img src="${esc(logoUrl)}" alt="Nokta Studio" style="height:30px">
+      <div class="tag">Contrato de prestación de servicios</div>
+    </div>
+    <div class="title">Contrato de Prestación de Servicios</div>
+    <p class="subtitle">Nokta Studio — Fotografía · Video · Marketing · Gestión de redes</p>
+    <p class="intro">En ${esc(d.ciudad)}, El Salvador, el ${esc(d.fechaContrato)}, se celebra el presente
+    contrato de prestación de servicios (en adelante, el "Contrato") entre <strong>Nokta Studio</strong>
+    (en adelante, el "Prestador de Servicios") y el Cliente identificado a continuación:</p>
+    <table class="datos">
+      ${row('Nombre del cliente', d.clienteNombre)}
+      ${row('Documento de identidad', d.clienteDui)}
+      ${row('Teléfono', d.clienteTelefono)}
+      ${row('Correo electrónico', d.clienteEmail)}
+      ${row('Dirección', d.clienteDireccion)}
+    </table>
+    ${clause(1,'Objeto del contrato','aquí se define exactamente qué servicio se va a dar, cuándo y dónde.',`
+      <table class="tbl">
+        <tr><th>Servicio contratado</th><th>Fecha</th><th>Lugar</th><th>Entregables</th></tr>
+        <tr><td>${esc(d.servicioTipo)}</td><td>${esc(d.servicioFecha)}</td><td>${esc(d.servicioLugar)}</td><td>${d.entregables?esc(d.entregables):'—'}</td></tr>
+      </table>`)}
+    ${clause(2,'Precio y forma de pago','cuánto cuesta el servicio y en qué momentos se paga.',`
+      <table class="tbl">
+        <tr><th>Concepto</th><th>Monto (USD)</th><th>Fecha límite</th></tr>
+        <tr><td>Anticipo — reserva la fecha</td><td>$${fmt(d.anticipoMonto)}</td><td>${d.anticipoFecha?esc(d.anticipoFecha):'—'}</td></tr>
+        <tr><td>Saldo — contra entrega del material</td><td>$${fmt(d.saldoMonto)}</td><td>${d.saldoFecha?esc(d.saldoFecha):'—'}</td></tr>
+        <tr class="total-row"><td>Total</td><td>$${fmt(total)}</td><td></td></tr>
+      </table>`)}
+    ${clause(3,'Mora por pago tardío',`si el pago se atrasa, se cobran $${fmt(mora)} extra por cada día de retraso.`,`
+      <p>En caso de que el Cliente no realice el pago (anticipo o saldo) en la fecha límite pactada, se
+      aplicará una multa por mora de <span class="hit">${fmt(mora)} DÓLARES DE LOS ESTADOS UNIDOS DE AMÉRICA
+      (US$${fmt(mora)})</span> por cada día calendario de atraso, contado a partir del día siguiente a la
+      fecha límite establecida, hasta la fecha en que se haga efectivo el pago total adeudado. El Prestador
+      de Servicios podrá suspender el servicio o retener los entregables mientras el pago y la mora
+      acumulada no estén cubiertos en su totalidad.</p>`)}
+    ${clause(4,'Plazo de entrega','cuántos días hábiles hay para entregar el material final ya editado.',
+      `<p>El Prestador de Servicios entregará el material final en un plazo de <strong>${esc(d.plazoDias)} días
+      hábiles</strong>, contados a partir de la fecha del servicio y/o de la recepción del pago del saldo, lo
+      que ocurra después.</p>`)}
+    ${clause(5,'Derechos de uso y propiedad','las fotos/videos finales son del cliente para usar; Nokta también puede mostrarlos en su portafolio.',`
+      <ul>
+        <li>El Cliente recibe una licencia de uso personal y/o comercial sobre el material entregado, una vez cubierto el pago total.</li>
+        <li>Nokta Studio conserva el derecho de utilizar el material producido con fines de portafolio, promoción y publicidad, salvo acuerdo expreso en contrario por escrito.</li>
+        <li>El material en bruto (RAW, tomas descartadas, archivos sin editar) no forma parte de los entregables y permanece en propiedad exclusiva de Nokta Studio.</li>
+      </ul>`)}
+    ${clause(6,'Cancelaciones y reprogramaciones','avisar con 72 horas de anticipación si se necesita cambiar la fecha; el anticipo no se devuelve pero sí se puede reagendar.',`
+      <ul>
+        <li>Toda cancelación o reprogramación debe notificarse con al menos 72 horas de anticipación a la fecha del servicio.</li>
+        <li>El anticipo no es reembolsable en caso de cancelación por parte del Cliente, pero podrá aplicarse a una nueva fecha sujeta a disponibilidad.</li>
+        <li>Si Nokta Studio debe cancelar por fuerza mayor, se reprogramará sin costo adicional o se reembolsará el anticipo, a elección del Cliente.</li>
+      </ul>`)}
+    ${clause(7,'Confidencialidad y datos personales','la información personal compartida se usa solo para este trabajo.',
+      `<p>Ambas partes se comprometen a mantener confidencial la información personal y comercial compartida durante la prestación del servicio, utilizándola únicamente para los fines de este Contrato.</p>`)}
+    ${clause(8,'Ley aplicable y jurisdicción','si hubiera un conflicto legal, se resuelve bajo las leyes de El Salvador.',
+      `<p>El presente Contrato se rige por las leyes de la República de El Salvador. Cualquier controversia se resolverá primero por arreglo directo entre las partes y, de no ser posible, ante los tribunales competentes de El Salvador.</p>`)}
+    ${clause(9,'Aceptación','firmando abajo, ambas partes aceptan todo lo anterior.',
+      `<p>Ambas partes declaran haber leído, entendido y aceptado en su totalidad los términos de este Contrato, firmándolo de conformidad en dos tantos, uno para cada parte.</p>`)}
+    <div class="sign-grid">
+      <div class="sign-box"><div class="who">Por Nokta Studio</div><div class="line">Nombre: ______________________</div><div class="line">Fecha: ______________________</div></div>
+      <div class="sign-box"><div class="who">Por el Cliente</div><div class="line">Nombre: ______________________</div><div class="line">Fecha: ______________________</div></div>
+    </div>
+    <div class="foot">Nokta Studio · contacto@noktastudio.com</div>
+    <div class="no-print" style="margin-top:32px;text-align:center">
+      <button onclick="window.print()" style="padding:10px 28px;background:#B85228;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer">Imprimir / Guardar PDF</button>
+    </div>`;
+
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Contrato · ${esc(d.clienteNombre)}</title>
+  <style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,'Helvetica Neue',sans-serif;color:#2A2620;background:#FAF7F2;padding:44px 52px}
+  .sheet{max-width:720px;margin:0 auto}
+  .mast{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-bottom:18px;margin-bottom:6px;border-bottom:1px solid #E6DFD3}
+  .tag{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#8B8378}
+  .title{text-align:center;margin:26px 0 6px;font-size:24px;font-weight:700}
+  .subtitle{text-align:center;color:#8B8378;font-style:italic;font-size:13px;margin:0 0 26px}
+  .intro{font-size:12.5px;line-height:1.7;margin-bottom:16px}
+  table.datos{width:100%;border-collapse:collapse;margin-bottom:22px}
+  table.datos td{padding:5px 0;font-size:12px;border-bottom:1px solid #EFE9DE}
+  table.datos td:first-child{color:#8B8378;width:38%}
+  table.datos td:last-child{font-weight:600}
+  .clause{margin:26px 0 16px}
+  .clause h2{display:flex;align-items:baseline;gap:9px;font-size:14px;font-weight:700;color:#B85228;margin:0 0 4px}
+  .clause h2 .num{font-size:10px;font-weight:700;color:#fff;background:#B85228;border-radius:5px;padding:2px 6px}
+  .explain{font-size:11px;font-style:italic;color:#8B8378;margin:0 0 10px}
+  .clause p, .clause li{font-size:12.5px;line-height:1.65}
+  .clause ul{margin:0 0 6px;padding-left:18px}
+  .clause li{margin-bottom:5px}
+  .hit{color:#B85228;font-weight:700}
+  table.tbl{width:100%;border-collapse:collapse;margin:8px 0 12px;font-size:11.5px}
+  table.tbl th{background:#B8522814;color:#B85228;text-align:left;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;padding:7px 9px;border:1px solid #B8522840}
+  table.tbl td{padding:8px 9px;border:1px solid #E6DFD3}
+  table.tbl .total-row td{font-weight:700}
+  .sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:34px}
+  .sign-box{border-top:1.5px solid #2A2620;padding-top:8px}
+  .sign-box .who{font-weight:700;font-size:12px;margin-bottom:8px}
+  .sign-box .line{font-size:11.5px;color:#8B8378;margin-bottom:6px}
+  .foot{margin-top:44px;padding-top:14px;border-top:1px solid #E6DFD3;text-align:center;font-size:10px;color:#8B8378}
+  @media print{.no-print{display:none}}
+  </style></head><body><div class="sheet">${cuerpo}</div></body></html>`;
+}
+
+// Formato largo ("20 de septiembre de 2026"), igual al que usa la app nativa
+// para las fechas del contrato — distinto del fmtFecha corto que usa el
+// resto del panel para tablas.
+function fmtFechaLarga(f){
+  if(!f) return '';
+  const d = f.includes('T') ? new Date(f) : new Date(f+'T12:00:00');
+  return isNaN(d) ? f : d.toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
+}
+
+function confirmarContrato(){
+  const val = id => document.getElementById(id).value;
+  const datos = {
+    ciudad: val('ct-ciudad'),
+    fechaContrato: fmtFechaLarga(val('ct-fecha')) || val('ct-fecha'),
+    clienteNombre: val('ct-cliente-nombre'),
+    clienteDui: val('ct-dui'),
+    clienteTelefono: val('ct-telefono'),
+    clienteEmail: val('ct-email'),
+    clienteDireccion: val('ct-direccion'),
+    servicioTipo: val('ct-servicio'),
+    servicioFecha: val('ct-servicio-fecha'),
+    servicioLugar: val('ct-servicio-lugar'),
+    entregables: val('ct-entregables'),
+    anticipoMonto: val('ct-anticipo-monto'),
+    anticipoFecha: fmtFechaLarga(val('ct-anticipo-fecha')) || val('ct-anticipo-fecha'),
+    saldoMonto: val('ct-saldo-monto'),
+    saldoFecha: fmtFechaLarga(val('ct-saldo-fecha')) || val('ct-saldo-fecha'),
+    plazoDias: val('ct-plazo'),
+    mora: val('ct-mora'),
+  };
+  const win = window.open('','_blank','width=820,height=1000');
+  if(!win){ toast('Permite las ventanas emergentes para abrir el contrato.','err'); return; }
+  win.document.write(contratoHTML(datos));
+  win.document.close();
+  closeModal('modal-contrato');
+}
+
 async function marcarPagado(id){
   await api('/api/trabajos/'+id,{method:'PUT',body:JSON.stringify({estado:'pagado',anticipo:allTrabajos.find(t=>t.id===id)?.monto,saldo:0})});
   closePanel(); await loadTrabajos(); await loadDashboard();

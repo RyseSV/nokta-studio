@@ -3,6 +3,7 @@ import SwiftUI
 @Observable
 final class TrabajosListViewModel {
     var trabajos: [NoktaTrabajo] = []
+    var estados: [NoktaClienteEstado] = []
     var filtroGrupo: String = ""
     var filtroEstado: String = ""
     var isLoading = false
@@ -10,7 +11,14 @@ final class TrabajosListViewModel {
     func load() async {
         isLoading = true
         defer { isLoading = false }
-        if let t: [NoktaTrabajo] = try? await NoktaAPI.get("/api/trabajos") { trabajos = t }
+        async let t: [NoktaTrabajo]? = try? NoktaAPI.get("/api/trabajos")
+        async let e: [NoktaClienteEstado]? = try? NoktaAPI.get("/api/clientes-estados")
+        if let t = await t { trabajos = t }
+        if let e = await e { estados = e }
+    }
+
+    func estadoRelacion(_ cliente: String) -> String {
+        estados.first { $0.nombre == cliente }?.estado ?? "activo"
     }
 
     var filtrados: [NoktaTrabajo] {
@@ -113,12 +121,22 @@ struct TrabajosListView: View {
     }
 
     private func estadoPill(_ t: NoktaTrabajo) -> some View {
+        let esRecurrente = t.servicio == "Clases"
+        if t.grupoResuelto == "B" || esRecurrente {
+            let er = vm.estadoRelacion(t.cliente)
+            let color = er == "activo" ? NoktaPalette.green : er == "pausado" ? NoktaPalette.yellow : NoktaPalette.red
+            return pillView(ESTADO_CLIENTE_LABEL[er] ?? er, color)
+        }
         let pagado = t.estado == "pagado"
-        return Text(pagado ? "Pagado" : "Pendiente")
+        return pillView(pagado ? "Pagado" : "Pendiente", pagado ? NoktaPalette.green : NoktaPalette.yellow)
+    }
+
+    private func pillView(_ text: String, _ color: Color) -> some View {
+        Text(text)
             .font(NoktaFont.pill)
-            .foregroundStyle(pagado ? NoktaPalette.green : NoktaPalette.yellow)
+            .foregroundStyle(color)
             .padding(.horizontal, 10).padding(.vertical, 3)
-            .background((pagado ? NoktaPalette.green : NoktaPalette.yellow).opacity(0.15), in: Capsule())
+            .background(color.opacity(0.15), in: Capsule())
     }
 
     private func fmt(_ v: Double) -> String { "$" + String(format: "%.2f", v) }

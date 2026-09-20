@@ -1503,6 +1503,7 @@ function clearTrabajoForm(){
 
 async function loadTrabajos(){
   allTrabajos = await api('/api/trabajos');
+  allClienteEstados = await api('/api/clientes-estados');
   initMesFilter('fil-mes-t',allTrabajos,'fecha');
   const mes=document.getElementById('fil-mes-t').value;
   const svc=document.getElementById('fil-svc-t').value;
@@ -1514,8 +1515,12 @@ async function loadTrabajos(){
   const tbody=document.getElementById('trabajos-tbody');
   tbody.innerHTML=fil.length?fil.map(t=>{
     const g=t.grupo||SVC_GRUPO[t.servicio]||'';
+    const esRecurrente=t.servicio==='Clases';
     const badge=g?`<span style="font-size:10px;color:var(--muted)"> · ${GRUPO_NOMBRES[g]||g}</span>`:'';
-    return `<tr onclick="openTrabajo('${t.id}')"><td>${esc(t.cliente)}</td><td>${esc(t.servicio)}${badge}</td><td>${fmtFecha(t.fecha)}</td><td>$${parseFloat(t.monto||0).toFixed(2)}</td><td>$${(t.servicio==='Clases'?(t.sesiones||[]).filter(s=>s.estado==='pagado').reduce((a,s)=>a+(Number(s.monto)||0),0):parseFloat(t.anticipo||0)).toFixed(2)}${t.servicio==='Clases'?'<small style="display:block;color:var(--muted)">Pagos de sesiones</small>':''}</td><td style="color:var(--yellow)">$${parseFloat(t.saldo||0).toFixed(2)}</td><td><span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span></td></tr>`;
+    const estadoHtml=(g==='B'||esRecurrente)
+      ? (()=>{ const er=estadoClienteDe(t.cliente); return `<span class="pill ${ESTADO_CLIENTE_PILL[er]}">${ESTADO_CLIENTE_LABEL[er]}</span>`; })()
+      : `<span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span>`;
+    return `<tr onclick="openTrabajo('${t.id}')"><td>${esc(t.cliente)}</td><td>${esc(t.servicio)}${badge}</td><td>${fmtFecha(t.fecha)}</td><td>$${parseFloat(t.monto||0).toFixed(2)}</td><td>$${(t.servicio==='Clases'?(t.sesiones||[]).filter(s=>s.estado==='pagado').reduce((a,s)=>a+(Number(s.monto)||0),0):parseFloat(t.anticipo||0)).toFixed(2)}${t.servicio==='Clases'?'<small style="display:block;color:var(--muted)">Pagos de sesiones</small>':''}</td><td style="color:var(--yellow)">$${parseFloat(t.saldo||0).toFixed(2)}</td><td>${estadoHtml}</td></tr>`;
   }).join(''):
     '<tr><td colspan="7" class="empty">No hay trabajos</td></tr>';
 }

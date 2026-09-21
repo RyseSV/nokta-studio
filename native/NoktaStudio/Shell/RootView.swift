@@ -60,7 +60,7 @@ enum NoktaSection: String, CaseIterable, Identifiable, Hashable {
     var webPageId: String? {
         switch self {
         case .dashboard, .asistente, .trabajos, .nuevoTrabajo, .calendario, .alertas, .clientes, .galerias,
-             .gastos, .documentos, .contratos, .reportes: nil
+             .gastos, .documentos, .contratos, .reportes, .analiticas, .equipo, .usuarios: nil
         default: rawValue
         }
     }
@@ -90,6 +90,10 @@ struct RootView: View {
     @State private var isLoading = false
     @State private var canGoBack = false
     @State private var unreadAlertas = 0
+    /// "Usuarios" (login accounts) is admin-only, same as the web sidebar's
+    /// hidden "Administración" section — native never tracked who's logged
+    /// in before, so this is the first thing that needs it.
+    @State private var currentUserRole: String?
     /// If a sidebar item is tapped before the WKWebView's first load finishes
     /// (e.g. right after launch), `nav(id)` silently no-ops — the page's own
     /// router isn't defined yet — leaving the SPA on its own default page.
@@ -113,12 +117,23 @@ struct RootView: View {
                 try? await Task.sleep(nanoseconds: 30_000_000_000)
             }
         }
+        .task { await loadCurrentUserRole() }
     }
 
     private func refreshUnreadAlertas() async {
         if let alertas: [NoktaAlerta] = try? await NoktaAPI.get("/api/alertas") {
             unreadAlertas = alertas.filter { !$0.leida }.count
         }
+    }
+
+    private func loadCurrentUserRole() async {
+        if let me: NoktaUsuario = try? await NoktaAPI.get("/api/admin/me") {
+            currentUserRole = me.role
+        }
+    }
+
+    private var visibleGroups: [SidebarGroup] {
+        currentUserRole == "admin" ? sidebarGroups : sidebarGroups.filter { $0.title != "ADMINISTRACIÓN" }
     }
 
     private func onSelect(_ item: NoktaSection) {
@@ -146,6 +161,9 @@ struct RootView: View {
             case .documentos: DocumentosView()
             case .contratos: ContratosView()
             case .reportes: ReportesView()
+            case .analiticas: AnaliticasView()
+            case .equipo: EquipoView()
+            case .usuarios: UsuariosView()
             default: webPanel
             }
         }
@@ -203,7 +221,7 @@ struct RootView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     logoRow
-                    ForEach(sidebarGroups, id: \.title) { group in
+                    ForEach(visibleGroups, id: \.title) { group in
                         if !group.title.isEmpty {
                             Text(group.title)
                                 .font(NoktaFont.sidebarSection)
@@ -243,7 +261,7 @@ struct RootView: View {
         NavigationStack {
             List {
                 logoRow
-                ForEach(sidebarGroups, id: \.title) { group in
+                ForEach(visibleGroups, id: \.title) { group in
                     Section {
                         ForEach(group.items) { item in
                             NavigationLink(value: item) {

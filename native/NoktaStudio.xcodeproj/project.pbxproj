@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		41AFBA97D65AE57A7DB4AFFD /* AlertasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAD2111EEC191ABB2041A543 /* AlertasView.swift */; };
+		46DF96E1B7032C162A2E7A37 /* AnaliticasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05498723964046F076C233DD /* AnaliticasView.swift */; };
 		9397FEA0DBE9FFD102A5950F /* NoktaStudioApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 753E68B7B4953F70C848178A /* NoktaStudioApp.swift */; };
 		AB61B9B599B9180919DF2DA6 /* ConsultarAlertasIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858048089CEAD4965706E81B /* ConsultarAlertasIntent.swift */; };
 		6C1B6451DCFBFBCA07990364 /* ConsultarSaldoIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07EC58114CA7D5F292B71FD0 /* ConsultarSaldoIntent.swift */; };
@@ -56,14 +57,17 @@
 		3AE504125F87E4AD848630F8 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105203992F135ED07A66C361 /* DashboardView.swift */; };
 		784B126DB513A475B3EEA8E6 /* ContratosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A9CFCAA9829E8E32685CB5 /* ContratosView.swift */; };
 		FCCDA1043D0340D0B3B6A1CA /* DocumentosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0197788E6AE654ACBE843B5E /* DocumentosView.swift */; };
+		B64DF059C3F922EB569D2104 /* EquipoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63BF01F1A1D616620CC208A5 /* EquipoView.swift */; };
 		86E7393265B78580C32A14E3 /* GastosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BC42EEFE6416D5D3DACAFA1 /* GastosView.swift */; };
 		372BAD6D62CE491C1A8CB067 /* ReportesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3401324A922ADD8337A286F /* ReportesView.swift */; };
 		CA7D0ADF52ECAA67A5CCF214 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F2D2F148896334509E9E1F /* RootView.swift */; };
 		B7569B9A572370D8D0D915E3 /* NuevoTrabajoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 125BBBEECEAB091A06BFE255 /* NuevoTrabajoView.swift */; };
 		B5722BE55D88076EA0635743 /* TrabajoDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D78967E806CF23153390A44 /* TrabajoDetailView.swift */; };
 		D698C5BFEE2A09EBBFABCD56 /* TrabajosListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 782030FFE8B32DDA3562A562 /* TrabajosListView.swift */; };
+		EE923713082FE87D563B2D86 /* UsuariosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E42946AE63B18DBC5A437DCD /* UsuariosView.swift */; };
 		831A7066B0F64F0101EF1A1E /* NoktaWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB38ED61BB052E334C9FBAA6 /* NoktaWebView.swift */; };
 		58497FCDE13489145EEB693B /* AlertasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAD2111EEC191ABB2041A543 /* AlertasView.swift */; };
+		0B938DFB33FE6DE1AA266648 /* AnaliticasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05498723964046F076C233DD /* AnaliticasView.swift */; };
 		7A98018EB868FB65026A8ACD /* NoktaStudioApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 753E68B7B4953F70C848178A /* NoktaStudioApp.swift */; };
 		F6BE16DD9EC99473CF0C791E /* ConsultarAlertasIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858048089CEAD4965706E81B /* ConsultarAlertasIntent.swift */; };
 		80519CF00769BDC5D752CA4F /* ConsultarSaldoIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07EC58114CA7D5F292B71FD0 /* ConsultarSaldoIntent.swift */; };
@@ -112,12 +116,14 @@
 		5805B630C9630207E29320B4 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105203992F135ED07A66C361 /* DashboardView.swift */; };
 		EE30F24F00A0B413CD1BD1DE /* ContratosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A9CFCAA9829E8E32685CB5 /* ContratosView.swift */; };
 		EE10ADFB3FCBB135CDB531E3 /* DocumentosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0197788E6AE654ACBE843B5E /* DocumentosView.swift */; };
+		175DACF9301764C38214B976 /* EquipoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63BF01F1A1D616620CC208A5 /* EquipoView.swift */; };
 		1BDC4298ACE967EFF3826FD3 /* GastosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BC42EEFE6416D5D3DACAFA1 /* GastosView.swift */; };
 		DA2F3FCDD415DF6BDD9029BA /* ReportesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3401324A922ADD8337A286F /* ReportesView.swift */; };
 		87A0FACA3BA5E454FB360EA9 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F2D2F148896334509E9E1F /* RootView.swift */; };
 		6768A10C9CCB501DA9B88204 /* NuevoTrabajoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 125BBBEECEAB091A06BFE255 /* NuevoTrabajoView.swift */; };
 		E8FC4CA34462C93A4FD4D837 /* TrabajoDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D78967E806CF23153390A44 /* TrabajoDetailView.swift */; };
 		5F8C68D10312DA9064113AF9 /* TrabajosListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 782030FFE8B32DDA3562A562 /* TrabajosListView.swift */; };
+		714128F0DCF74CFCF328B0A7 /* UsuariosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E42946AE63B18DBC5A437DCD /* UsuariosView.swift */; };
 		2AB4D63607EE84CB3E49151A /* NoktaWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB38ED61BB052E334C9FBAA6 /* NoktaWebView.swift */; };
 		1567291634E038F286E91D2C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CFDBAC21689581B04CB7ABB5 /* Assets.xcassets */; };
 		7B6B6A277A353A0833D22730 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CFDBAC21689581B04CB7ABB5 /* Assets.xcassets */; };
@@ -137,6 +143,7 @@
 
 /* Begin PBXFileReference section */
 		EAD2111EEC191ABB2041A543 /* AlertasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertasView.swift; sourceTree = "<group>"; };
+		05498723964046F076C233DD /* AnaliticasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnaliticasView.swift; sourceTree = "<group>"; };
 		753E68B7B4953F70C848178A /* NoktaStudioApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoktaStudioApp.swift; sourceTree = "<group>"; };
 		858048089CEAD4965706E81B /* ConsultarAlertasIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultarAlertasIntent.swift; sourceTree = "<group>"; };
 		07EC58114CA7D5F292B71FD0 /* ConsultarSaldoIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultarSaldoIntent.swift; sourceTree = "<group>"; };
@@ -185,12 +192,14 @@
 		105203992F135ED07A66C361 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		A1A9CFCAA9829E8E32685CB5 /* ContratosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContratosView.swift; sourceTree = "<group>"; };
 		0197788E6AE654ACBE843B5E /* DocumentosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentosView.swift; sourceTree = "<group>"; };
+		63BF01F1A1D616620CC208A5 /* EquipoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquipoView.swift; sourceTree = "<group>"; };
 		4BC42EEFE6416D5D3DACAFA1 /* GastosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GastosView.swift; sourceTree = "<group>"; };
 		D3401324A922ADD8337A286F /* ReportesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportesView.swift; sourceTree = "<group>"; };
 		33F2D2F148896334509E9E1F /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		125BBBEECEAB091A06BFE255 /* NuevoTrabajoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NuevoTrabajoView.swift; sourceTree = "<group>"; };
 		1D78967E806CF23153390A44 /* TrabajoDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrabajoDetailView.swift; sourceTree = "<group>"; };
 		782030FFE8B32DDA3562A562 /* TrabajosListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrabajosListView.swift; sourceTree = "<group>"; };
+		E42946AE63B18DBC5A437DCD /* UsuariosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsuariosView.swift; sourceTree = "<group>"; };
 		DB38ED61BB052E334C9FBAA6 /* NoktaWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoktaWebView.swift; sourceTree = "<group>"; };
 		6EE96B676F11A1B72FB10D74 /* Poppins-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Poppins-Bold.ttf; sourceTree = "<group>"; };
 		44296FB7088CFED343CFF1EE /* Poppins-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Poppins-Light.ttf; sourceTree = "<group>"; };
@@ -225,6 +234,7 @@
 			isa = PBXGroup;
 			children = (
 				690315808D2A7727A8BF8CDD,
+				022473DED8F92F4218176135,
 				1C48CE29E4E135EE62951B22,
 				FDCEBBF9DA95BEB2A4BFD3EE,
 				B650B6C384DB426CDB6DABB8,
@@ -233,11 +243,13 @@
 				410188F9DC6E499FEC68BCF6,
 				E1A8163F06C67BC7F1F82BB0,
 				8415FBCAB41AD52DEDE614B7,
+				519C69675673B79580AF3C8A,
 				E18C414122F8336A8A7A47BC,
 				8AD564B41A355B3926B74668,
 				A024F06580C79B7582C3806A,
 				72B4D395CBFFB3EEC69CDEB6,
 				518371CAC0C183E82510C847,
+				E35B0AA77333B098B40E4BFD,
 				9E8191CD8A03A7B5FF478C7E,
 				CFDBAC21689581B04CB7ABB5,
 				5151B46607EBC8890D8DFCC2,
@@ -251,6 +263,14 @@
 				EAD2111EEC191ABB2041A543,
 			);
 			path = "Alertas";
+			sourceTree = "<group>";
+		};
+		022473DED8F92F4218176135 = {
+			isa = PBXGroup;
+			children = (
+				05498723964046F076C233DD,
+			);
+			path = "Analiticas";
 			sourceTree = "<group>";
 		};
 		1C48CE29E4E135EE62951B22 = {
@@ -365,6 +385,14 @@
 			path = "Documentos";
 			sourceTree = "<group>";
 		};
+		519C69675673B79580AF3C8A = {
+			isa = PBXGroup;
+			children = (
+				63BF01F1A1D616620CC208A5,
+			);
+			path = "Equipo";
+			sourceTree = "<group>";
+		};
 		E18C414122F8336A8A7A47BC = {
 			isa = PBXGroup;
 			children = (
@@ -426,6 +454,14 @@
 				782030FFE8B32DDA3562A562,
 			);
 			path = "Trabajos";
+			sourceTree = "<group>";
+		};
+		E35B0AA77333B098B40E4BFD = {
+			isa = PBXGroup;
+			children = (
+				E42946AE63B18DBC5A437DCD,
+			);
+			path = "Usuarios";
 			sourceTree = "<group>";
 		};
 		9E8191CD8A03A7B5FF478C7E = {
@@ -548,6 +584,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				41AFBA97D65AE57A7DB4AFFD /* AlertasView.swift in Sources */,
+				46DF96E1B7032C162A2E7A37 /* AnaliticasView.swift in Sources */,
 				9397FEA0DBE9FFD102A5950F /* NoktaStudioApp.swift in Sources */,
 				AB61B9B599B9180919DF2DA6 /* ConsultarAlertasIntent.swift in Sources */,
 				6C1B6451DCFBFBCA07990364 /* ConsultarSaldoIntent.swift in Sources */,
@@ -596,12 +633,14 @@
 				3AE504125F87E4AD848630F8 /* DashboardView.swift in Sources */,
 				784B126DB513A475B3EEA8E6 /* ContratosView.swift in Sources */,
 				FCCDA1043D0340D0B3B6A1CA /* DocumentosView.swift in Sources */,
+				B64DF059C3F922EB569D2104 /* EquipoView.swift in Sources */,
 				86E7393265B78580C32A14E3 /* GastosView.swift in Sources */,
 				372BAD6D62CE491C1A8CB067 /* ReportesView.swift in Sources */,
 				CA7D0ADF52ECAA67A5CCF214 /* RootView.swift in Sources */,
 				B7569B9A572370D8D0D915E3 /* NuevoTrabajoView.swift in Sources */,
 				B5722BE55D88076EA0635743 /* TrabajoDetailView.swift in Sources */,
 				D698C5BFEE2A09EBBFABCD56 /* TrabajosListView.swift in Sources */,
+				EE923713082FE87D563B2D86 /* UsuariosView.swift in Sources */,
 				831A7066B0F64F0101EF1A1E /* NoktaWebView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -611,6 +650,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				58497FCDE13489145EEB693B /* AlertasView.swift in Sources */,
+				0B938DFB33FE6DE1AA266648 /* AnaliticasView.swift in Sources */,
 				7A98018EB868FB65026A8ACD /* NoktaStudioApp.swift in Sources */,
 				F6BE16DD9EC99473CF0C791E /* ConsultarAlertasIntent.swift in Sources */,
 				80519CF00769BDC5D752CA4F /* ConsultarSaldoIntent.swift in Sources */,
@@ -659,12 +699,14 @@
 				5805B630C9630207E29320B4 /* DashboardView.swift in Sources */,
 				EE30F24F00A0B413CD1BD1DE /* ContratosView.swift in Sources */,
 				EE10ADFB3FCBB135CDB531E3 /* DocumentosView.swift in Sources */,
+				175DACF9301764C38214B976 /* EquipoView.swift in Sources */,
 				1BDC4298ACE967EFF3826FD3 /* GastosView.swift in Sources */,
 				DA2F3FCDD415DF6BDD9029BA /* ReportesView.swift in Sources */,
 				87A0FACA3BA5E454FB360EA9 /* RootView.swift in Sources */,
 				6768A10C9CCB501DA9B88204 /* NuevoTrabajoView.swift in Sources */,
 				E8FC4CA34462C93A4FD4D837 /* TrabajoDetailView.swift in Sources */,
 				5F8C68D10312DA9064113AF9 /* TrabajosListView.swift in Sources */,
+				714128F0DCF74CFCF328B0A7 /* UsuariosView.swift in Sources */,
 				2AB4D63607EE84CB3E49151A /* NoktaWebView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

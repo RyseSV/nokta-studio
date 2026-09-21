@@ -178,6 +178,33 @@ struct NoktaContrato: Codable, Identifiable {
     var total: Double { (anticipoMonto ?? 0) + (saldoMonto ?? 0) }
 }
 
+/// A login account for the admin panel — admin-only section (see
+/// UsuariosView). Mirrors admin.html's usuarios table.
+struct NoktaUsuario: Codable, Identifiable {
+    var _id: String
+    var nombre: String?
+    var username: String
+    var role: String  // "admin" | "editor"
+    var icono: String?
+    var foto: String?
+    var creado: String?
+
+    var id: String { _id }
+}
+
+/// A team member's pay record (not a login account) — commission/paid/owed.
+/// Mirrors admin.html's Mi equipo section.
+struct NoktaEquipo: Codable, Identifiable {
+    var id: String
+    var nombre: String?
+    var rol: String?
+    var tipo: String?
+    @Flex var comision: Double?
+    @Flex var pagado: Double?
+    @Flex var pendiente: Double?
+    var creado: String?
+}
+
 struct NoktaAlerta: Codable {
     var id: String
     var tipo: String

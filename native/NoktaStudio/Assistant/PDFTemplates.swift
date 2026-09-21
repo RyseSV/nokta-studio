@@ -43,6 +43,22 @@ struct ContratoParaPDF: Encodable {
     var fileName: String { "Contrato_\(clienteNombre)" }
 }
 
+/// Shared by TrabajoDetailView (generate from a trabajo already open) and
+/// ContratosView (generate from the "+ Nuevo contrato" trabajo picker) so
+/// the render+save-to-history step isn't duplicated between the two.
+enum ContratoGenerator {
+    static func generar(_ datos: ContratoParaPDF) async throws -> URL {
+        let html = PDFTemplates.contrato(datos)
+        let url = try await PDFRenderer().renderToPDF(html: html, suggestedName: datos.fileName)
+        // Best-effort: the PDF above is already generated and returned either
+        // way — a failed save here shouldn't block or alarm about the PDF the
+        // caller already has in hand, just leave it out of the history list.
+        struct Resp: Decodable { let ok: Bool? }
+        let _: Resp? = try? await NoktaAPI.post("/api/contratos", body: datos)
+        return url
+    }
+}
+
 /// Rebuilds the exact HTML/CSS `buildDocHTML()` in admin.html uses (same
 /// colors, layout, typography) so a PDF generated from the Assistant looks
 /// identical to one downloaded from the Documentos page — rendered via

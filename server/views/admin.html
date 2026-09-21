@@ -517,8 +517,9 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
 <section class="page" id="page-contratos">
   <div class="page-header">
     <div class="page-title">Contratos</div>
-    <div style="font-size:12px;color:var(--muted)">Generados desde el detalle de cada trabajo — aquí solo se listan.</div>
+    <button class="btn btn-primary" onclick="abrirElegirTrabajo()">＋ Nuevo contrato</button>
   </div>
+  <p style="font-size:12px;color:var(--muted);margin:-8px 0 16px">Elige un trabajo para generar su contrato, o revisa los que ya hiciste.</p>
   <div class="table-card">
     <table><thead><tr><th>Cliente</th><th>Servicio</th><th>Total</th><th>Fecha del contrato</th><th>Generado</th><th></th></tr></thead>
     <tbody id="contratos-tbody"></tbody></table>
@@ -845,6 +846,18 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
     <div class="form-actions" style="margin-top:20px">
       <button class="btn btn-primary" onclick="confirmarAgregarSesion()">＋ Agregar</button>
       <button class="btn btn-ghost" onclick="closeModal('modal-agregar-sesion')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL ELEGIR TRABAJO (para "+ Nuevo contrato" desde Contratos) ═══ -->
+<div class="modal-overlay" id="modal-elegir-trabajo">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">Elige el trabajo</div>
+    <input id="et-buscar" placeholder="Buscar cliente o servicio" style="width:100%;margin-top:8px" oninput="filtrarElegirTrabajo()">
+    <div id="et-lista" style="max-height:360px;overflow-y:auto;margin-top:12px;border:1px solid var(--border);border-radius:8px"></div>
+    <div class="form-actions" style="margin-top:16px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-elegir-trabajo')">Cancelar</button>
     </div>
   </div>
 </div>
@@ -2360,7 +2373,7 @@ async function confirmarContrato(){
   win.document.write(contratoHTML(datos));
   win.document.close();
   closeModal('modal-contrato');
-  try { await api('/api/contratos',{method:'POST',body:JSON.stringify(datos)}); }
+  try { await api('/api/contratos',{method:'POST',body:JSON.stringify(datos)}); if(document.getElementById('page-contratos').classList.contains('active')) await loadContratos(); }
   catch(e) { toast('El contrato se generó, pero no se pudo guardar en el historial.','err'); }
 }
 
@@ -2371,6 +2384,7 @@ async function confirmarContrato(){
 let allContratos = [];
 async function loadContratos(){
   allContratos = await api('/api/contratos');
+  if(!allTrabajos.length) allTrabajos = await api('/api/trabajos');
   const tbody = document.getElementById('contratos-tbody');
   tbody.innerHTML = allContratos.length ? allContratos.map(c => `
     <tr>
@@ -2396,6 +2410,32 @@ async function eliminarContrato(id){
   if(!confirm('¿Eliminar este contrato del historial? El PDF ya generado no se ve afectado.')) return;
   await api('/api/contratos/'+id,{method:'DELETE'});
   await loadContratos();
+}
+
+// "+ Nuevo contrato" desde la página de Contratos — deja elegir el trabajo
+// en vez de tener que abrirlo primero desde la lista de Trabajos.
+async function abrirElegirTrabajo(){
+  if(!allTrabajos.length) allTrabajos = await api('/api/trabajos');
+  document.getElementById('et-buscar').value = '';
+  renderElegirTrabajoLista(allTrabajos);
+  openModal('modal-elegir-trabajo');
+}
+function filtrarElegirTrabajo(){
+  const q = document.getElementById('et-buscar').value.trim().toLowerCase();
+  const fil = !q ? allTrabajos : allTrabajos.filter(t=>(t.cliente||'').toLowerCase().includes(q)||(t.servicio||'').toLowerCase().includes(q));
+  renderElegirTrabajoLista(fil);
+}
+function renderElegirTrabajoLista(lista){
+  const el = document.getElementById('et-lista');
+  el.innerHTML = lista.length ? lista.map(t=>`
+    <div onclick="elegirTrabajoParaContrato('${t.id}')" style="padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:500">${esc(t.cliente)}</div>
+      <div style="font-size:11px;color:var(--muted)">${esc(t.servicio)}</div>
+    </div>`).join('') : '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Sin resultados</div>';
+}
+function elegirTrabajoParaContrato(trabajoId){
+  closeModal('modal-elegir-trabajo');
+  abrirContrato(trabajoId);
 }
 
 async function marcarPagado(id){

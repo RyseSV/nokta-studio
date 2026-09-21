@@ -7,14 +7,16 @@ import SwiftUI
 @Observable
 final class ContratosViewModel {
     var contratos: [NoktaContrato] = []
+    var trabajos: [NoktaTrabajo] = []
     var isLoading = true
 
     func load() async {
         isLoading = true
         defer { isLoading = false }
-        if let c: [NoktaContrato] = try? await NoktaAPI.get("/api/contratos") {
-            contratos = c.sorted { ($0.creado ?? "") > ($1.creado ?? "") }
-        }
+        async let c: [NoktaContrato]? = try? NoktaAPI.get("/api/contratos")
+        async let t: [NoktaTrabajo]? = try? NoktaAPI.get("/api/trabajos")
+        if let c = await c { contratos = c.sorted { ($0.creado ?? "") > ($1.creado ?? "") } }
+        if let t = await t { trabajos = t.sorted { ($0.fecha ?? $0.fechaInicio ?? "") > ($1.fecha ?? $1.fechaInicio ?? "") } }
     }
 
     func eliminar(_ id: String) async {
@@ -31,6 +33,9 @@ struct ContratosView: View {
     @State private var previewItem: ContratoPreviewItem?
     @State private var previewErrorMessage: String?
     @State private var eliminarConfirm: String?
+    @State private var elegirTrabajoShown = false
+    @State private var trabajoParaContrato: NoktaTrabajo?
+    @State private var contratoErrorMessage: String?
 
     var body: some View {
         ScrollView {
@@ -38,8 +43,10 @@ struct ContratosView: View {
                 HStack {
                     Text("Contratos").font(NoktaFont.pageTitle).foregroundStyle(NoktaPalette.cream)
                     Spacer()
+                    Button("＋ Nuevo contrato") { elegirTrabajoShown = true }
+                        .buttonStyle(.glassProminent).tint(NoktaPalette.ember)
                 }
-                Text("Generados desde el detalle de cada trabajo — aquí solo se listan.")
+                Text("Elige un trabajo para generar su contrato, o revisa los que ya hiciste.")
                     .font(.system(size: 12)).foregroundStyle(NoktaPalette.muted)
 
                 if vm.contratos.isEmpty {
@@ -78,6 +85,33 @@ struct ContratosView: View {
             }
         } message: {
             Text("El PDF ya generado no se ve afectado.")
+        }
+        .sheet(isPresented: $elegirTrabajoShown) {
+            ElegirTrabajoSheet(trabajos: vm.trabajos) { t in
+                elegirTrabajoShown = false
+                trabajoParaContrato = t
+            }
+        }
+        .sheet(item: $trabajoParaContrato) { t in
+            ContratoSheet(trabajo: t) { datos in
+                Task { await generar(datos) }
+                trabajoParaContrato = nil
+            }
+        }
+        .alert("No se pudo generar el contrato", isPresented: Binding(get: { contratoErrorMessage != nil }, set: { if !$0 { contratoErrorMessage = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(contratoErrorMessage ?? "")
+        }
+    }
+
+    private func generar(_ datos: ContratoParaPDF) async {
+        do {
+            let url = try await ContratoGenerator.generar(datos)
+            previewItem = ContratoPreviewItem(url: url, title: "Contrato · \(datos.clienteNombre)")
+            await vm.load()
+        } catch {
+            contratoErrorMessage = error.localizedDescription
         }
     }
 
@@ -125,5 +159,53 @@ struct ContratosView: View {
         } catch {
             previewErrorMessage = error.localizedDescription
         }
+    }
+}
+
+/// Trabajo picker for "+ Nuevo contrato" — lets you start a contract from
+/// the Contratos page instead of having to open the trabajo first.
+private struct ElegirTrabajoSheet: View {
+    let trabajos: [NoktaTrabajo]
+    let onElegir: (NoktaTrabajo) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var busqueda = ""
+
+    private var filtrados: [NoktaTrabajo] {
+        guard !busqueda.trimmingCharacters(in: .whitespaces).isEmpty else { return trabajos }
+        return trabajos.filter { $0.cliente.localizedCaseInsensitiveContains(busqueda) || $0.servicio.localizedCaseInsensitiveContains(busqueda) }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Elige el trabajo").font(.system(size: 16, weight: .semibold)).foregroundStyle(NoktaPalette.cream)
+            TextField("Buscar cliente o servicio", text: $busqueda).textFieldStyle(.roundedBorder)
+            ScrollView {
+                VStack(spacing: 0) {
+                    if filtrados.isEmpty {
+                        Text("Sin resultados").font(.system(size: 13)).foregroundStyle(NoktaPalette.muted)
+                            .frame(maxWidth: .infinity, alignment: .center).padding(24)
+                    }
+                    ForEach(filtrados, id: \.id) { t in
+                        Button { onElegir(t) } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(t.cliente).font(.system(size: 13, weight: .medium)).foregroundStyle(NoktaPalette.cream)
+                                    Text(t.servicio).font(.system(size: 11)).foregroundStyle(NoktaPalette.muted)
+                                }
+                                Spacer()
+                            }
+                            .padding(.horizontal, 12).padding(.vertical, 10)
+                            .contentShape(Rectangle())
+                        }.buttonStyle(.plain)
+                        if t.id != filtrados.last?.id { Divider().overlay(NoktaPalette.border) }
+                    }
+                }
+            }
+            .frame(maxHeight: 360)
+            .glassEffect(.regular.tint(NoktaPalette.card), in: RoundedRectangle(cornerRadius: NoktaRadius.card))
+            Button("Cancelar") { dismiss() }.buttonStyle(.glass)
+        }
+        .padding(24)
+        .frame(maxWidth: 420)
     }
 }

@@ -308,18 +308,12 @@ struct TrabajoDetailView: View {
     }
 
     private func generarContrato(_ datos: ContratoParaPDF) async {
-        let html = PDFTemplates.contrato(datos)
         do {
-            let url = try await PDFRenderer().renderToPDF(html: html, suggestedName: datos.fileName)
+            let url = try await ContratoGenerator.generar(datos)
             facturaPreview = FacturaPreviewItem(url: url, title: "Contrato · \(datos.clienteNombre)")
         } catch {
             contratoErrorMessage = error.localizedDescription
         }
-        // Best-effort: the PDF above is already generated and shown either
-        // way — a failed save here shouldn't block or alarm about the PDF
-        // the user already has in hand, just leave it out of the history list.
-        struct Resp: Decodable { let ok: Bool? }
-        let _: Resp? = try? await NoktaAPI.post("/api/contratos", body: datos)
     }
 
     private func generarFacturaQ(periodo: String, q: Int, rec: NoktaQuincena, montoQ: Double) async {
@@ -684,7 +678,8 @@ private struct AgregarSesionSheet: View {
 /// fecha, monto), left blank where it doesn't (DUI, dirección, entregables)
 /// so the user fills those in per client. This is where "editable" lives:
 /// the generated PDF itself is a filled document, not a fillable form.
-private struct ContratoSheet: View {
+/// Not private — ContratosView's "+ Nuevo contrato" picker reuses it too.
+struct ContratoSheet: View {
     let trabajo: NoktaTrabajo
     let onGenerar: (ContratoParaPDF) -> Void
     @Environment(\.dismiss) private var dismiss

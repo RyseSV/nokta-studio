@@ -187,6 +187,17 @@ async function generateCode(tipo) {
   return `NK-${year}-${prefix}-${String(count + 1).padStart(4, '0')}-${suffix}`;
 }
 
+// `new Date('YYYY-MM-DD')` parses as UTC midnight, which rolls back a day
+// (and, at day 1, a whole month) in negative-UTC timezones like El Salvador
+// — parse the "YYYY-MM" text directly instead, same fix already applied to
+// admin.html's mesAnioDeFecha/_generarPeriodos.
+function anioMesDeFecha(f) {
+  if (!f || f.length < 7) return null;
+  const anio = parseInt(f.slice(0, 4), 10), mes = parseInt(f.slice(5, 7), 10);
+  if (!anio || !mes) return null;
+  return { anio, mes: mes - 1 };
+}
+
 // ── Auto-generate alerts ────────────────────────────────────
 async function addAlert(tipo, datos) {
   const id = `a${Date.now()}${Math.random().toString(36).slice(2,6)}`;
@@ -244,8 +255,8 @@ async function checkAlerts() {
     const montoQ = parseFloat(t.pagoMensual || 0) / 2;
 
     // Generate periods from start to current month
-    const inicio = new Date(t.fechaInicio);
-    let cur = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+    const inicioAM = anioMesDeFecha(t.fechaInicio);
+    let cur = inicioAM ? new Date(inicioAM.anio, inicioAM.mes, 1) : new Date(now.getFullYear(), now.getMonth(), 1);
     let fin = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
     while (cur < fin) {

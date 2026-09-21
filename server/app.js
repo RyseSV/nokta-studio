@@ -96,11 +96,24 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/img', express.static(path.join(__dirname, '../img')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
+// Nothing security-relevant was logged anywhere in this file before — a
+// brute-force run against /api/admin/login, or someone hammering the public
+// galeria routes, left zero trace. Render captures stdout/stderr as its
+// platform logs already, so a plain console.warn at the right points is
+// enough monitoring for an app this size — no new infra needed.
+function logSecurity(evento, req, extra = {}) {
+  console.warn(`[SEGURIDAD] ${evento} | ip=${req.ip} | ${new Date().toISOString()}`, extra);
+}
+
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   message: { error: 'Demasiados intentos. Espera 15 minutos.' },
   skipSuccessfulRequests: true,
+  handler: (req, res, next, options) => {
+    logSecurity('login bloqueado por exceso de intentos', req);
+    res.status(options.statusCode).json(options.message);
+  },
 });
 
 // Public gallery routes have no login — this is the only thing standing
@@ -110,6 +123,10 @@ const galeriaLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 120,
   message: { error: 'Demasiadas solicitudes. Intenta de nuevo en unos minutos.' },
+  handler: (req, res, next, options) => {
+    logSecurity('galería bloqueada por exceso de solicitudes', req, { codigo: req.params.codigo });
+    res.status(options.statusCode).json(options.message);
+  },
 });
 
 // Every route below does `catch (err) { ... }` around a DB call — this
@@ -330,13 +347,16 @@ app.post('/api/admin/login', loginLimiter, async (req, res) => {
   try {
     const { username, password, remember } = req.body;
     const user = await Usuario.findOne({ username: username?.trim().toLowerCase() });
-    if (!user || !(await bcrypt.compare(password, user.password)))
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      logSecurity('intento de login fallido', req, { username: username?.trim().toLowerCase() || '(vacío)' });
       return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+    }
     if (remember) req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 días
     req.session.userId = user._id.toString();
     req.session.username = user.username;
     req.session.nombre = user.nombre;
     req.session.role = user.role;
+    logSecurity('login exitoso', req, { username: user.username, role: user.role });
     res.json({ ok: true, role: user.role, nombre: user.nombre });
   } catch (err) { handleError(res, err); }
 });
@@ -419,6 +439,7 @@ app.delete('/api/usuarios/:id', requireAdmin, requireSuperAdmin, async (req, res
     const u = await Usuario.findById(req.params.id);
     if (u?.role === 'admin') return res.status(400).json({ error: 'No puedes eliminar al admin' });
     await Usuario.deleteOne({ _id: req.params.id });
+    logSecurity('usuario eliminado', req, { por: req.session.username, usuarioEliminado: u?.username });
     res.json({ ok: true });
   } catch (err) { handleError(res, err); }
 });
@@ -478,6 +499,7 @@ app.put('/api/clientes/:codigo/reactivar', requireAdmin, async (req, res) => {
 app.delete('/api/clientes/:codigo', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
     await Cliente.deleteOne({ codigo: req.params.codigo });
+    logSecurity('cliente eliminado', req, { por: req.session.username, codigo: req.params.codigo });
     res.json({ ok: true });
   } catch (err) { handleError(res, err); }
 });
@@ -652,6 +674,7 @@ app.patch('/api/trabajos/:id/sesiones', requireAdmin, async (req, res) => {
 app.delete('/api/trabajos/:id', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
     await Trabajo.deleteOne({ id: req.params.id });
+    logSecurity('trabajo eliminado', req, { por: req.session.username, trabajoId: req.params.id });
     res.json({ ok: true });
   } catch (err) { handleError(res, err); }
 });
@@ -676,6 +699,7 @@ app.post('/api/gastos', requireAdmin, async (req, res) => {
 app.delete('/api/gastos/:id', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
     await Gasto.deleteOne({ id: req.params.id });
+    logSecurity('gasto eliminado', req, { por: req.session.username, gastoId: req.params.id });
     res.json({ ok: true });
   } catch (err) { handleError(res, err); }
 });
@@ -742,6 +766,7 @@ app.post('/api/contratos', requireAdmin, async (req, res) => {
 app.delete('/api/contratos/:id', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
     await Contrato.deleteOne({ id: req.params.id });
+    logSecurity('contrato eliminado', req, { por: req.session.username, contratoId: req.params.id });
     res.json({ ok: true });
   } catch (err) { handleError(res, err); }
 });

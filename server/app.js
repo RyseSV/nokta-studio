@@ -213,6 +213,17 @@ async function checkAlerts() {
   const estadosCliente = await ClienteEstado.find({}).lean();
   const estadoClienteDe = (nombre) => estadosCliente.find(e => e.nombre === nombre)?.estado || 'activo';
 
+  // One query for every alert that already exists, instead of one
+  // Alerta.findOne() per candidate item below (a grupo B contract alone can
+  // check up to ~48 quincena periods) — checked in memory from here on, and
+  // kept in sync as addAlert() creates new ones within this same run.
+  const alertasExistentes = await Alerta.find({}, 'tipo datos').lean();
+  const existeAlerta = (tipo, campo, valor) => alertasExistentes.some(a => a.tipo === tipo && a.datos?.[campo] === valor);
+  async function addAlertTracked(tipo, datos) {
+    await addAlert(tipo, datos);
+    alertasExistentes.push({ tipo, datos });
+  }
+
   // Expiring gallery links (≤ 3 days)
   const clientes = await Cliente.find({});
   for (const c of clientes) {
@@ -220,8 +231,7 @@ async function checkAlerts() {
     const exp = new Date(c.expira);
     const days = Math.ceil((exp - now) / 86400000);
     if (days <= 3 && days > 0 && c.estado === 'activo') {
-      const exists = await Alerta.findOne({ tipo: 'link_venciendo', 'datos.codigo': c.codigo });
-      if (!exists) await addAlert('link_venciendo', { nombre: c.nombre, codigo: c.codigo, diasRestantes: days });
+      if (!existeAlerta('link_venciendo', 'codigo', c.codigo)) await addAlertTracked('link_venciendo', { nombre: c.nombre, codigo: c.codigo, diasRestantes: days });
     }
     if (exp < now && c.estado === 'activo') {
       await Cliente.updateOne({ codigo: c.codigo }, { $set: { estado: 'expirado' } });
@@ -236,8 +246,7 @@ async function checkAlerts() {
     if (t.estado !== 'pendiente' || !t.creado) continue;
     const days = Math.ceil((now - new Date(t.creado)) / 86400000);
     if (days >= 7) {
-      const exists = await Alerta.findOne({ tipo: 'pago_pendiente', 'datos.id': t.id });
-      if (!exists) await addAlert('pago_pendiente', { id: t.id, cliente: t.cliente, servicio: t.servicio, saldo: t.saldo });
+      if (!existeAlerta('pago_pendiente', 'id', t.id)) await addAlertTracked('pago_pendiente', { id: t.id, cliente: t.cliente, servicio: t.servicio, saldo: t.saldo });
     }
   }
 
@@ -274,11 +283,10 @@ async function checkAlerts() {
         if (stored && (stored.estado === 'pagado' || stored.estado === 'oculta')) continue;
 
         const alertKey = `${t.id}-${periodo}-q${q}`;
-        const exists = await Alerta.findOne({ tipo: 'quincena_vencida', 'datos.key': alertKey });
-        if (!exists) {
+        if (!existeAlerta('quincena_vencida', 'key', alertKey)) {
           const monto = stored ? parseFloat(stored.monto || montoQ) : montoQ;
           const label = q === 1 ? '1 al 15' : '15 al 30';
-          await addAlert('quincena_vencida', {
+          await addAlertTracked('quincena_vencida', {
             key: alertKey, id: t.id, cliente: t.cliente,
             periodo, q, label, monto,
             mensaje: `${t.cliente} — ${periodo} (${label}) $${monto.toFixed(2)} sin pagar`
@@ -295,8 +303,7 @@ async function checkAlerts() {
     const fechaEvento = new Date(`${t.fecha}T${t.horaInicio || '00:00'}`);
     const diffH = (fechaEvento - now) / 3600000;
     if (diffH > 0 && diffH <= 48) {
-      const exists = await Alerta.findOne({ tipo: 'evento_proximo', 'datos.id': t.id });
-      if (!exists) await addAlert('evento_proximo', { id: t.id, cliente: t.cliente, tipo: t.servicio, hora: t.horaInicio, fecha: t.fecha });
+      if (!existeAlerta('evento_proximo', 'id', t.id)) await addAlertTracked('evento_proximo', { id: t.id, cliente: t.cliente, tipo: t.servicio, hora: t.horaInicio, fecha: t.fecha });
     }
   }
 }

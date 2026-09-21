@@ -1187,10 +1187,9 @@ function cobrosPendientes(periodo, trabajos=allTrabajos, estados=allClienteEstad
 
 async function loadDashboard(){
   initMesSel();
-  allTrabajos = await api('/api/trabajos');
-  allGastos = await api('/api/gastos');
-  allClienteEstados = await api('/api/clientes-estados');
-  allAlertas = await api('/api/alertas');
+  [allTrabajos, allGastos, allClienteEstados, allAlertas] = await Promise.all([
+    api('/api/trabajos'), api('/api/gastos'), api('/api/clientes-estados'), api('/api/alertas'),
+  ]);
 
   const mes=parseInt(document.getElementById('dash-mes').value);
   const year=new Date().getFullYear();
@@ -2689,14 +2688,17 @@ const ESTADO_CLIENTE_LABEL={activo:'Activo',pausado:'Pausado',cancelado:'Cancela
 const ESTADO_CLIENTE_PILL={activo:'pill-green',pausado:'pill-yellow',cancelado:'pill-red'};
 
 async function loadClientes(){
-  allTrabajos=await api('/api/trabajos'); allClientes=await api('/api/clientes');
-  allClienteEstados=await api('/api/clientes-estados');
+  [allTrabajos, allClientes, allClienteEstados] = await Promise.all([
+    api('/api/trabajos'), api('/api/clientes'), api('/api/clientes-estados'),
+  ]);
   const tbody=document.getElementById('clientes-tbody');
   // Combinar clientes registrados + clientes de trabajos
   const nombres=[...new Set([...allClientes.map(c=>c.nombre),...allTrabajos.map(t=>t.cliente)])];
   if(!nombres.length){ tbody.innerHTML='<tr><td colspan="7" class="empty">No hay clientes registrados</td></tr>'; return; }
+  const trabajosPorCliente=new Map();
+  for(const t of allTrabajos){ if(!trabajosPorCliente.has(t.cliente)) trabajosPorCliente.set(t.cliente,[]); trabajosPorCliente.get(t.cliente).push(t); }
   let rows = nombres.map(n=>{
-    const ts=allTrabajos.filter(t=>t.cliente===n);
+    const ts=trabajosPorCliente.get(n)||[];
     const total=totalGenerado(ts);
     const pendiente=ts.reduce((s,t)=>{
       const g=t.grupo||SVC_GRUPO[t.servicio]||'';
@@ -2748,10 +2750,9 @@ async function cambiarEstadoCliente(nombre,estado){
     // nuevas para ese contrato (ver _generarPeriodos).
     if(!allTrabajos.length) allTrabajos = await api('/api/trabajos');
     const contratosB = allTrabajos.filter(t=>t.cliente===nombre && (t.grupo||SVC_GRUPO[t.servicio])==='B');
-    for(const t of contratosB){
-      await api('/api/trabajos/'+t.id,{method:'PUT',body:JSON.stringify({estadoContrato:estado})});
-      t.estadoContrato = estado;
-    }
+    await Promise.all(contratosB.map(t =>
+      api('/api/trabajos/'+t.id,{method:'PUT',body:JSON.stringify({estadoContrato:estado})}).then(()=>{ t.estadoContrato = estado; })
+    ));
     toast('Estado actualizado','ok');
     if(document.getElementById('page-clientes').classList.contains('active')) loadClientes();
     if(document.getElementById('page-cliente-detalle').classList.contains('active') && document.getElementById('cd-title').textContent===nombre){

@@ -55,10 +55,12 @@ final class ClienteDetailViewModel {
         struct Body: Encodable { let estado: String }
         struct Resp: Decodable { let ok: Bool? }
         let _: Resp? = try? await NoktaAPI.put("/api/clientes-estados/\(nombre.urlPathComponentEncoded)", body: Body(estado: nuevo))
-        for t in trabajos where t.grupoResuelto == "B" {
-            struct TBody: Encodable { let estadoContrato: String }
-            struct TResp: Decodable { let ok: Bool? }
-            let _: TResp? = try? await NoktaAPI.put("/api/trabajos/\(t.id)", body: TBody(estadoContrato: nuevo))
+        struct TBody: Encodable { let estadoContrato: String }
+        struct TResp: Decodable { let ok: Bool? }
+        await withTaskGroup(of: Void.self) { group in
+            for t in trabajos where t.grupoResuelto == "B" {
+                group.addTask { let _: TResp? = try? await NoktaAPI.put("/api/trabajos/\(t.id)", body: TBody(estadoContrato: nuevo)) }
+            }
         }
     }
 

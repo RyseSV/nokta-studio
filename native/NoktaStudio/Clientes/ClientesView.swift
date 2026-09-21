@@ -82,10 +82,13 @@ final class ClientesViewModel {
         }
         // Sincroniza el contrato de sus paquetes mensuales (grupo B) — pausar/cancelar
         // al cliente detiene la generación de quincenas nuevas (ver QuincenaEngine).
-        for t in trabajos where t.cliente == nombre && t.grupoResuelto == "B" {
-            struct TBody: Encodable { let estadoContrato: String }
-            struct TResp: Decodable { let ok: Bool? }
-            let _: TResp? = try? await NoktaAPI.put("/api/trabajos/\(t.id)", body: TBody(estadoContrato: estado))
+        // En paralelo: un cliente con varios contratos no debería esperar uno a uno.
+        struct TBody: Encodable { let estadoContrato: String }
+        struct TResp: Decodable { let ok: Bool? }
+        await withTaskGroup(of: Void.self) { group in
+            for t in trabajos where t.cliente == nombre && t.grupoResuelto == "B" {
+                group.addTask { let _: TResp? = try? await NoktaAPI.put("/api/trabajos/\(t.id)", body: TBody(estadoContrato: estado)) }
+            }
         }
     }
 }

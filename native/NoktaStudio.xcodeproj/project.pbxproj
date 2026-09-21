@@ -60,6 +60,7 @@
 		B64DF059C3F922EB569D2104 /* EquipoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63BF01F1A1D616620CC208A5 /* EquipoView.swift */; };
 		86E7393265B78580C32A14E3 /* GastosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BC42EEFE6416D5D3DACAFA1 /* GastosView.swift */; };
 		372BAD6D62CE491C1A8CB067 /* ReportesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3401324A922ADD8337A286F /* ReportesView.swift */; };
+		C43577172BE76ADB1B6BA9F4 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC42F9D441ED876390DE39EE /* BiometricAuth.swift */; };
 		73EA58F1027B217020CA348D /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FD26677CEFF7ED23AD7D2A3 /* LoginView.swift */; };
 		CA7D0ADF52ECAA67A5CCF214 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F2D2F148896334509E9E1F /* RootView.swift */; };
 		B7569B9A572370D8D0D915E3 /* NuevoTrabajoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 125BBBEECEAB091A06BFE255 /* NuevoTrabajoView.swift */; };
@@ -120,6 +121,7 @@
 		175DACF9301764C38214B976 /* EquipoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63BF01F1A1D616620CC208A5 /* EquipoView.swift */; };
 		1BDC4298ACE967EFF3826FD3 /* GastosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BC42EEFE6416D5D3DACAFA1 /* GastosView.swift */; };
 		DA2F3FCDD415DF6BDD9029BA /* ReportesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3401324A922ADD8337A286F /* ReportesView.swift */; };
+		8806FBFB5FB2747B3C713E68 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC42F9D441ED876390DE39EE /* BiometricAuth.swift */; };
 		57FF5DF519F44C4FA7E65D80 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FD26677CEFF7ED23AD7D2A3 /* LoginView.swift */; };
 		87A0FACA3BA5E454FB360EA9 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F2D2F148896334509E9E1F /* RootView.swift */; };
 		6768A10C9CCB501DA9B88204 /* NuevoTrabajoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 125BBBEECEAB091A06BFE255 /* NuevoTrabajoView.swift */; };
@@ -197,6 +199,7 @@
 		63BF01F1A1D616620CC208A5 /* EquipoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquipoView.swift; sourceTree = "<group>"; };
 		4BC42EEFE6416D5D3DACAFA1 /* GastosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GastosView.swift; sourceTree = "<group>"; };
 		D3401324A922ADD8337A286F /* ReportesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportesView.swift; sourceTree = "<group>"; };
+		AC42F9D441ED876390DE39EE /* BiometricAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricAuth.swift; sourceTree = "<group>"; };
 		3FD26677CEFF7ED23AD7D2A3 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		33F2D2F148896334509E9E1F /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		125BBBEECEAB091A06BFE255 /* NuevoTrabajoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NuevoTrabajoView.swift; sourceTree = "<group>"; };
@@ -444,6 +447,7 @@
 		72B4D395CBFFB3EEC69CDEB6 = {
 			isa = PBXGroup;
 			children = (
+				AC42F9D441ED876390DE39EE,
 				3FD26677CEFF7ED23AD7D2A3,
 				33F2D2F148896334509E9E1F,
 			);
@@ -640,6 +644,7 @@
 				B64DF059C3F922EB569D2104 /* EquipoView.swift in Sources */,
 				86E7393265B78580C32A14E3 /* GastosView.swift in Sources */,
 				372BAD6D62CE491C1A8CB067 /* ReportesView.swift in Sources */,
+				C43577172BE76ADB1B6BA9F4 /* BiometricAuth.swift in Sources */,
 				73EA58F1027B217020CA348D /* LoginView.swift in Sources */,
 				CA7D0ADF52ECAA67A5CCF214 /* RootView.swift in Sources */,
 				B7569B9A572370D8D0D915E3 /* NuevoTrabajoView.swift in Sources */,
@@ -707,6 +712,7 @@
 				175DACF9301764C38214B976 /* EquipoView.swift in Sources */,
 				1BDC4298ACE967EFF3826FD3 /* GastosView.swift in Sources */,
 				DA2F3FCDD415DF6BDD9029BA /* ReportesView.swift in Sources */,
+				8806FBFB5FB2747B3C713E68 /* BiometricAuth.swift in Sources */,
 				57FF5DF519F44C4FA7E65D80 /* LoginView.swift in Sources */,
 				87A0FACA3BA5E454FB360EA9 /* RootView.swift in Sources */,
 				6768A10C9CCB501DA9B88204 /* NuevoTrabajoView.swift in Sources */,
@@ -779,6 +785,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Usa Face ID para iniciar sesión más rápido en el panel de Nokta Studio.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
@@ -812,6 +819,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Usa Face ID para iniciar sesión más rápido en el panel de Nokta Studio.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;

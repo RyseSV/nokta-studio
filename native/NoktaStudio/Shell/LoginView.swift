@@ -15,10 +15,11 @@ final class LoginViewModel {
     var username = ""
     var password = ""
     var remember = true
+    var useTouchID = true
     var isLoading = false
     var errorMessage: String?
 
-    func login() async -> Bool {
+    func login(saveForBiometrics: Bool) async -> Bool {
         errorMessage = nil
         let user = username.trimmingCharacters(in: .whitespaces)
         guard !user.isEmpty, !password.isEmpty else {
@@ -31,9 +32,17 @@ final class LoginViewModel {
         struct Resp: Decodable { let ok: Bool? }
         do {
             let resp: Resp = try await NoktaAPI.post("/api/admin/login", body: Body(username: user, password: password, remember: remember))
-            if resp.ok == true { return true }
-            errorMessage = "Usuario o contraseña incorrectos"
-            return false
+            guard resp.ok == true else {
+                errorMessage = "Usuario o contraseña incorrectos"
+                KeychainCredentialStore.delete() // stale saved credential would just fail silently later
+                return false
+            }
+            if saveForBiometrics {
+                KeychainCredentialStore.save(username: user, password: password)
+            } else {
+                KeychainCredentialStore.delete()
+            }
+            return true
         } catch NoktaAPIError.http(_, let msg) {
             errorMessage = msg == "—" ? "Usuario o contraseña incorrectos" : msg
             return false
@@ -46,7 +55,17 @@ final class LoginViewModel {
 
 struct LoginView: View {
     @State private var vm = LoginViewModel()
+    @State private var hasSavedCredential = KeychainCredentialStore.hasStoredCredential
+    @State private var isAuthenticatingBiometrics = false
     let onSuccess: () -> Void
+
+    private var biometricLabel: String {
+        #if os(iOS)
+        "Entrar con Face ID / Touch ID"
+        #else
+        "Entrar con Touch ID"
+        #endif
+    }
 
     var body: some View {
         ZStack {
@@ -61,6 +80,23 @@ struct LoginView: View {
                 }
 
                 VStack(spacing: 12) {
+                    if hasSavedCredential && BiometricAuth.isAvailable {
+                        Button {
+                            Task { await loginWithBiometrics() }
+                        } label: {
+                            Label(isAuthenticatingBiometrics ? "Verificando…" : biometricLabel, systemImage: "touchid")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.glassProminent).tint(NoktaPalette.ember)
+                        .disabled(isAuthenticatingBiometrics)
+
+                        HStack {
+                            Rectangle().fill(NoktaPalette.border).frame(height: 1)
+                            Text("o con tu contraseña").font(.system(size: 11)).foregroundStyle(NoktaPalette.muted)
+                            Rectangle().fill(NoktaPalette.border).frame(height: 1)
+                        }
+                    }
+
                     TextField("Usuario", text: $vm.username)
                         .textFieldStyle(.roundedBorder)
                         .autocorrectionDisabled()
@@ -74,6 +110,12 @@ struct LoginView: View {
                     Toggle("Recordar sesión en este dispositivo", isOn: $vm.remember)
                         .font(.system(size: 12)).foregroundStyle(NoktaPalette.muted)
                         .toggleStyle(.switch)
+
+                    if BiometricAuth.isAvailable {
+                        Toggle(biometricLabel + " la próxima vez", isOn: $vm.useTouchID)
+                            .font(.system(size: 12)).foregroundStyle(NoktaPalette.muted)
+                            .toggleStyle(.switch)
+                    }
 
                     if let err = vm.errorMessage {
                         Text(err).font(.system(size: 12)).foregroundStyle(NoktaPalette.red)
@@ -91,6 +133,21 @@ struct LoginView: View {
     }
 
     private func submit() async {
-        if await vm.login() { onSuccess() }
+        if await vm.login(saveForBiometrics: vm.useTouchID && BiometricAuth.isAvailable) { onSuccess() }
+    }
+
+    /// The Keychain item's own access-control check does the actual
+    /// biometric/passcode prompt (kSecUseOperationPrompt) — this just reads
+    /// the result and replays the same login the user already did once.
+    private func loginWithBiometrics() async {
+        isAuthenticatingBiometrics = true
+        defer { isAuthenticatingBiometrics = false }
+        guard let cred = KeychainCredentialStore.load(reason: "Inicia sesión en Nokta Studio") else {
+            hasSavedCredential = KeychainCredentialStore.hasStoredCredential
+            return
+        }
+        vm.username = cred.username
+        vm.password = cred.password
+        if await vm.login(saveForBiometrics: true) { onSuccess() }
     }
 }

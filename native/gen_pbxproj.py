@@ -444,6 +444,7 @@ def main():
 \t\t\t\tCURRENT_PROJECT_VERSION = 1;
 \t\t\t\tENABLE_PREVIEWS = YES;
 \t\t\t\tGENERATE_INFOPLIST_FILE = YES;
+\t\t\t\tINFOPLIST_KEY_NSFaceIDUsageDescription = "Usa Face ID para iniciar sesión más rápido en el panel de Nokta Studio.";
 \t\t\t\tINFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 \t\t\t\tINFOPLIST_KEY_UILaunchScreen_Generation = YES;
 \t\t\t\tINFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
@@ -477,6 +478,7 @@ def main():
 \t\t\t\tCURRENT_PROJECT_VERSION = 1;
 \t\t\t\tENABLE_PREVIEWS = YES;
 \t\t\t\tGENERATE_INFOPLIST_FILE = YES;
+\t\t\t\tINFOPLIST_KEY_NSFaceIDUsageDescription = "Usa Face ID para iniciar sesión más rápido en el panel de Nokta Studio.";
 \t\t\t\tINFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 \t\t\t\tINFOPLIST_KEY_UILaunchScreen_Generation = YES;
 \t\t\t\tINFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;

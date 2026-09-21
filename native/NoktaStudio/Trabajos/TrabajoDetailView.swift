@@ -701,6 +701,7 @@ struct ContratoSheet: View {
     @State private var saldoFecha = Date()
     @State private var plazoDias = "7"
     @State private var mora: Double = 10
+    @State private var validationError: String?
 
     init(trabajo: NoktaTrabajo, onGenerar: @escaping (ContratoParaPDF) -> Void) {
         self.trabajo = trabajo
@@ -738,8 +739,11 @@ struct ContratoSheet: View {
                 row("Ciudad del contrato", $ciudad)
                 DatePicker("Fecha del contrato", selection: $fechaContrato, displayedComponents: .date)
 
-                row("Nombre del cliente", $clienteNombre)
-                HStack(spacing: 10) { row("DUI", $clienteDui); row("Teléfono", $clienteTelefono) }
+                row("Nombre del cliente *", $clienteNombre)
+                HStack(spacing: 10) { row("DUI *", $clienteDui); row("Teléfono", $clienteTelefono) }
+                if let validationError {
+                    Text(validationError).font(.system(size: 12)).foregroundStyle(NoktaPalette.red)
+                }
                 row("Correo electrónico", $clienteEmail)
                 row("Dirección", $clienteDireccion)
 
@@ -764,6 +768,12 @@ struct ContratoSheet: View {
                     Button("Cancelar") { dismiss() }
                     Spacer()
                     Button("📜 Generar PDF") {
+                        guard !clienteNombre.trimmingCharacters(in: .whitespaces).isEmpty,
+                              !clienteDui.trimmingCharacters(in: .whitespaces).isEmpty else {
+                            validationError = "Escribe el nombre y el DUI del cliente antes de generar el contrato"
+                            return
+                        }
+                        validationError = nil
                         let f = DateFormatter(); f.dateFormat = "d 'de' MMMM 'de' yyyy"; f.locale = Locale(identifier: "es_MX")
                         onGenerar(ContratoParaPDF(
                             trabajoId: trabajo.id, ciudad: ciudad, fechaContrato: f.string(from: fechaContrato),

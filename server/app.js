@@ -213,7 +213,7 @@ async function checkAlerts() {
       if (!exists) await addAlert('link_venciendo', { nombre: c.nombre, codigo: c.codigo, diasRestantes: days });
     }
     if (exp < now && c.estado === 'activo') {
-      await Cliente.updateOne({ codigo: c.codigo }, { estado: 'expirado' });
+      await Cliente.updateOne({ codigo: c.codigo }, { $set: { estado: 'expirado' } });
     }
   }
 
@@ -378,7 +378,11 @@ app.put('/api/usuarios/:id', requireAdmin, requireSuperAdmin, async (req, res) =
 
 app.post('/api/usuarios/:id/foto', requireAdmin, async (req, res) => {
   try {
-    console.log('POST /api/usuarios/:id/foto — id:', req.params.id, 'body size:', JSON.stringify(req.body).length);
+    // Anyone can update their own photo; changing someone else's requires the
+    // same requireSuperAdmin check the other user-mutating routes already have.
+    if (req.session.userId !== req.params.id && req.session.role !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
     const { base64 } = req.body;
     if (!base64) return res.status(400).json({ error: 'No image' });
     const result = await cloudinary.uploader.upload(base64, {
@@ -531,7 +535,7 @@ app.post('/api/galeria/:codigo/descarga', galeriaLimiter, async (req, res) => {
 
 app.post('/api/galeria/:codigo/favoritos', galeriaLimiter, async (req, res) => {
   try {
-    await Cliente.updateOne({ codigo: req.params.codigo }, { favoritos: req.body.favoritos || [] });
+    await Cliente.updateOne({ codigo: req.params.codigo }, { $set: { favoritos: req.body.favoritos || [] } });
     res.json({ ok: true });
   } catch (err) { handleError(res, err); }
 });
@@ -741,14 +745,14 @@ app.get('/api/alertas', requireAdmin, async (req, res) => {
 
 app.put('/api/alertas/leer', requireAdmin, async (req, res) => {
   try {
-    await Alerta.updateMany({}, { leida: true });
+    await Alerta.updateMany({}, { $set: { leida: true } });
     res.json({ ok: true });
   } catch (err) { handleError(res, err); }
 });
 
 app.put('/api/alertas/:id/leer', requireAdmin, async (req, res) => {
   try {
-    await Alerta.updateOne({ id: req.params.id }, { leida: true });
+    await Alerta.updateOne({ id: req.params.id }, { $set: { leida: true } });
     res.json({ ok: true });
   } catch (err) { handleError(res, err); }
 });

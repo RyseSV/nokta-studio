@@ -85,6 +85,7 @@ private final class RootShell {
 }
 
 struct RootView: View {
+    var onLogout: () -> Void = {}
     @State private var assistant = AssistantViewModel()
     @State private var webView = WKWebView(frame: .zero, configuration: makeNoktaWebViewConfiguration())
     @State private var isLoading = false
@@ -94,6 +95,7 @@ struct RootView: View {
     /// hidden "Administración" section — native never tracked who's logged
     /// in before, so this is the first thing that needs it.
     @State private var currentUserRole: String?
+    @State private var currentUserNombre: String?
     /// If a sidebar item is tapped before the WKWebView's first load finishes
     /// (e.g. right after launch), `nav(id)` silently no-ops — the page's own
     /// router isn't defined yet — leaving the SPA on its own default page.
@@ -129,11 +131,19 @@ struct RootView: View {
     private func loadCurrentUserRole() async {
         if let me: NoktaUsuario = try? await NoktaAPI.get("/api/admin/me") {
             currentUserRole = me.role
+            currentUserNombre = me.nombre
         }
     }
 
     private var visibleGroups: [SidebarGroup] {
         currentUserRole == "admin" ? sidebarGroups : sidebarGroups.filter { $0.title != "ADMINISTRACIÓN" }
+    }
+
+    private func logout() async {
+        struct EmptyBody: Encodable {}
+        struct Resp: Decodable { let ok: Bool? }
+        let _: Resp? = try? await NoktaAPI.post("/api/admin/logout", body: EmptyBody())
+        onLogout()
     }
 
     private func onSelect(_ item: NoktaSection) {
@@ -218,31 +228,34 @@ struct RootView: View {
 
     private var macShell: some View {
         NavigationSplitView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    logoRow
-                    ForEach(visibleGroups, id: \.title) { group in
-                        if !group.title.isEmpty {
-                            Text(group.title)
-                                .font(NoktaFont.sidebarSection)
-                                .tracking(2)
-                                .foregroundStyle(NoktaPalette.muted)
-                                .padding(.horizontal, 20)
-                                .padding(.top, 16)
-                                .padding(.bottom, 6)
-                        }
-                        ForEach(group.items) { item in
-                            Button {
-                                macSelection = item
-                                onSelect(item)
-                            } label: {
-                                sidebarRowLabel(item, isActive: macSelection == item)
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        logoRow
+                        ForEach(visibleGroups, id: \.title) { group in
+                            if !group.title.isEmpty {
+                                Text(group.title)
+                                    .font(NoktaFont.sidebarSection)
+                                    .tracking(2)
+                                    .foregroundStyle(NoktaPalette.muted)
+                                    .padding(.horizontal, 20)
+                                    .padding(.top, 16)
+                                    .padding(.bottom, 6)
                             }
-                            .buttonStyle(.plain)
+                            ForEach(group.items) { item in
+                                Button {
+                                    macSelection = item
+                                    onSelect(item)
+                                } label: {
+                                    sidebarRowLabel(item, isActive: macSelection == item)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
                     }
+                    .padding(.top, 4)
                 }
-                .padding(.top, 4)
+                sidebarFooter
             }
             .background(NoktaPalette.sb)
             .navigationSplitViewColumnWidth(220)
@@ -251,6 +264,28 @@ struct RootView: View {
         }
     }
     #endif
+
+    /// Pinned below the scrolling sidebar (not inside it) — the current
+    /// user's name and a logout button, same spot as admin.html's
+    /// sb-avatar/sb-nombre/logout-btn row.
+    private var sidebarFooter: some View {
+        HStack(spacing: 10) {
+            ZStack {
+                Circle().fill(NoktaPalette.ember)
+                Text(String((currentUserNombre ?? "?").prefix(1)).uppercased())
+                    .font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
+            }.frame(width: 28, height: 28)
+            Text(currentUserNombre ?? "—")
+                .font(.system(size: 12, weight: .medium)).foregroundStyle(NoktaPalette.cream)
+                .lineLimit(1)
+            Spacer()
+            Button { Task { await logout() } } label: { Image(systemName: "power") }
+                .buttonStyle(.glass)
+                .help("Cerrar sesión")
+        }
+        .padding(.horizontal, 16).padding(.vertical, 12)
+        .overlay(alignment: .top) { Rectangle().fill(NoktaPalette.border).frame(height: 1) }
+    }
 
     // MARK: - iOS: plain NavigationStack + real NavigationLink push. A
     // pushed-and-popped row doesn't retain a persistent "selected" system
@@ -278,6 +313,17 @@ struct RootView: View {
                                 .foregroundStyle(NoktaPalette.muted)
                         }
                     }
+                }
+                Section {
+                    Button(role: .destructive) { Task { await logout() } } label: {
+                        HStack {
+                            Text("Cerrar sesión (\(currentUserNombre ?? "—"))")
+                            Spacer()
+                            Image(systemName: "power")
+                        }
+                    }
+                    .listRowBackground(NoktaPalette.sb)
+                    .listRowSeparator(.hidden)
                 }
             }
             .listStyle(.plain)

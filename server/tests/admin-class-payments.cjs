@@ -7,7 +7,7 @@ const t={id:'clase',cliente:'Fátima',servicio:'Clases',grupo:'A',monto:999,anti
  {id:'2',fecha:'2026-09-19',monto:20,estado:'pagado'},
  {id:'3',fecha:'2026-09-26',monto:20,estado:'pendiente'},
  {id:'4',fecha:'2026-10-03',monto:20,estado:'pendiente'}]};
-const context={allTrabajos:[t],allClienteEstados:[{nombre:'Fátima',estado:'activo'}],SVC_GRUPO:{},GRUPO_NOMBRES:{},ESTADO_CLIENTE_PILL:{activo:''},ESTADO_CLIENTE_LABEL:{activo:'Activo'},estadoClienteDe:()=> 'activo',esc:x=>String(x),fmtFecha:x=>x,renderSesionesPanel:()=>'',animateStatNums:()=>{},document:{getElementById:id=>els[id]??=( {classList:{add(){}},innerHTML:'',textContent:''}),querySelectorAll:()=>[]}};
+const context={allTrabajos:[t],allClienteEstados:[{nombre:'Fátima',estado:'activo'}],currentUser:{role:'admin'},SVC_GRUPO:{},GRUPO_NOMBRES:{},ESTADO_CLIENTE_PILL:{activo:''},ESTADO_CLIENTE_LABEL:{activo:'Activo'},estadoClienteDe:()=> 'activo',esc:x=>String(x),fmtFecha:x=>x,renderSesionesPanel:()=>'',animateStatNums:()=>{},document:{getElementById:id=>els[id]??=( {classList:{add(){}},innerHTML:'',textContent:''}),querySelectorAll:()=>[]}};
 vm.createContext(context);vm.runInContext(code,context);
 (async()=>{
  await context.openTrabajo('clase');let result=els['td-body'].innerHTML;

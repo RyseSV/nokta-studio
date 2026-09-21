@@ -1613,7 +1613,7 @@ async function openTrabajo(id){
   document.getElementById('td-actions').innerHTML = `
     ${g!=='B'&&!esRecurrente&&t.estado!=='pagado'?`<button class="btn btn-primary btn-sm" onclick="marcarPagado('${t.id}')">✓ Marcar pagado</button>`:''}
     <button class="btn btn-ghost btn-sm" onclick="abrirContrato('${t.id}')">📜 Contrato</button>
-    <button class="btn btn-danger btn-sm" onclick="eliminarTrabajo('${t.id}')">🗑 Eliminar</button>`;
+    ${currentUser?.role==='admin'?`<button class="btn btn-danger btn-sm" onclick="eliminarTrabajo('${t.id}')">🗑 Eliminar</button>`:''}`;
 
   const pf = (label, val) => val ? `
     <div style="padding:14px 0;border-bottom:1px solid var(--border)">
@@ -2405,7 +2405,7 @@ async function loadContratos(){
       <td>${fmtDateTime(c.creado)}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-ghost btn-sm" onclick="verContrato('${c.id}')">👁 Ver</button>
-        <button class="btn btn-sm" style="padding:5px 10px;background:transparent;border:1px solid #e55;border-radius:6px;cursor:pointer" onclick="eliminarContrato('${c.id}')" title="Eliminar">🗑</button>
+        ${currentUser?.role==='admin'?`<button class="btn btn-sm" style="padding:5px 10px;background:transparent;border:1px solid #e55;border-radius:6px;cursor:pointer" onclick="eliminarContrato('${c.id}')" title="Eliminar">🗑</button>`:''}
       </td>
     </tr>`).join('') : '<tr><td colspan="6" class="empty">Sin contratos generados todavía</td></tr>';
 }
@@ -2481,7 +2481,7 @@ async function loadGastos(){
   document.getElementById('g-total-mes').textContent='$'+totalG.toFixed(2);
   document.getElementById('g-ratio').textContent=totalI>0?((1-totalG/totalI)*100).toFixed(0)+'% margen':'—';
   const tbody=document.getElementById('gastos-tbody');
-  tbody.innerHTML=fil.length?fil.map(g=>`<tr><td>${esc(g.concepto)}</td><td>${esc(g.categoria)}</td><td>${fmtFecha(g.fecha)}</td><td style="color:var(--red)">$${parseFloat(g.monto||0).toFixed(2)}</td><td><button class="btn btn-ghost btn-sm" onclick="eliminarGasto('${g.id}')">✕</button></td></tr>`).join(''):
+  tbody.innerHTML=fil.length?fil.map(g=>`<tr><td>${esc(g.concepto)}</td><td>${esc(g.categoria)}</td><td>${fmtFecha(g.fecha)}</td><td style="color:var(--red)">$${parseFloat(g.monto||0).toFixed(2)}</td><td>${currentUser?.role==='admin'?`<button class="btn btn-ghost btn-sm" onclick="eliminarGasto('${g.id}')">✕</button>`:''}</td></tr>`).join(''):
     '<tr><td colspan="5" class="empty">No hay gastos</td></tr>';
 }
 async function eliminarGasto(id){ if(!confirm('¿Eliminar?')) return; await api('/api/gastos/'+id,{method:'DELETE'}); await loadGastos(); }
@@ -2916,7 +2916,7 @@ async function loadGalerias(){
         <a href="${link}" target="_blank" class="btn btn-ghost btn-sm">👁 Ver galería</a>
         <button class="btn btn-outline btn-sm" onclick="openReactivar('${c.codigo}')">🔄 Reactivar</button>
         ${c.whatsapp?`<button class="btn btn-ghost btn-sm" onclick="waGaleria('${c.codigo}')">💬 WA</button>`:''}
-        <button class="btn btn-danger btn-sm" onclick="eliminarCliente('${c.codigo}')">Eliminar</button>
+        ${currentUser?.role==='admin'?`<button class="btn btn-danger btn-sm" onclick="eliminarCliente('${c.codigo}')">Eliminar</button>`:''}
       </div>
     </div>`;
   }
@@ -2972,7 +2972,7 @@ function renderGalCards(filtro){
         <a href="${link}" target="_blank" class="btn btn-ghost btn-sm">👁 Ver galería</a>
         <button class="btn btn-outline btn-sm" onclick="openReactivar('${c.codigo}')">🔄 Reactivar</button>
         ${c.whatsapp?`<button class="btn btn-ghost btn-sm" onclick="waGaleria('${c.codigo}')">💬 WA</button>`:''}
-        <button class="btn btn-danger btn-sm" onclick="eliminarCliente('${c.codigo}')">Eliminar</button>
+        ${currentUser?.role==='admin'?`<button class="btn btn-danger btn-sm" onclick="eliminarCliente('${c.codigo}')">Eliminar</button>`:''}
       </div>
     </div>`;
   }).join('');

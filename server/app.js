@@ -475,7 +475,7 @@ app.put('/api/clientes/:codigo/reactivar', requireAdmin, async (req, res) => {
   } catch (err) { handleError(res, err); }
 });
 
-app.delete('/api/clientes/:codigo', requireAdmin, async (req, res) => {
+app.delete('/api/clientes/:codigo', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
     await Cliente.deleteOne({ codigo: req.params.codigo });
     res.json({ ok: true });
@@ -649,7 +649,7 @@ app.patch('/api/trabajos/:id/sesiones', requireAdmin, async (req, res) => {
   } catch (err) { handleError(res, err); }
 });
 
-app.delete('/api/trabajos/:id', requireAdmin, async (req, res) => {
+app.delete('/api/trabajos/:id', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
     await Trabajo.deleteOne({ id: req.params.id });
     res.json({ ok: true });
@@ -673,7 +673,7 @@ app.post('/api/gastos', requireAdmin, async (req, res) => {
   } catch (err) { handleError(res, err); }
 });
 
-app.delete('/api/gastos/:id', requireAdmin, async (req, res) => {
+app.delete('/api/gastos/:id', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
     await Gasto.deleteOne({ id: req.params.id });
     res.json({ ok: true });
@@ -739,7 +739,7 @@ app.post('/api/contratos', requireAdmin, async (req, res) => {
   } catch (err) { handleError(res, err); }
 });
 
-app.delete('/api/contratos/:id', requireAdmin, async (req, res) => {
+app.delete('/api/contratos/:id', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
     await Contrato.deleteOne({ id: req.params.id });
     res.json({ ok: true });

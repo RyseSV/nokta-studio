@@ -90,7 +90,29 @@ const app = express();
 // Render terminates TLS and proxies over HTTP internally — without this,
 // a `secure` session cookie would never actually get set in production.
 app.set('trust proxy', 1);
-app.use(helmet({ contentSecurityPolicy: false }));
+// admin.html relies on inline onclick="" handlers and style="" attributes
+// throughout — blocking 'unsafe-inline' on script-src/style-src would break
+// every button on the page, and fixing that is a much bigger rewrite than
+// this pass. What CSP CAN still do without that rewrite: stop an injected
+// script from *exfiltrating* anything (connect-src), stop an injected
+// <base>/<form> from redirecting links or form posts off-site, and stop the
+// whole panel from being framed by another site (clickjacking).
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:', 'https://res.cloudinary.com'],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'none'"],
+    },
+  },
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/img', express.static(path.join(__dirname, '../img')));

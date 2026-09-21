@@ -39,7 +39,6 @@ private struct SessionGateView: View {
                 LoginView(onSuccess: { state = .loggedIn })
             case .loggedIn:
                 RootView(onLogout: { state = .loggedOut })
-                    .overlay { if lockManager.isLocked { AppLockedView(manager: lockManager) } }
             }
         }
         .task { await checkSession() }
@@ -47,6 +46,9 @@ private struct SessionGateView: View {
             if new == .loggedIn { lockManager.start() } else { lockManager.stop() }
         }
         .onChange(of: scenePhase) { _, phase in lockManager.handleScenePhase(phase) }
+        .onAppear {
+            lockManager.onTimeout = { Task { await forceLogout() } }
+        }
     }
 
     private func checkSession() async {
@@ -56,5 +58,15 @@ private struct SessionGateView: View {
         } else {
             state = .loggedOut
         }
+    }
+
+    /// Same POST the sidebar's own logout button does (RootView.logout()) —
+    /// duplicated here rather than reached into RootView, since this fires
+    /// from outside RootView's lifetime (AppLockManager lives at this level).
+    private func forceLogout() async {
+        struct EmptyBody: Encodable {}
+        struct Resp: Decodable { let ok: Bool? }
+        let _: Resp? = try? await NoktaAPI.post("/api/admin/logout", body: EmptyBody())
+        state = .loggedOut
     }
 }

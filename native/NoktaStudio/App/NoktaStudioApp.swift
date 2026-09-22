@@ -20,12 +20,10 @@ struct NoktaStudioApp: App {
 /// sesión" login) before deciding whether to show LoginView or RootView —
 /// this is what used to happen implicitly whenever the WKWebView loaded
 /// /admin and the server redirected to the login page or not.
-private enum SessionState: Equatable { case checking, loggedOut, loggedIn }
+private enum SessionState { case checking, loggedOut, loggedIn }
 
 private struct SessionGateView: View {
     @State private var state: SessionState = .checking
-    @State private var lockManager = AppLockManager()
-    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         Group {
@@ -42,13 +40,6 @@ private struct SessionGateView: View {
             }
         }
         .task { await checkSession() }
-        .onChange(of: state) { _, new in
-            if new == .loggedIn { lockManager.start() } else { lockManager.stop() }
-        }
-        .onChange(of: scenePhase) { _, phase in lockManager.handleScenePhase(phase) }
-        .onAppear {
-            lockManager.onTimeout = { Task { await forceLogout() } }
-        }
     }
 
     private func checkSession() async {
@@ -58,15 +49,5 @@ private struct SessionGateView: View {
         } else {
             state = .loggedOut
         }
-    }
-
-    /// Same POST the sidebar's own logout button does (RootView.logout()) —
-    /// duplicated here rather than reached into RootView, since this fires
-    /// from outside RootView's lifetime (AppLockManager lives at this level).
-    private func forceLogout() async {
-        struct EmptyBody: Encodable {}
-        struct Resp: Decodable { let ok: Bool? }
-        let _: Resp? = try? await NoktaAPI.post("/api/admin/logout", body: EmptyBody())
-        state = .loggedOut
     }
 }

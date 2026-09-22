@@ -328,7 +328,6 @@ enum NoktaAPI {
     }
 
     private static func request<T: Decodable>(_ path: String, method: String, body: Data?) async throws -> T {
-        await CookieSync.syncFromWebView()
         // Callers encode individual path components; preserve those escapes.
         guard let url = URL(string: path, relativeTo: baseURL)?.absoluteURL else {
             throw NoktaAPIError.invalidURL

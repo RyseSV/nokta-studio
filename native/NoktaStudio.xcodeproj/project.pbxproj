@@ -21,7 +21,6 @@
 		2CF199BCCE5FA20FD882EE4E /* AssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC409B385F5212B5029A38D /* AssistantView.swift */; };
 		FEEC2077D8D9D2981ABC75CE /* AssistantViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1394EADB007D0E620DA32187 /* AssistantViewModel.swift */; };
 		88F9F4A0A845AB6F5956E87C /* ConsultaCobrosRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F02009FC71425D242AA52D1F /* ConsultaCobrosRouting.swift */; };
-		073EDAEB78CC5AABD638B868 /* CookieSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751561F8F0E2C02DF152640B /* CookieSync.swift */; };
 		61E623B32794DB3F0925C011 /* NoktaAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6745B2EA3513D45539F64210 /* NoktaAPI.swift */; };
 		F62C1948A394196C83300D72 /* PDFPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9463634CD2DA67DD57D9E98 /* PDFPreviewView.swift */; };
 		CB96D4EC6629E5F6CD037BD8 /* PDFRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E40A46AAE4902C8C42F04D6 /* PDFRenderer.swift */; };
@@ -81,7 +80,6 @@
 		CE30A17E8698C99620B77EDA /* AssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC409B385F5212B5029A38D /* AssistantView.swift */; };
 		12D7B9B254871A690214CA3B /* AssistantViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1394EADB007D0E620DA32187 /* AssistantViewModel.swift */; };
 		AF81FD3036066AC1AFADC9EC /* ConsultaCobrosRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F02009FC71425D242AA52D1F /* ConsultaCobrosRouting.swift */; };
-		682BEC41C11C881169355152 /* CookieSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751561F8F0E2C02DF152640B /* CookieSync.swift */; };
 		18EF569F41F44BADCDED4A31 /* NoktaAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6745B2EA3513D45539F64210 /* NoktaAPI.swift */; };
 		6C78A0D35DCE5A86FA9FFED9 /* PDFPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9463634CD2DA67DD57D9E98 /* PDFPreviewView.swift */; };
 		5DDD7214A9535ACF02462E24 /* PDFRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E40A46AAE4902C8C42F04D6 /* PDFRenderer.swift */; };
@@ -158,7 +156,6 @@
 		5FC409B385F5212B5029A38D /* AssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantView.swift; sourceTree = "<group>"; };
 		1394EADB007D0E620DA32187 /* AssistantViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantViewModel.swift; sourceTree = "<group>"; };
 		F02009FC71425D242AA52D1F /* ConsultaCobrosRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultaCobrosRouting.swift; sourceTree = "<group>"; };
-		751561F8F0E2C02DF152640B /* CookieSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CookieSync.swift; sourceTree = "<group>"; };
 		6745B2EA3513D45539F64210 /* NoktaAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoktaAPI.swift; sourceTree = "<group>"; };
 		C9463634CD2DA67DD57D9E98 /* PDFPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFPreviewView.swift; sourceTree = "<group>"; };
 		0E40A46AAE4902C8C42F04D6 /* PDFRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFRenderer.swift; sourceTree = "<group>"; };
@@ -334,7 +331,6 @@
 				5FC409B385F5212B5029A38D,
 				1394EADB007D0E620DA32187,
 				F02009FC71425D242AA52D1F,
-				751561F8F0E2C02DF152640B,
 				6745B2EA3513D45539F64210,
 				C9463634CD2DA67DD57D9E98,
 				0E40A46AAE4902C8C42F04D6,
@@ -601,7 +597,6 @@
 				2CF199BCCE5FA20FD882EE4E /* AssistantView.swift in Sources */,
 				FEEC2077D8D9D2981ABC75CE /* AssistantViewModel.swift in Sources */,
 				88F9F4A0A845AB6F5956E87C /* ConsultaCobrosRouting.swift in Sources */,
-				073EDAEB78CC5AABD638B868 /* CookieSync.swift in Sources */,
 				61E623B32794DB3F0925C011 /* NoktaAPI.swift in Sources */,
 				F62C1948A394196C83300D72 /* PDFPreviewView.swift in Sources */,
 				CB96D4EC6629E5F6CD037BD8 /* PDFRenderer.swift in Sources */,
@@ -668,7 +663,6 @@
 				CE30A17E8698C99620B77EDA /* AssistantView.swift in Sources */,
 				12D7B9B254871A690214CA3B /* AssistantViewModel.swift in Sources */,
 				AF81FD3036066AC1AFADC9EC /* ConsultaCobrosRouting.swift in Sources */,
-				682BEC41C11C881169355152 /* CookieSync.swift in Sources */,
 				18EF569F41F44BADCDED4A31 /* NoktaAPI.swift in Sources */,
 				6C78A0D35DCE5A86FA9FFED9 /* PDFPreviewView.swift in Sources */,
 				5DDD7214A9535ACF02462E24 /* PDFRenderer.swift in Sources */,

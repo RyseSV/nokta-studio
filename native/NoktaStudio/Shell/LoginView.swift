@@ -1,15 +1,16 @@
 import SwiftUI
 
 /// The app never had its own login screen — it always relied on the WKWebView
-/// showing admin.html's real login form once, then CookieSync copying that
-/// session cookie into NoktaAPI's URLSession. Now that every sidebar section
-/// is native (RootView's webPageId is nil everywhere), that WKWebView is
-/// unreachable, so this is the only way left to actually sign in.
+/// showing admin.html's real login form once, then a since-removed CookieSync
+/// helper copying that session cookie into NoktaAPI's URLSession on every
+/// request. Now that every sidebar section is native (RootView's webPageId
+/// is nil everywhere), that WKWebView is unreachable, so this is the only
+/// way left to actually sign in.
 ///
 /// Posting directly to /api/admin/login works without any WKWebView
 /// involved: NoktaAPI's URLSession already uses `.shared` cookie storage and
-/// accepts all cookies, so the Set-Cookie header from this POST lands in the
-/// exact same place CookieSync used to copy into.
+/// accepts all cookies, so the Set-Cookie header from this POST lands there
+/// directly and stays put — nothing re-syncs over it afterward.
 @Observable
 final class LoginViewModel {
     var username = ""

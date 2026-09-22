@@ -96,6 +96,7 @@ struct RootView: View {
     /// in before, so this is the first thing that needs it.
     @State private var currentUserRole: String?
     @State private var currentUserNombre: String?
+    @State private var currentUserFoto: String?
     /// If a sidebar item is tapped before the WKWebView's first load finishes
     /// (e.g. right after launch), `nav(id)` silently no-ops — the page's own
     /// router isn't defined yet — leaving the SPA on its own default page.
@@ -132,6 +133,7 @@ struct RootView: View {
         if let me: NoktaUsuario = try? await NoktaAPI.get("/api/admin/me") {
             currentUserRole = me.role
             currentUserNombre = me.nombre
+            currentUserFoto = me.foto
         }
     }
 
@@ -271,10 +273,22 @@ struct RootView: View {
     private var sidebarFooter: some View {
         HStack(spacing: 10) {
             ZStack {
-                Circle().fill(NoktaPalette.ember)
-                Text(String((currentUserNombre ?? "?").prefix(1)).uppercased())
-                    .font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
-            }.frame(width: 28, height: 28)
+                if let fotoURL = currentUserFoto.flatMap(URL.init) {
+                    AsyncImage(url: fotoURL) { image in
+                        image.resizable().scaledToFill()
+                    } placeholder: {
+                        Circle().fill(NoktaPalette.ember)
+                        Text(String((currentUserNombre ?? "?").prefix(1)).uppercased())
+                            .font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
+                    }
+                } else {
+                    Circle().fill(NoktaPalette.ember)
+                    Text(String((currentUserNombre ?? "?").prefix(1)).uppercased())
+                        .font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
+                }
+            }
+            .frame(width: 28, height: 28)
+            .clipShape(Circle())
             Text(currentUserNombre ?? "—")
                 .font(.system(size: 12, weight: .medium)).foregroundStyle(NoktaPalette.cream)
                 .lineLimit(1)

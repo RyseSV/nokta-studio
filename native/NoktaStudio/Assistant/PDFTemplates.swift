@@ -327,7 +327,7 @@ enum PDFTemplates {
             """
             <p>En caso de que el Cliente no realice el pago (anticipo o saldo) en la fecha límite pactada, se
             aplicará una multa por mora de <span class="hit">\(fmt(d.mora)) DÓLARES DE LOS ESTADOS UNIDOS
-            DE AMÉRICA (US$\(fmt(d.mora)).00)</span> por cada día calendario de atraso, contado a partir
+            DE AMÉRICA (US$\(fmt(d.mora)))</span> por cada día calendario de atraso, contado a partir
             del día siguiente a la fecha límite establecida, hasta la fecha en que se haga efectivo el pago
             total adeudado. El Prestador de Servicios podrá suspender el servicio o retener los entregables
             mientras el pago y la mora acumulada no estén cubiertos en su totalidad.</p>

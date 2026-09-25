@@ -32,6 +32,12 @@ final class TrabajosListViewModel {
 struct TrabajosContainerView: View {
     @State private var selectedId: String?
 
+    /// `abrir`: jump straight into one trabajo's detail (used by the
+    /// Dashboard search); Back still returns to the list.
+    init(abrir: String? = nil) {
+        _selectedId = State(initialValue: abrir)
+    }
+
     var body: some View {
         if let id = selectedId {
             TrabajoDetailView(trabajoId: id, onBack: { selectedId = nil })

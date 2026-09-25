@@ -1,5 +1,7 @@
 import SwiftUI
 import PhotosUI
+import ImageIO
+import UniformTypeIdentifiers
 
 /// Port of admin.html's "Usuarios" section — admin-only (see RootView's
 /// visibleGroups), manages the login accounts for the panel itself, not
@@ -9,6 +11,7 @@ import PhotosUI
 final class UsuariosViewModel {
     var usuarios: [NoktaUsuario] = []
     var isLoading = true
+    var errorMessage: String?
 
     func load() async {
         isLoading = true
@@ -37,8 +40,17 @@ final class UsuariosViewModel {
 
     func eliminar(_ id: String) async {
         struct Resp: Decodable { let ok: Bool? }
-        let _: Resp? = try? await NoktaAPI.delete("/api/usuarios/\(id)")
-        usuarios.removeAll { $0._id == id }
+        errorMessage = nil
+        do {
+            let response: Resp = try await NoktaAPI.delete("/api/usuarios/\(id)")
+            guard response.ok == true else {
+                errorMessage = "El servidor no confirmó la eliminación. Actualiza la lista antes de reintentar."
+                return
+            }
+            usuarios.removeAll { $0._id == id }
+        } catch {
+            errorMessage = "No se pudo confirmar la eliminación. \(error.localizedDescription)"
+        }
     }
 
     func subirFoto(_ id: String, base64: String) async -> String? {
@@ -82,6 +94,10 @@ struct UsuariosView: View {
                     Spacer()
                     Button("＋ Nuevo usuario") { editForm = UsuarioForm() }
                         .buttonStyle(.glassProminent).tint(NoktaPalette.ember)
+                }
+
+                if let error = vm.errorMessage {
+                    Text(error).font(.system(size: 12)).foregroundStyle(NoktaPalette.red)
                 }
 
                 if vm.usuarios.isEmpty {
@@ -214,16 +230,23 @@ private struct UsuarioFormSheet: View {
                 Text("Cambiar foto").font(.system(size: 12))
             }
             .buttonStyle(.glass)
+            .disabled(isUploadingPhoto)
             .onChange(of: photoItem) { _, item in
                 Task {
                     guard let item, let data = try? await item.loadTransferable(type: Data.self) else { return }
-                    photoData = data
                     isUploadingPhoto = true
+                    errorMessage = nil
                     defer { isUploadingPhoto = false }
-                    if let err = await vm.subirFoto(id, base64: "data:image/jpeg;base64," + data.base64EncodedString()) {
-                        errorMessage = err
-                    } else if let updated = vm.usuarios.first(where: { $0._id == id }) {
-                        form.foto = updated.foto
+                    do {
+                        let jpeg = try UsuarioFoto.preparar(data)
+                        if let err = await vm.subirFoto(id, base64: "data:image/jpeg;base64," + jpeg.base64EncodedString()) {
+                            errorMessage = err
+                        } else if let updated = vm.usuarios.first(where: { $0._id == id }) {
+                            photoData = jpeg
+                            form.foto = updated.foto
+                        }
+                    } catch {
+                        errorMessage = error.localizedDescription
                     }
                 }
             }
@@ -250,4 +273,35 @@ private func platformImage(data: Data) -> Image? {
     guard let uiImage = UIImage(data: data) else { return nil }
     return Image(uiImage: uiImage)
     #endif
+}
+
+/// Decode supported photo formats, apply orientation, and upload actual JPEG
+/// bytes sized for an avatar rather than a full-resolution camera original.
+enum UsuarioFoto {
+    static func preparar(_ data: Data) throws -> Data {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+                kCGImageSourceCreateThumbnailFromImageAlways: true,
+                kCGImageSourceCreateThumbnailWithTransform: true,
+                kCGImageSourceThumbnailMaxPixelSize: 400,
+                kCGImageSourceShouldCacheImmediately: true
+              ] as CFDictionary) else { throw FotoError.imagenInvalida }
+        let output = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(output, UTType.jpeg.identifier as CFString, 1, nil) else {
+            throw FotoError.imagenInvalida
+        }
+        CGImageDestinationAddImage(destination, image, [kCGImageDestinationLossyCompressionQuality: 0.82] as CFDictionary)
+        guard CGImageDestinationFinalize(destination), output.length <= 1_048_576 else { throw FotoError.noSePudoReducir }
+        return output as Data
+    }
+
+    enum FotoError: LocalizedError {
+        case imagenInvalida, noSePudoReducir
+        var errorDescription: String? {
+            switch self {
+            case .imagenInvalida: return "No se pudo leer esa imagen. Selecciona otra foto."
+            case .noSePudoReducir: return "No se pudo reducir la foto para subirla. Selecciona otra imagen."
+            }
+        }
+    }
 }

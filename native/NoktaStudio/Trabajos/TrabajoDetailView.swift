@@ -710,9 +710,11 @@ struct ContratoSheet: View {
         _servicioTipo = State(initialValue: trabajo.servicio)
         _servicioFecha = State(initialValue: FechaUtil.fechaCorta(trabajo.fecha ?? trabajo.fechaInicio))
         _servicioLugar = State(initialValue: trabajo.lugar ?? "")
-        let total = trabajo.monto ?? trabajo.pagoMensual ?? 0
-        _anticipoMonto = State(initialValue: (total / 2).rounded())
-        _saldoMonto = State(initialValue: total - (total / 2).rounded())
+        let total = trabajo.grupoResuelto == "B" ? (trabajo.pagoMensual ?? 0) : (trabajo.monto ?? 0)
+        let esSesion = trabajo.servicio == "Clases" || !(trabajo.sesiones ?? []).isEmpty
+        let anticipo = esSesion ? 0 : max(0, min(total, trabajo.anticipo ?? 0))
+        _anticipoMonto = State(initialValue: anticipo)
+        _saldoMonto = State(initialValue: total - anticipo)
     }
 
     private func row(_ label: String, _ text: Binding<String>) -> some View {
@@ -771,6 +773,10 @@ struct ContratoSheet: View {
                         guard !clienteNombre.trimmingCharacters(in: .whitespaces).isEmpty,
                               !clienteDui.trimmingCharacters(in: .whitespaces).isEmpty else {
                             validationError = "Escribe el nombre y el DUI del cliente antes de generar el contrato"
+                            return
+                        }
+                        guard [anticipoMonto, saldoMonto, mora].allSatisfy({ $0.isFinite && $0 >= 0 }) else {
+                            validationError = "Escribe montos válidos mayores o iguales a cero"
                             return
                         }
                         validationError = nil

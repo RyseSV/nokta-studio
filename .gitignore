@@ -1,7 +1,16 @@
-# Secretos — NUNCA subir
-server/.env
-server/node_modules/
+# Secretos — NUNCA subir (cualquier .env en cualquier carpeta; solo las plantillas .env.example sí)
+.env
+.env.*
+!.env.example
 server/data/db.json
+desktop/server/data/
+
+# Dependencias y compilados
+node_modules/
+desktop/dist/
+desktop/build-output/
+DerivedData/
+xcuserdata/
 
 # Archivos del sistema
 .DS_Store

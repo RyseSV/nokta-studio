@@ -9,6 +9,7 @@ final class ContratosViewModel {
     var contratos: [NoktaContrato] = []
     var trabajos: [NoktaTrabajo] = []
     var isLoading = true
+    var errorMessage: String?
 
     func load() async {
         isLoading = true
@@ -21,8 +22,17 @@ final class ContratosViewModel {
 
     func eliminar(_ id: String) async {
         struct Resp: Decodable { let ok: Bool? }
-        let _: Resp? = try? await NoktaAPI.delete("/api/contratos/\(id)")
-        contratos.removeAll { $0.id == id }
+        errorMessage = nil
+        do {
+            let response: Resp = try await NoktaAPI.delete("/api/contratos/\(id)")
+            guard response.ok == true else {
+                errorMessage = "El servidor no confirmó la eliminación. Actualiza la lista antes de reintentar."
+                return
+            }
+            contratos.removeAll { $0.id == id }
+        } catch {
+            errorMessage = "No se pudo confirmar la eliminación. \(error.localizedDescription)"
+        }
     }
 }
 
@@ -48,6 +58,10 @@ struct ContratosView: View {
                 }
                 Text("Elige un trabajo para generar su contrato, o revisa los que ya hiciste.")
                     .font(.system(size: 12)).foregroundStyle(NoktaPalette.muted)
+
+                if let error = vm.errorMessage {
+                    Text(error).font(.system(size: 12)).foregroundStyle(NoktaPalette.red)
+                }
 
                 if vm.contratos.isEmpty {
                     Text(vm.isLoading ? "Cargando…" : "Sin contratos generados todavía")

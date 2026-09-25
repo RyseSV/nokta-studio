@@ -6,6 +6,7 @@ import SwiftUI
 final class EquipoViewModel {
     var miembros: [NoktaEquipo] = []
     var isLoading = true
+    var errorMessage: String?
 
     func load() async {
         isLoading = true
@@ -13,22 +14,39 @@ final class EquipoViewModel {
         if let m: [NoktaEquipo] = try? await NoktaAPI.get("/api/equipo") { miembros = m }
     }
 
-    func guardar(_ form: EquipoForm) async {
+    /// Nil means the server confirmed the save; an error keeps the form open.
+    func guardar(_ form: EquipoForm) async -> String? {
         struct Body: Encodable { let nombre, rol, tipo: String; let comision, pagado, pendiente: Double }
         struct Resp: Decodable { let ok: Bool? }
         let body = Body(nombre: form.nombre, rol: form.rol, tipo: form.tipo, comision: form.comision, pagado: form.pagado, pendiente: form.pendiente)
-        if let id = form.id {
-            let _: Resp? = try? await NoktaAPI.put("/api/equipo/\(id)", body: body)
-        } else {
-            let _: Resp? = try? await NoktaAPI.post("/api/equipo", body: body)
+        do {
+            let response: Resp
+            if let id = form.id {
+                response = try await NoktaAPI.put("/api/equipo/\(id)", body: body)
+            } else {
+                response = try await NoktaAPI.post("/api/equipo", body: body)
+            }
+            guard response.ok == true else { return "El servidor no confirmó el guardado. Revisa el estado antes de reintentar." }
+            await load()
+            return nil
+        } catch {
+            return "No se pudo confirmar el guardado. \(error.localizedDescription)"
         }
-        await load()
     }
 
     func eliminar(_ id: String) async {
         struct Resp: Decodable { let ok: Bool? }
-        let _: Resp? = try? await NoktaAPI.delete("/api/equipo/\(id)")
-        miembros.removeAll { $0.id == id }
+        errorMessage = nil
+        do {
+            let response: Resp = try await NoktaAPI.delete("/api/equipo/\(id)")
+            guard response.ok == true else {
+                errorMessage = "El servidor no confirmó la eliminación. Actualiza la lista antes de reintentar."
+                return
+            }
+            miembros.removeAll { $0.id == id }
+        } catch {
+            errorMessage = "No se pudo confirmar la eliminación. \(error.localizedDescription)"
+        }
     }
 }
 
@@ -63,6 +81,10 @@ struct EquipoView: View {
                         .buttonStyle(.glassProminent).tint(NoktaPalette.ember)
                 }
 
+                if let error = vm.errorMessage {
+                    Text(error).font(.system(size: 12)).foregroundStyle(NoktaPalette.red)
+                }
+
                 if vm.miembros.isEmpty {
                     Text(vm.isLoading ? "Cargando…" : "No hay miembros registrados")
                         .font(.system(size: 13)).foregroundStyle(NoktaPalette.muted)
@@ -81,8 +103,7 @@ struct EquipoView: View {
         .refreshable { await vm.load() }
         .sheet(item: $editForm) { form in
             EquipoFormSheet(form: form) { updated in
-                Task { await vm.guardar(updated) }
-                editForm = nil
+                await vm.guardar(updated)
             }
         }
         .alert("¿Eliminar este miembro?", isPresented: Binding(get: { eliminarConfirm != nil }, set: { if !$0 { eliminarConfirm = nil } })) {
@@ -118,8 +139,10 @@ struct EquipoView: View {
 
 private struct EquipoFormSheet: View {
     @State var form: EquipoForm
-    let onGuardar: (EquipoForm) -> Void
+    let onGuardar: (EquipoForm) async -> String?
     @Environment(\.dismiss) private var dismiss
+    @State private var isSaving = false
+    @State private var errorMessage: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -135,16 +158,28 @@ private struct EquipoFormSheet: View {
                 labeled("Pagado ($)") { TextField("0", value: $form.pagado, format: .number).textFieldStyle(.roundedBorder) }
                 labeled("Pendiente ($)") { TextField("0", value: $form.pendiente, format: .number).textFieldStyle(.roundedBorder) }
             }
+            if let errorMessage {
+                Text(errorMessage).font(.system(size: 12)).foregroundStyle(NoktaPalette.red)
+            }
             HStack {
-                Button("Cancelar") { dismiss() }
+                Button("Cancelar") { dismiss() }.disabled(isSaving)
                 Spacer()
-                Button("✓ Guardar") { onGuardar(form) }
+                Button(isSaving ? "Guardando…" : "✓ Guardar") { Task { await guardar() } }
                     .buttonStyle(.glassProminent).tint(NoktaPalette.ember)
-                    .disabled(form.nombre.trimmingCharacters(in: .whitespaces).isEmpty || form.rol.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(isSaving || form.nombre.trimmingCharacters(in: .whitespaces).isEmpty || form.rol.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
         .padding(24)
         .frame(maxWidth: 420)
+        .interactiveDismissDisabled(isSaving)
+    }
+
+    private func guardar() async {
+        guard !isSaving else { return }
+        isSaving = true
+        defer { isSaving = false }
+        errorMessage = await onGuardar(form)
+        if errorMessage == nil { dismiss() }
     }
 
     private func labeled<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {

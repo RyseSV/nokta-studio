@@ -19,7 +19,10 @@ enum NoktaAPIError: Error { case invalidURL }
 source += encoding
 source += '\nfunc makeURL(_ path: String) throws -> URL { let baseURL = URL(string:"https://example.test")!\n'
 source += url_code + 'return url\n}\n'
-source += (root / "Assistant/PDFTemplates.swift").read_text()
+pdf = (root / "Assistant/PDFTemplates.swift").read_text()
+# Test the actual templates, excluding the network/render orchestration enum.
+source += pdf[:pdf.index("enum ContratoGenerator")] + pdf[pdf.index("enum PDFTemplates"):]
+
 source += '''
 enum FechaUtil {
     static let mesesCompletos = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
@@ -46,6 +49,10 @@ for date: String? in [nil, "invalid"] {
     let html = PDFTemplates.facturaQuincena(cliente: "Prueba", empresa: nil, servicio: "Prueba", periodo: "2026-09", q: 2, monto: 20, fechaPago: date)
     precondition(!html.contains("18 de septiembre de 2026"))
 }
+let contrato = ContratoParaPDF(ciudad: "Prueba", fechaContrato: "2026-09-24", clienteNombre: "Prueba", clienteDui: "prueba", clienteTelefono: "", clienteEmail: "", clienteDireccion: "", servicioTipo: "Clases", servicioFecha: "", servicioLugar: "", entregables: "", anticipoMonto: 0, anticipoFecha: "", saldoMonto: 120, saldoFecha: "", plazoDias: "7", mora: 0)
+let contratoHTML = PDFTemplates.contrato(contrato)
+precondition(contratoHTML.contains("US$0.00)"))
+precondition(!contratoHTML.contains("US$0.00.00"))
 print("PASS: 6 client names, static API path, and PDF HTML dates/month ranges")
 '''
 with tempfile.TemporaryDirectory(prefix="nokta-native-check-") as tmp:

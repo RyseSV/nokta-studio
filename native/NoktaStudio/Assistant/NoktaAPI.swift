@@ -327,6 +327,24 @@ enum NoktaAPI {
         try await request(path, method: "DELETE", body: Data?.none)
     }
 
+    /// A local sign-out is shown only after server invalidation succeeds.
+    static func logout() async throws {
+        struct Body: Encodable {}
+        let response: OKResponse = try await post("/api/admin/logout", body: Body())
+        guard response.ok == true else {
+            throw NoktaAPIError.http(502, "El servidor no confirmó el cierre de sesión")
+        }
+        clearSessionCookies()
+    }
+
+    static func clearSessionCookies(in storage: HTTPCookieStorage = .shared) {
+        guard let host = baseURL.host else { return }
+        for cookie in storage.cookies ?? [] {
+            let domain = cookie.domain.hasPrefix(".") ? String(cookie.domain.dropFirst()) : cookie.domain
+            if host == domain || host.hasSuffix("." + domain) { storage.deleteCookie(cookie) }
+        }
+    }
+
     private static func request<T: Decodable>(_ path: String, method: String, body: Data?) async throws -> T {
         // Callers encode individual path components; preserve those escapes.
         guard let url = URL(string: path, relativeTo: baseURL)?.absoluteURL else {

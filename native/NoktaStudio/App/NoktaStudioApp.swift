@@ -3,6 +3,8 @@ import AppIntents
 
 @main
 struct NoktaStudioApp: App {
+    @AppStorage("noktaApariencia") private var apariencia: NoktaApariencia = .oscuro
+
     init() {
         NoktaShortcuts.updateAppShortcutParameters()
         NoktaFontRegistrar.registerBundledFonts()
@@ -11,7 +13,7 @@ struct NoktaStudioApp: App {
     var body: some Scene {
         WindowGroup {
             SessionGateView()
-                .preferredColorScheme(.dark)
+                .preferredColorScheme(apariencia.colorScheme)
         }
     }
 }
@@ -34,7 +36,9 @@ private struct SessionGateView: View {
                     ProgressView().tint(NoktaPalette.ember)
                 }
             case .loggedOut:
+                // Not redesigned yet — keep its original dark look.
                 LoginView(onSuccess: { state = .loggedIn })
+                    .environment(\.colorScheme, .dark)
             case .loggedIn:
                 RootView(onLogout: { state = .loggedOut })
             }

@@ -102,6 +102,11 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
+      // helmet's default `script-src-attr 'none'` silently blocks every
+      // inline onclick/onchange/onerror handler — admin.html uses 130+ of
+      // them (sidebar, logout, theme switch…). Inline <script> is already
+      // allowed above, so this adds no new class of risk.
+      scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       imgSrc: ["'self'", 'data:', 'https://res.cloudinary.com'],

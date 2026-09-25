@@ -3,79 +3,265 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
 <title>Nokta — Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
+/* Same look as the native app's login (Trazo vivo + borde de luz). */
+:root{
+  --fondo:#0C0C0B; --texto:#F4F1EA; --suave:rgba(244,241,234,.55); --tenue:rgba(244,241,234,.3);
+  --borde:rgba(255,255,255,.08); --campo:rgba(28,28,26,.6); --marca:#D0673A; --error:#E8706A;
+  --font:'Poppins',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#1C1C1A;font-family:'Poppins',sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at 50% 100%,rgba(184,82,40,.12) 0%,#1C1C1A 60%)}
-.card{background:#2E2E2B;border-radius:18px;padding:48px 40px;width:100%;max-width:380px;border:1px solid rgba(240,236,228,.06)}
-.logo{width:160px;margin:0 auto 6px;display:block}
-.logo-txt{display:none;font-size:24px;font-weight:700;color:#F0ECE4;text-align:center;margin-bottom:6px}
-.sub{font-size:10px;letter-spacing:4px;color:#7A7A72;text-transform:uppercase;margin-bottom:36px;text-align:center}
-.field{margin-bottom:16px}
-label{display:block;font-size:11px;color:#7A7A72;margin-bottom:6px;letter-spacing:.5px}
-input[type=text],input[type=password]{width:100%;background:#1C1C1A;border:1px solid #3a3a37;border-radius:8px;padding:12px 16px;color:#F0ECE4;font-family:'Poppins',sans-serif;font-size:13px;outline:none;transition:border .2s}
-input:focus{border-color:#B85228}
-.remember{display:flex;align-items:center;gap:10px;margin-bottom:20px;cursor:pointer;user-select:none}
-.remember input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:#B85228}
-.remember span{font-size:12px;color:#7A7A72}
-button{width:100%;background:linear-gradient(135deg,#B85228,#d4724a);border:none;border-radius:8px;padding:13px;color:#F0ECE4;font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:opacity .2s;box-shadow:0 4px 20px rgba(184,82,40,.3)}
-button:hover{opacity:.9}
-.err{color:#e05a5a;font-size:12px;margin-top:12px;min-height:18px;text-align:center}
+html,body{height:100%}
+body{background:var(--fondo);color:var(--texto);font-family:var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+#trazo{position:fixed;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+
+.logo{display:flex;align-items:center;gap:8px;letter-spacing:-.03em;font-size:20px}
+.logo i{width:8px;height:8px;border-radius:50%;background:var(--marca)}
+.logo b{font-weight:500} .logo span{font-weight:300;color:var(--tenue)}
+
+.escena{position:relative;min-height:100%;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto 1fr auto;padding:52px 96px 64px 64px;gap:24px}
+.escena .logo{grid-column:1;grid-row:1}
+.lema{grid-column:1;grid-row:3;align-self:end}
+.lema small{display:block;font-size:11px;font-weight:500;letter-spacing:.25em;color:var(--tenue);margin-bottom:14px}
+.lema h1{font-weight:300;font-size:46px;line-height:1.08;letter-spacing:-.04em}
+.tarjeta{grid-column:2;grid-row:1/4;align-self:center;width:380px}
+
+.cabeza{display:none;text-align:center;margin-bottom:28px}
+.cabeza .logo{justify-content:center;font-size:22px;margin-bottom:22px}
+
+/* Glass form with the travelling light border */
+@property --a{syntax:'<angle>';inherits:false;initial-value:0deg}
+@keyframes vuelta{to{--a:360deg}}
+.vidrio{position:relative;padding:28px;border-radius:22px;background:rgba(12,12,11,.62);backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);display:grid;gap:18px}
+.vidrio::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;pointer-events:none;
+  background:conic-gradient(from var(--a),transparent 0 70%,var(--marca) 82%,rgba(244,241,234,.6) 88%,transparent 96%),linear-gradient(var(--borde),var(--borde));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:vuelta 7s linear infinite}
+.titulo h2{font-weight:300;font-size:24px;letter-spacing:-.035em}
+.titulo p{font-size:12px;color:var(--suave);margin-top:4px}
+
+.campo{display:grid;gap:7px}
+.campo label{font-size:12px;font-weight:500;color:var(--suave)}
+.caja{height:46px;display:flex;align-items:center;gap:10px;padding:0 14px;border-radius:12px;background:var(--campo);border:1px solid var(--borde);transition:border-color .15s}
+.caja:focus-within{border-color:rgba(208,103,58,.7)}
+.caja svg{width:15px;height:15px;flex:none;stroke:var(--tenue);fill:none;stroke-width:1.5;transition:stroke .15s}
+.caja:focus-within>svg{stroke:var(--marca)}
+.caja input{flex:1;min-width:0;height:100%;background:none;border:0;outline:0;color:var(--texto);font:400 14px var(--font)}
+.caja input::placeholder{color:var(--tenue)}
+.ojo{background:none;border:0;cursor:pointer;width:26px;height:26px;display:grid;place-items:center;border-radius:6px}
+.ojo:focus-visible{outline:2px solid var(--marca);outline-offset:2px}
+.ojo svg{stroke:var(--tenue)}
+
+.recordar{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:var(--suave);cursor:pointer;user-select:none}
+.recordar input{position:absolute;opacity:0;pointer-events:none}
+.switch{width:38px;height:22px;border-radius:99px;background:rgba(255,255,255,.12);position:relative;flex:none;transition:background .2s}
+.switch::after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.recordar input:checked+.switch{background:var(--marca)}
+.recordar input:checked+.switch::after{transform:translateX(16px)}
+.recordar input:focus-visible+.switch{outline:2px solid var(--marca);outline-offset:2px}
+
+.error{display:none;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:rgba(232,112,106,.1);color:var(--error);font-size:12px}
+.error.si{display:flex}
+.error.tiembla{animation:tiembla .4s}
+@keyframes tiembla{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+.boton{height:46px;border:0;border-radius:12px;background:var(--texto);color:var(--fondo);font:500 14px var(--font);display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;margin-top:4px;transition:opacity .15s}
+.boton:hover{opacity:.92}
+.boton:focus-visible{outline:2px solid var(--marca);outline-offset:3px}
+.boton:disabled{opacity:.8;cursor:default}
+.boton svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8}
+.rueda{width:14px;height:14px;border-radius:50%;border:2px solid rgba(12,12,11,.25);border-top-color:var(--fondo);animation:gira .7s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+
+.pie{display:none;text-align:center;font-size:11px;color:var(--tenue);margin-top:28px}
+
+.entra{animation:entra .8s cubic-bezier(.2,.8,.2,1) both}
+.entra.d2{animation-delay:.08s}
+@keyframes entra{from{opacity:0;transform:translateY(16px)}}
+
+/* Narrow (phone): one centered column */
+@media (max-width:859px){
+  .escena{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:48px 20px}
+  .escena>.logo,.lema{display:none}
+  .tarjeta{width:100%;max-width:360px}
+  .cabeza,.pie{display:block}
+  .titulo{display:none}
+  .cabeza h2{font-weight:300;font-size:28px;letter-spacing:-.035em}
+  .cabeza p{font-size:13px;color:var(--suave);margin-top:8px}
+}
+@media (prefers-reduced-motion:reduce){
+  .vidrio::before,.entra,.error.tiembla{animation:none}
+}
 </style>
 </head>
 <body>
-<div class="card">
-  <img class="logo" src="/img/logo/nokta_lockup_reversed_transparent.png" alt="nokta" onerror="this.style.display='none';document.querySelector('.logo-txt').style.display='block'">
-  <div class="logo-txt">nokta<span style="color:#B85228">.</span></div>
-  <div class="sub">Panel administrativo</div>
-  <form id="f">
-    <div class="field">
-      <label>USUARIO</label>
-      <input type="text" id="usr" placeholder="tu usuario" autocomplete="off">
+<canvas id="trazo" aria-hidden="true"></canvas>
+
+<main class="escena">
+  <div class="logo entra"><i></i><b>nokta</b><span>studio</span></div>
+
+  <div class="lema entra">
+    <small>AGENCIA CREATIVA</small>
+    <h1>Las ideas<br>toman forma.</h1>
+  </div>
+
+  <div class="tarjeta">
+    <div class="cabeza entra">
+      <div class="logo"><i></i><b>nokta</b><span>studio</span></div>
+      <h2>Bienvenido de vuelta</h2>
+      <p>Ingresa a tu panel de administración</p>
     </div>
-    <div class="field">
-      <label>CONTRASEÑA</label>
-      <input type="password" id="pw" placeholder="••••••••" autocomplete="off">
-    </div>
-    <label class="remember">
-      <input type="checkbox" id="rem">
-      <span>Recordar sesión en este dispositivo</span>
-    </label>
-    <button type="submit" id="btn">Ingresar</button>
-    <div class="err" id="err"></div>
-  </form>
-</div>
+
+    <form id="f" class="vidrio entra d2" novalidate>
+      <div class="titulo">
+        <h2>Bienvenido de vuelta</h2>
+        <p>Ingresa a tu panel de administración</p>
+      </div>
+
+      <div class="campo">
+        <label for="usr">Usuario</label>
+        <div class="caja">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.5"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+          <input type="text" id="usr" name="username" placeholder="Tu usuario" autocomplete="username" autocapitalize="none" spellcheck="false" autofocus>
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="pw">Contraseña</label>
+        <div class="caja">
+          <svg viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>
+          <input type="password" id="pw" name="password" placeholder="Tu contraseña" autocomplete="current-password">
+          <button type="button" class="ojo" id="ojo" aria-label="Mostrar contraseña">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke-width="1.5"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <label class="recordar" for="rem">
+        <span>Recordar sesión en este dispositivo</span>
+        <input type="checkbox" id="rem">
+        <span class="switch"></span>
+      </label>
+
+      <div class="error" id="err" role="alert">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></svg>
+        <span id="errtxt"></span>
+      </div>
+
+      <button type="submit" class="boton" id="btn">
+        <span id="btntxt">Ingresar</span>
+        <svg viewBox="0 0 24 24" id="flecha"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </form>
+
+    <p class="pie">Agencia creativa · © <span id="anio"></span></p>
+  </div>
+</main>
+
 <script>
 // Remove any previously stored plain-text credentials (security cleanup)
 localStorage.removeItem('nk_creds');
 
+document.getElementById('anio').textContent = new Date().getFullYear();
+
+const pw = document.getElementById('pw');
+document.getElementById('ojo').onclick = e => {
+  const ver = pw.type === 'password';
+  pw.type = ver ? 'text' : 'password';
+  e.currentTarget.setAttribute('aria-label', ver ? 'Ocultar contraseña' : 'Mostrar contraseña');
+  pw.focus();
+};
+
+const btn = document.getElementById('btn'), btntxt = document.getElementById('btntxt'), flecha = document.getElementById('flecha');
+const err = document.getElementById('err'), errtxt = document.getElementById('errtxt');
+
+function cargando(si) {
+  btn.disabled = si;
+  btntxt.textContent = si ? 'Ingresando…' : 'Ingresar';
+  flecha.style.display = si ? 'none' : '';
+  const r = btn.querySelector('.rueda');
+  if (si && !r) { const s = document.createElement('span'); s.className = 'rueda'; btn.prepend(s); }
+  if (!si && r) r.remove();
+}
+function mostrarError(msg) {
+  errtxt.textContent = msg;
+  err.classList.add('si');
+  err.classList.remove('tiembla'); void err.offsetWidth; err.classList.add('tiembla');
+  pw.focus();
+}
+
 document.getElementById('f').onsubmit = async e => {
   e.preventDefault();
-  const btn = document.getElementById('btn');
-  const err = document.getElementById('err');
   const usr = document.getElementById('usr').value.trim();
-  const pw  = document.getElementById('pw').value;
+  const clave = pw.value;
   const rem = document.getElementById('rem').checked;
-  btn.textContent = 'Verificando...'; btn.disabled = true; err.textContent = '';
+  err.classList.remove('si');
+  cargando(true);
   try {
     const r = await fetch('/api/admin/login', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ username: usr, password: pw, remember: rem })
+      body: JSON.stringify({ username: usr, password: clave, remember: rem })
     });
     if (r.ok) {
       window.location.href = '/admin';
     } else {
-      const d = await r.json();
-      err.textContent = d.error || 'Error al ingresar';
-      btn.textContent = 'Ingresar'; btn.disabled = false;
+      const d = await r.json().catch(() => ({}));
+      mostrarError(d.error || 'Error al ingresar');
+      cargando(false);
     }
   } catch {
-    err.textContent = 'Error de conexión';
-    btn.textContent = 'Ingresar'; btn.disabled = false;
+    mostrarError('Error de conexión');
+    cargando(false);
   }
 };
+
+// The ribbon, drawn live — same math as the native app's TrazoVivo.
+(() => {
+  const c = document.getElementById('trazo'), g = c.getContext('2d');
+  const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let d = 1;
+  function ajustar() { d = Math.min(devicePixelRatio || 1, 2); c.width = innerWidth * d; c.height = innerHeight * d; }
+  ajustar(); addEventListener('resize', ajustar);
+  const punto = (u, t, W, H) => [
+    W * (0.5 + 0.47 * Math.sin(u + t * 0.00011) * Math.cos(u * 0.37)),
+    H * (0.5 + 0.36 * Math.sin(u * 1.9 + t * 0.00017))
+  ];
+  const N = 14, pasos = 220, largo = 5.2;
+  function cuadro(now) {
+    const t = quieto ? 20000 : now, W = c.width, H = c.height;
+    g.clearRect(0, 0, W, H);
+    const cab = (t * 0.00035) % (Math.PI * 6);
+    for (let k = 0; k < N; k++) {
+      const off = (k - N / 2) * 2.2 * d;
+      g.beginPath();
+      for (let i = 0; i <= pasos; i++) {
+        const u = cab - largo + (largo * i) / pasos;
+        const [x, y] = punto(u, t, W, H), [x2, y2] = punto(u + 0.01, t, W, H);
+        let nx = -(y2 - y), ny = x2 - x; const nl = Math.hypot(nx, ny) || 1; nx /= nl; ny /= nl;
+        const giro = Math.sin(u * 1.3 + t * 0.0004);
+        const px = x + nx * off * giro, py = y + ny * off * giro;
+        i ? g.lineTo(px, py) : g.moveTo(px, py);
+      }
+      const centro = 1 - Math.abs(k - N / 2) / (N / 2);
+      const grad = g.createLinearGradient(...punto(cab - largo, t, W, H), ...punto(cab, t, W, H));
+      grad.addColorStop(0, 'rgba(244,241,234,0)');
+      grad.addColorStop(1, `rgba(244,241,234,${0.10 + 0.22 * centro})`);
+      g.strokeStyle = grad; g.lineWidth = d; g.stroke();
+    }
+    const [hx, hy] = punto(cab, t, W, H), R = 26 * d;
+    const halo = g.createRadialGradient(hx, hy, 0, hx, hy, R);
+    halo.addColorStop(0, 'rgba(208,103,58,.55)'); halo.addColorStop(1, 'rgba(208,103,58,0)');
+    g.fillStyle = halo; g.beginPath(); g.arc(hx, hy, R, 0, 7); g.fill();
+    g.fillStyle = '#D0673A'; g.beginPath(); g.arc(hx, hy, 4.5 * d, 0, 7); g.fill();
+    if (!quieto) requestAnimationFrame(cuadro);
+  }
+  requestAnimationFrame(cuadro);
+})();
 </script>
 </body>
 </html>

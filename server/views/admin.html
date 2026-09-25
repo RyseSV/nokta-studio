@@ -173,37 +173,202 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
   .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:110}
   .sb-overlay.open{display:block}
 }
+
+/* ═══ PREMIUM (2026-09) — same tokens as the native app's NoktaTheme ═══ */
+:root{--pf-fondo:#0C0C0B;--pf-sup:#141413;--pf-sup2:#1C1C1A;--pf-borde:rgba(255,255,255,.07);--pf-texto:#F4F1EA;--pf-suave:rgba(244,241,234,.5);--pf-tenue:rgba(244,241,234,.3);--pf-marca:#D0673A;--pf-marca-s:rgba(208,103,58,.13);--pf-exito:#6CC495;--pf-aviso:#E3AE4A;--pf-aviso-s:rgba(227,174,74,.12);--pf-error:#E8706A;--pf-sombra:none}
+html[data-tema="claro"]{--pf-fondo:#F6F4EF;--pf-sup:#FFFFFF;--pf-sup2:#EFECE6;--pf-borde:rgba(26,25,23,.08);--pf-texto:#191816;--pf-suave:rgba(25,24,22,.52);--pf-tenue:rgba(25,24,22,.32);--pf-marca:#B85228;--pf-marca-s:rgba(184,82,40,.09);--pf-exito:#2E8B5A;--pf-aviso:#A86B12;--pf-aviso-s:rgba(168,107,18,.1);--pf-error:#C0392B;--pf-sombra:0 3px 10px rgba(0,0,0,.05)}
+body.en-dash{background:var(--pf-fondo)}
+body{transition:background .25s}
+
+/* Sidebar */
+.sb{background:var(--pf-fondo);border-right:1px solid var(--pf-borde);padding:28px 12px 0}
+.sb-logo{display:flex;align-items:center;gap:8px;padding:6px 10px 22px;font-size:19px;letter-spacing:-.03em}
+.sb-logo i{width:8px;height:8px;border-radius:50%;background:var(--pf-marca)}
+.sb-logo b{font-weight:500;color:var(--pf-texto)} .sb-logo em{font-style:normal;font-weight:300;color:var(--pf-tenue)}
+.sb-section{font-size:10px;font-weight:500;letter-spacing:1.4px;color:var(--pf-tenue);padding:18px 10px 6px}
+.sb-link{gap:12px;padding:8px 10px;margin:1px 0;border-left:0;border-radius:10px;color:var(--pf-suave);font-size:13px;transition:background .18s,color .18s}
+.sb-link:hover{color:var(--pf-texto);background:var(--pf-sup2)}
+.sb-link.active{color:var(--pf-texto);background:var(--pf-sup2);font-weight:500;border-left:0}
+.sb-link .ic{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.badge{background:var(--pf-marca)}
+.sb-bottom{margin:auto -12px 0;padding:14px 14px;gap:10px;border-top:1px solid var(--pf-borde)}
+.avatar{width:32px;height:32px;background:var(--pf-sup2);border:0;box-shadow:0 0 0 1.5px var(--pf-fondo),0 0 0 3px var(--pf-marca)}
+.sb-user span{color:var(--pf-tenue);font-size:11px;text-transform:none;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-nombre-text{color:var(--pf-texto)!important;font-size:13px!important}
+.sb-acciones{display:flex;margin-left:auto}
+.sb-ibtn,.logout-btn{margin:0;width:28px;height:28px;display:grid;place-items:center;background:none;border:0;border-radius:8px;color:var(--pf-suave);cursor:pointer}
+.sb-ibtn:hover,.logout-btn:hover{color:var(--pf-texto);background:var(--pf-sup2)}
+.sb-ibtn svg,.logout-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round}
+.sb-toggle{background:var(--pf-sup);border-color:var(--pf-borde);color:var(--pf-texto)}
+@media(min-width:769px){.sb{width:240px;min-width:240px}.main{margin-left:240px}}
+
+/* Dashboard */
+#page-dashboard{color:var(--pf-texto)}
+.pd{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;max-width:1240px;margin:0 auto;padding:0 12px 12px}
+.pd-top>*{flex-shrink:0}.pd-top .pd-crumb,.pd-top .pd-search{flex-shrink:1;min-width:0}
+.pd *{box-sizing:border-box}
+.pd-top{display:flex;align-items:center;gap:10px;position:relative;z-index:5}
+.pd-crumb{flex:1;font-size:13px;color:var(--pf-suave)}
+.pd-search{position:relative;width:300px}
+.pd-field{display:flex;align-items:center;gap:8px;height:36px;padding:0 10px 0 12px;border-radius:10px;background:var(--pf-sup);border:1px solid var(--pf-borde);transition:border-color .15s}
+.pd-field:focus-within{border-color:rgba(208,103,58,.6)}
+.pd-field svg{width:14px;height:14px;flex:none;stroke:var(--pf-tenue);fill:none;stroke-width:1.5}
+.pd-field input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--pf-texto);font:400 12px 'Poppins',sans-serif}
+.pd-field input::placeholder{color:var(--pf-tenue)}
+.pd-kbd{font-size:10px;font-weight:500;color:var(--pf-suave);background:var(--pf-sup2);border-radius:5px;padding:2px 6px}
+.pd-res{position:absolute;top:44px;right:0;width:360px;max-width:92vw;padding:6px;border-radius:14px;background:var(--pf-sup);border:1px solid var(--pf-borde);box-shadow:0 10px 24px rgba(0,0,0,.18);display:none}
+.pd-res.on{display:block;animation:pdPop .15s ease-out}
+.pd-ri{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:9px;cursor:pointer}
+.pd-ri:hover,.pd-ri.sel{background:var(--pf-sup2)}
+.pd-ri .ico{width:30px;height:30px;border-radius:8px;background:var(--pf-sup2);display:grid;place-items:center;flex:none}
+.pd-ri .ico svg{width:13px;height:13px;stroke:var(--pf-suave);fill:none;stroke-width:1.5}
+.pd-ri b{display:block;font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pd-ri small{display:block;font-size:11px;color:var(--pf-tenue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pd-ri .m{margin-left:auto;font-size:12px;color:var(--pf-suave)}
+.pd-vacio{padding:12px;font-size:12px;color:var(--pf-tenue)}
+.pd-ibtn{position:relative;width:36px;height:36px;border-radius:10px;background:var(--pf-sup);border:1px solid var(--pf-borde);display:grid;place-items:center;cursor:pointer;color:var(--pf-suave)}
+.pd-ibtn:hover{color:var(--pf-texto)}
+.pd-ibtn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5}
+.pd-ibtn .n{position:absolute;top:-6px;right:-6px;min-width:17px;height:17px;padding:0 5px;border-radius:99px;background:var(--pf-marca);color:#fff;font-size:9px;font-weight:500;display:grid;place-items:center}
+.pd-new{height:36px;padding:0 14px;border:0;border-radius:10px;background:var(--pf-texto);color:var(--pf-fondo);font:500 12px 'Poppins',sans-serif;display:flex;align-items:center;gap:6px;cursor:pointer}
+.pd-new svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
+.pd-hola{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.pd-hola h1{font-weight:300;font-size:34px;letter-spacing:-.03em;line-height:1.15}
+.pd-hola p{font-size:14px;color:var(--pf-suave);margin-top:4px}
+.pd-meses{position:relative;display:flex;gap:2px;padding:3px;border-radius:11px;background:var(--pf-sup);border:1px solid var(--pf-borde)}
+.pd-meses button{position:relative;z-index:1;border:0;background:none;padding:6px 14px;border-radius:8px;font:400 12px 'Poppins',sans-serif;color:var(--pf-suave);cursor:pointer}
+.pd-meses button.fut{color:var(--pf-tenue)}
+.pd-meses button.on{color:var(--pf-texto);font-weight:500}
+.pd-meses .pill-mov{position:absolute;z-index:0;top:3px;bottom:3px;border-radius:8px;background:var(--pf-sup2);transition:left .3s cubic-bezier(.3,.8,.3,1),width .3s cubic-bezier(.3,.8,.3,1)}
+.pd-otro{position:relative;z-index:1;display:flex;align-items:center;gap:5px;padding:0 10px;border-radius:8px;color:var(--pf-suave);font-size:12px;font-weight:500}
+.pd-otro.on{color:var(--pf-texto)}
+.pd-otro svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.5}
+.pd-otro select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;margin:0}
+.pd-card{background:var(--pf-sup);border:1px solid var(--pf-borde);border-radius:20px;padding:24px;box-shadow:var(--pf-sombra)}
+.pd-r1{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}
+.pd-r2{display:grid;grid-template-columns:380px minmax(0,1fr);gap:16px;align-items:start}
+.pd-lbl{font-size:10px;font-weight:500;letter-spacing:1.4px;color:var(--pf-tenue)}
+.pd-hero{padding:28px 28px 20px;display:flex;flex-direction:column}
+.pd-num{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:6px}
+.pd-num .v{font-weight:300;font-size:56px;letter-spacing:-.045em;line-height:1.1;font-variant-numeric:tabular-nums}
+.pd-var{display:none;align-items:center;gap:4px;padding:4px 9px;border-radius:99px;font-size:11px;font-weight:500}
+.pd-var.on{display:inline-flex}
+.pd-var svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2}
+.pd-sub{font-size:12px;color:var(--pf-suave);margin-top:2px}
+.pd-curva{position:relative;height:170px;margin-top:18px}
+.pd-curva svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.pd-curva .area{fill:url(#pd-grad);transform-origin:bottom;transition:opacity .6s}
+.pd-curva .linea{fill:none;stroke:var(--pf-marca);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.pd-punto{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--pf-sup);border:2.5px solid var(--pf-marca)}
+.pd-ejes{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--pf-tenue)}
+.pd-ejes span:last-child{color:var(--pf-suave);font-weight:500}
+.pd-ind{display:grid;grid-template-rows:repeat(3,1fr);gap:16px}
+.pd-kpi{display:flex;align-items:center;gap:14px;padding:18px 20px}
+.pd-kpi .ico{width:40px;height:40px;border-radius:12px;background:var(--pf-sup2);display:grid;place-items:center;flex:none;color:var(--pf-suave)}
+.pd-kpi .ico svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5}
+.pd-kpi.av .ico{background:var(--pf-aviso-s);color:var(--pf-aviso)}
+.pd-kpi small{display:block;font-size:12px;color:var(--pf-suave)}
+.pd-kpi b{display:block;font-weight:400;font-size:22px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.pd-kpi.av b{color:var(--pf-aviso)}
+.pd-kpi em{display:block;font-style:normal;font-size:11px;color:var(--pf-tenue)}
+.pd-kpi.av em{color:var(--pf-aviso);opacity:.85}
+.pd-ht{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.pd-ht h3{font-size:14px;font-weight:500}
+.pd-ht span{font-size:12px;color:var(--pf-tenue)}
+.pd-barra{display:flex;gap:3px;height:10px;margin-bottom:18px}
+.pd-barra i{display:block;border-radius:3px;min-width:4px;width:0;transition:width .9s cubic-bezier(.3,.8,.3,1) .25s}
+.pd-svc{display:grid;gap:12px}
+.pd-svc div{display:flex;align-items:center;gap:10px;font-size:13px}
+.pd-svc .c{width:8px;height:8px;border-radius:2px;flex:none}
+.pd-svc .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pd-svc .m{color:var(--pf-suave)}
+.pd-svc .p{width:42px;text-align:right;font-weight:500}
+.pd-fila{display:flex;align-items:center;gap:14px;padding:10px 0;border-top:1px solid var(--pf-borde);cursor:pointer;border-radius:8px;transition:background .15s}
+.pd-fila:first-child{border-top:0}
+.pd-fila:hover{background:var(--pf-sup2)}
+.pd-av{width:34px;height:34px;border-radius:50%;background:var(--pf-sup2);display:grid;place-items:center;flex:none;font-size:11px;font-weight:500;color:var(--pf-suave)}
+.pd-fila .q{flex:1;min-width:0}
+.pd-fila .q b{display:block;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pd-fila .q small{display:block;font-size:11px;color:var(--pf-tenue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pd-fila .m{font-size:14px;letter-spacing:-.01em}
+.pd-est{width:96px;display:flex;align-items:center;justify-content:flex-end;gap:6px;font-size:12px}
+.pd-est i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.pd-err{display:none;font-size:12px;color:var(--pf-error)}
+.pd-in{animation:pdIn .6s cubic-bezier(.25,.9,.3,1.1) both;animation-delay:calc(var(--i,0)*60ms)}
+@keyframes pdIn{from{opacity:0;transform:translateY(14px)}}
+@keyframes pdPop{from{opacity:0;transform:translateY(-4px)}}
+@keyframes pdDraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes pdRise{from{opacity:0;transform:scaleY(0)}}
+@media(max-width:900px){
+  .pd{padding:0}
+  .pd-r1,.pd-r2{grid-template-columns:1fr}
+  .pd-ind{grid-template-rows:none}
+  .pd-search{flex:1;width:auto}
+  .pd-meses{max-width:100%;overflow-x:auto}
+  .pd-crumb,.pd-kbd,.pd-new span{display:none}
+  .pd-hola h1{font-size:26px}
+  .pd-num .v{font-size:44px}
+  .pd-curva{height:130px}
+  .pd-est{width:auto}
+}
+@media(prefers-reduced-motion:reduce){.pd-in,.pd-res.on{animation:none}.pd-barra i,.pd-meses .pill-mov{transition:none}}
 @media print{.sb,.page-header .btn,.sb-toggle{display:none!important}.main{margin-left:0}}
 </style>
 </head>
-<body>
+<body class="en-dash">
 
 <!-- MOBILE TOGGLE -->
 <button class="sb-toggle" onclick="toggleSb()" id="sb-toggle">☰</button>
 <div class="sb-overlay" id="sb-overlay" onclick="closeSb()"></div>
 
 <!-- SIDEBAR -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-inicio" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol>
+  <symbol id="i-calendario" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-campana" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-mas" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></symbol>
+  <symbol id="i-trabajos" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
+  <symbol id="i-firma" viewBox="0 0 24 24"><path d="M3 17c3-4 5-9 7-9s-1 9 1 9 3-5 5-5 1 4 3 4"/><path d="M3 21h18"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8M10 9H8"/></symbol>
+  <symbol id="i-tarjeta" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></symbol>
+  <symbol id="i-barras" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></symbol>
+  <symbol id="i-pastel" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></symbol>
+  <symbol id="i-clientes" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-fotos" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></symbol>
+  <symbol id="i-equipo" viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.5"/><circle cx="5" cy="9" r="2.5"/><circle cx="19" cy="9" r="2.5"/><path d="M6 20a6 6 0 0 1 12 0M1 19a4 4 0 0 1 4.5-4M23 19a4 4 0 0 0-4.5-4"/></symbol>
+  <symbol id="i-llave" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3M17 6l3 3M14.5 8.5l2 2"/></symbol>
+  <symbol id="i-buscar" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+  <symbol id="i-tendencia" viewBox="0 0 24 24"><path d="M22 7 13.5 15.5 8.5 10.5 2 17"/><path d="M16 7h6v6"/></symbol>
+  <symbol id="i-baja" viewBox="0 0 24 24"><path d="M22 17 13.5 8.5 8.5 13.5 2 7"/><path d="M16 17h6v-6"/></symbol>
+  <symbol id="i-reloj" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-sol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-luna" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-apagar" viewBox="0 0 24 24"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/></symbol>
+</svg>
 <nav class="sb" id="sidebar">
-  <div class="sb-logo">nokta<span>.</span></div>
-  <div class="sb-section">Principal</div>
-  <div class="sb-link active" onclick="nav('dashboard')"><span class="icon">▦</span> Dashboard</div>
-  <div class="sb-link" onclick="nav('calendario')"><span class="icon">📅</span> Calendario</div>
-  <div class="sb-link" onclick="nav('alertas')" id="sb-alertas"><span class="icon">🔔</span> Alertas <span class="badge" id="badge-count" style="display:none">0</span></div>
-  <div class="sb-section">Finanzas</div>
-  <div class="sb-link" onclick="nav('nuevo-trabajo')"><span class="icon">＋</span> Nuevo trabajo</div>
-  <div class="sb-link" onclick="nav('trabajos')"><span class="icon">💼</span> Trabajos</div>
-  <div class="sb-link" onclick="nav('gastos')"><span class="icon">💸</span> Gastos</div>
-  <div class="sb-link" onclick="nav('documentos')"><span class="icon">📄</span> Documentos</div>
-  <div class="sb-link" onclick="nav('contratos')"><span class="icon">📜</span> Contratos</div>
-  <div class="sb-section">Clientes</div>
-  <div class="sb-link" onclick="nav('clientes')"><span class="icon">👤</span> Clientes</div>
-  <div class="sb-link" onclick="nav('galerias')"><span class="icon">🖼</span> Galerías</div>
-  <div class="sb-section">Negocio</div>
-  <div class="sb-link" onclick="nav('analiticas')"><span class="icon">📊</span> Analíticas</div>
-  <div class="sb-link" onclick="nav('equipo')"><span class="icon">👥</span> Mi equipo</div>
-  <div class="sb-link" onclick="nav('reportes')"><span class="icon">📋</span> Reportes</div>
-  <div class="sb-section" id="sb-admin-section" style="display:none">Administración</div>
-  <div class="sb-link" onclick="nav('usuarios')" id="sb-usuarios" style="display:none"><span class="icon">🔑</span> Usuarios</div>
+  <div class="sb-logo"><i></i><b>nokta</b><em>studio</em></div>
+  <div class="sb-section">GENERAL</div>
+  <div class="sb-link active" onclick="nav('dashboard')"><svg class="ic"><use href="#i-inicio"/></svg> Dashboard</div>
+  <div class="sb-link" onclick="nav('calendario')"><svg class="ic"><use href="#i-calendario"/></svg> Calendario</div>
+  <div class="sb-link" onclick="nav('alertas')" id="sb-alertas"><svg class="ic"><use href="#i-campana"/></svg> Alertas <span class="badge" id="badge-count" style="display:none">0</span></div>
+  <div class="sb-section">TRABAJOS</div>
+  <div class="sb-link" onclick="nav('nuevo-trabajo')"><svg class="ic"><use href="#i-mas"/></svg> Nuevo trabajo</div>
+  <div class="sb-link" onclick="nav('trabajos')"><svg class="ic"><use href="#i-trabajos"/></svg> Trabajos</div>
+  <div class="sb-link" onclick="nav('contratos')"><svg class="ic"><use href="#i-firma"/></svg> Contratos</div>
+  <div class="sb-link" onclick="nav('documentos')"><svg class="ic"><use href="#i-doc"/></svg> Documentos</div>
+  <div class="sb-section">FINANZAS</div>
+  <div class="sb-link" onclick="nav('gastos')"><svg class="ic"><use href="#i-tarjeta"/></svg> Gastos</div>
+  <div class="sb-link" onclick="nav('reportes')"><svg class="ic"><use href="#i-barras"/></svg> Reportes</div>
+  <div class="sb-link" onclick="nav('analiticas')"><svg class="ic"><use href="#i-pastel"/></svg> Analíticas</div>
+  <div class="sb-section">CLIENTES</div>
+  <div class="sb-link" onclick="nav('clientes')"><svg class="ic"><use href="#i-clientes"/></svg> Clientes</div>
+  <div class="sb-link" onclick="nav('galerias')"><svg class="ic"><use href="#i-fotos"/></svg> Galerías</div>
+  <div class="sb-section">ESTUDIO</div>
+  <div class="sb-link" onclick="nav('equipo')"><svg class="ic"><use href="#i-equipo"/></svg> Mi equipo</div>
+  <div class="sb-section" id="sb-admin-section" style="display:none">ADMINISTRACIÓN</div>
+  <div class="sb-link" onclick="nav('usuarios')" id="sb-usuarios" style="display:none"><svg class="ic"><use href="#i-llave"/></svg> Usuarios</div>
   <div class="sb-bottom">
     <div class="avatar" id="sb-avatar">
       <img src="/img/logo/icon_enso_white.png" alt="nokta" onerror="this.style.display='none'">
@@ -212,7 +377,10 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
       <span class="sb-nombre-text" id="sb-nombre">—</span>
       <span id="sb-rol">Nokta Studio</span>
     </div>
-    <button class="logout-btn" onclick="logout()" title="Cerrar sesión">⏻</button>
+    <div class="sb-acciones">
+      <button class="sb-ibtn" id="btn-tema" onclick="ciclarTema()" title="Apariencia"><svg><use href="#i-luna"/></svg></button>
+      <button class="logout-btn" onclick="logout()" title="Cerrar sesión"><svg><use href="#i-apagar"/></svg></button>
+    </div>
   </div>
 </nav>
 
@@ -221,28 +389,63 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
 
 <!-- ═══════════════ DASHBOARD ═══════════════ -->
 <section class="page active" id="page-dashboard">
-  <div class="page-header">
-    <div class="page-title">Dashboard</div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <select id="dash-mes" class="filters" onchange="loadDashboard()" style="margin:0"></select>
-      <button class="btn btn-primary" onclick="nav('nuevo-trabajo')">＋ Registrar</button>
+<div class="pd">
+  <div class="pd-top">
+    <div class="pd-crumb">Resumen</div>
+    <div class="pd-search">
+      <label class="pd-field">
+        <svg><use href="#i-buscar"/></svg>
+        <input id="pd-q" type="search" placeholder="Buscar trabajos o clientes…" autocomplete="off" aria-label="Buscar trabajos o clientes">
+        <span class="pd-kbd" id="pd-kbd">⌘K</span>
+      </label>
+      <div class="pd-res" id="pd-res" role="listbox"></div>
+    </div>
+    <button class="pd-ibtn" onclick="nav('alertas')" title="Alertas" aria-label="Alertas"><svg><use href="#i-campana"/></svg><span class="n" id="pd-alertas-n" hidden>0</span></button>
+    <button class="pd-new" onclick="nav('nuevo-trabajo')"><svg><use href="#i-plus"/></svg><span>Nuevo trabajo</span></button>
+  </div>
+
+  <div class="pd-hola pd-in" style="--i:0">
+    <div>
+      <h1 id="pd-saludo">Hola</h1>
+      <p id="pd-subsaludo">Así va Nokta Studio este mes.</p>
+    </div>
+    <div class="pd-meses" id="pd-meses">
+      <span class="pill-mov" id="pd-pill"></span>
+      <label class="pd-otro" id="pd-otro" title="Elegir otro mes">
+        <svg><use href="#i-calendario"/></svg><span id="pd-otro-txt"></span>
+        <select id="dash-mes" onchange="loadDashboard()" aria-label="Elegir mes"></select>
+      </label>
     </div>
   </div>
-  <div class="cards" id="dash-cards">
-    <div class="card"><div class="card-label">INGRESOS MES PASADO</div><div class="card-value" id="d-ingresos-prev">$0</div><div class="card-sub" id="d-ingresos-prev-sub">—</div></div>
-    <div class="card"><div class="card-label">INGRESOS DEL MES</div><div class="card-value" id="d-ingresos">$0</div><div class="card-sub" id="d-ingresos-sub">—</div></div>
-    <div class="card"><div class="card-label">GANANCIA NETA</div><div class="card-value" id="d-ganancia">$0</div><div class="card-sub" id="d-margen">0% margen</div></div>
-    <div class="card"><div class="card-label">PENDIENTE DE COBRO</div><div class="card-value" id="d-pendiente" style="color:var(--yellow)">$0</div><div class="card-sub warn" id="d-pendiente-sub">0 trabajos</div></div>
+
+  <div class="pd-err" id="pd-err"></div>
+
+  <div class="pd-r1">
+    <div class="pd-card pd-hero pd-in" style="--i:1">
+      <div class="pd-lbl">INGRESOS DEL MES</div>
+      <div class="pd-num"><span class="v" id="d-ingresos">$0</span><span class="pd-var" id="d-var"></span></div>
+      <div class="pd-sub" id="d-ingresos-sub">—</div>
+      <div class="pd-curva" id="pd-curva"></div>
+      <div class="pd-ejes" id="pd-ejes"></div>
+    </div>
+    <div class="pd-ind">
+      <div class="pd-card pd-kpi pd-in" style="--i:2"><div class="ico"><svg><use href="#i-tendencia"/></svg></div><div><small>Ganancia neta</small><b id="d-ganancia">$0</b><em id="d-margen">0% de margen</em></div></div>
+      <div class="pd-card pd-kpi pd-in" id="d-pend-card" style="--i:3"><div class="ico"><svg><use href="#i-reloj"/></svg></div><div><small>Por cobrar</small><b id="d-pendiente">$0</b><em id="d-pendiente-sub">0 trabajos</em></div></div>
+      <div class="pd-card pd-kpi pd-in" style="--i:4"><div class="ico"><svg><use href="#i-calendario"/></svg></div><div><small>Mes pasado</small><b id="d-ingresos-prev">$0</b><em id="d-ingresos-prev-sub">—</em></div></div>
+    </div>
   </div>
-  <div class="charts">
-    <div class="chart-card"><div class="chart-title">Ingresos últimos 4 meses</div><canvas id="chart-bar" height="120"></canvas></div>
-    <div class="chart-card"><div class="chart-title">Por tipo de servicio</div><canvas id="chart-pie" height="120"></canvas></div>
+
+  <div class="pd-r2">
+    <div class="pd-card pd-in" style="--i:5">
+      <div class="pd-ht"><h3>Por servicio</h3><span>Histórico</span></div>
+      <div id="pd-servicios"></div>
+    </div>
+    <div class="pd-card pd-in" style="--i:6">
+      <div class="pd-ht"><h3>Últimos trabajos</h3></div>
+      <div id="dash-trabajos"></div>
+    </div>
   </div>
-  <div class="table-card">
-    <div class="table-head"><div class="table-title">Últimos trabajos</div></div>
-    <table><thead><tr><th>Cliente</th><th>Servicio</th><th>Fecha</th><th>Monto</th><th>Estado</th></tr></thead>
-    <tbody id="dash-trabajos"></tbody></table>
-  </div>
+</div>
 </section>
 
 <!-- ═══════════════ CALENDARIO ═══════════════ -->
@@ -936,6 +1139,9 @@ function nav(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.sb-link').forEach(l=>l.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
+  // Only the Dashboard follows the premium light/dark theme so far; the other
+  // sections keep their original dark background.
+  document.body.classList.toggle('en-dash', id==='dashboard');
   document.querySelectorAll('.sb-link').forEach(l=>{ if(l.getAttribute('onclick')?.includes(`'${id}'`)) l.classList.add('active'); });
   closeSb();
   loadSection(id);
@@ -979,9 +1185,10 @@ async function initSession(){
     currentUser = me;
     document.getElementById('sb-nombre').textContent = me.nombre || me.username || '—';
     document.getElementById('sb-rol').textContent = me.role === 'admin' ? 'Administrador' : 'Editor';
+    pdSaludo();
     const avatarEl = document.getElementById('sb-avatar');
     const iconSrc = me.foto || (me.icono === 'cream' ? '/img/logo/avatar_cream.png' : '/img/logo/avatar_dark.png');
-    avatarEl.innerHTML = `<img src="${iconSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.src='/img/logo/avatar_dark.png'">`;
+    avatarEl.innerHTML = `<img src="${iconSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.onerror=null;this.src='/img/logo/avatar_dark.png'">`;
     if(me.role === 'admin'){
       document.getElementById('sb-admin-section').style.display = '';
       document.getElementById('sb-usuarios').style.display = '';
@@ -1196,11 +1403,29 @@ function cobrosPendientes(periodo, trabajos=allTrabajos, estados=allClienteEstad
 }
 
 async function loadDashboard(){
-  initMesSel();
-  [allTrabajos, allGastos, allClienteEstados, allAlertas] = await Promise.all([
-    api('/api/trabajos'), api('/api/gastos'), api('/api/clientes-estados'), api('/api/alertas'),
-  ]);
+  initMesSel(); pdMeses();
+  const visible=document.getElementById('page-dashboard').classList.contains('active');
+  // With data already loaded (returning visit) the entrance animation plays
+  // right away and the refresh happens underneath — no blank/flash state.
+  let animado=false;
+  if(visible && allTrabajos.length){ pintarDashboard(); pdEntrada(); animado=true; }
+  try {
+    [allTrabajos, allGastos, allClienteEstados, allAlertas] = await Promise.all([
+      api('/api/trabajos'), api('/api/gastos'), api('/api/clientes-estados'), api('/api/alertas'),
+    ]);
+    document.getElementById('pd-err').style.display='none';
+  } catch(e) {
+    const el=document.getElementById('pd-err'); el.textContent='No se pudieron cargar los datos: '+(e.message||e); el.style.display='block';
+    if(!animado){ pintarDashboard(); if(visible) pdEntrada(); }
+    return;
+  }
+  pintarDashboard();
+  if(!animado && visible) pdEntrada();
+  // Alert badge
+  updateBadge(allAlertas);
+}
 
+function pintarDashboard(){
   const mes=parseInt(document.getElementById('dash-mes').value);
   const year=new Date().getFullYear();
   const periodoMes=`${year}-${String(mes+1).padStart(2,'0')}`;
@@ -1220,50 +1445,197 @@ async function loadDashboard(){
   const pendiente=cobros.reduce((s,c)=>s+c.monto,0);
   const pendienteCount=new Set(cobros.map(c=>c.trabajoId)).size;
 
-  document.getElementById('d-ingresos-prev').textContent='$'+ingresosPrev.toFixed(2);
-  document.getElementById('d-ingresos-prev-sub').textContent=ingresosPrev>0?'Cobrado el mes anterior':'Sin ingresos el mes anterior';
+  const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const nomMes=MESES[mes].toLowerCase(), nomPrev=MESES[(mes+11)%12].toLowerCase();
+  document.getElementById('pd-subsaludo').textContent=`Así va Nokta Studio en ${nomMes}.`;
+  pdSaludo();
 
-  document.getElementById('d-ingresos').textContent='$'+ingresos.toFixed(2);
-  const pct=ingresosPrev>0?((ingresos-ingresosPrev)/ingresosPrev*100).toFixed(0):0;
-  const sub1=document.getElementById('d-ingresos-sub');
-  sub1.textContent=ingresos>0?(pct>=0?'▲ +':'▼ ')+pct+'% vs mes anterior':'Pendiente de cobro';
-  sub1.className='card-sub '+(ingresos>0&&pct>=0?'up':ingresos>0?'down':'');
+  // Hero: ingresos + variación
+  pdContar('d-ingresos', ingresos);
+  document.getElementById('d-ingresos-sub').textContent=ingresos>0?`Cobrado en ${nomMes}`:'Aún sin cobros este mes';
+  const vr=document.getElementById('d-var');
+  if(ingresosPrev>0){
+    const pct=(ingresos-ingresosPrev)/ingresosPrev*100, sube=pct>=0;
+    vr.innerHTML=`<svg><use href="#i-${sube?'tendencia':'baja'}"/></svg>${Math.abs(Math.trunc(pct))}% vs ${nomPrev}`;
+    vr.style.color=sube?'var(--pf-exito)':'var(--pf-error)';
+    vr.style.background=`color-mix(in srgb, ${sube?'var(--pf-exito)':'var(--pf-error)'} 12%, transparent)`;
+    vr.classList.add('on');
+  } else vr.classList.remove('on');
 
-  document.getElementById('d-ganancia').textContent='$'+ganancia.toFixed(2);
-  document.getElementById('d-margen').textContent=(ingresos>0?(ganancia/ingresos*100).toFixed(0):0)+'% margen';
-
-  document.getElementById('d-pendiente').textContent='$'+pendiente.toFixed(2);
-  document.getElementById('d-pendiente-sub').textContent=pendienteCount+' trabajo'+(pendienteCount!==1?'s':'')+' · clases: solo la próxima sesión';
+  // Indicadores
+  pdContar('d-ganancia', ganancia);
+  document.getElementById('d-margen').textContent=(ingresos>0?Math.trunc(ganancia/ingresos*100):0)+'% de margen';
+  pdContar('d-pendiente', pendiente);
+  document.getElementById('d-pendiente-sub').textContent=`${pendienteCount} trabajo${pendienteCount!==1?'s':''} pendiente${pendienteCount!==1?'s':''}`;
   document.getElementById('d-pendiente').title=cobros.map(c=>`${c.cliente}: $${c.monto.toFixed(2)} · ${c.concepto}`).join('\n');
+  document.getElementById('d-pend-card').classList.toggle('av', pendiente>0);
+  pdContar('d-ingresos-prev', ingresosPrev);
+  document.getElementById('d-ingresos-prev-sub').textContent=ingresosPrev>0?`Cobrado en ${nomPrev}`:`Sin ingresos en ${nomPrev}`;
 
-  // Bar chart — last 4 months
-  const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const labels=[],data=[];
+  // Curva — same 4-month window as before
+  const abrev=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const serie=[];
   for(let i=3;i>=0;i--){
-    const m=(mes-i+12)%12;
-    const y=m>mes?year-1:year;
-    labels.push(meses[m]);
-    const p=`${y}-${String(m+1).padStart(2,'0')}`;
-    data.push(ingresosDelPeriodo(p));
+    const m=(mes-i+12)%12, y=m>mes?year-1:year;
+    serie.push({l:abrev[m], v:ingresosDelPeriodo(`${y}-${String(m+1).padStart(2,'0')}`)});
   }
-  if(chartBar) chartBar.destroy();
-  chartBar=new Chart(document.getElementById('chart-bar'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:'rgba(184,82,40,.7)',borderRadius:6,borderSkipped:false}]},options:{plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#7A7A72'}},y:{grid:{color:'#3a3a37'},ticks:{color:'#7A7A72',callback:v=>'$'+v}}}}});
+  pdCurva(serie);
 
-  // Pie chart — by service
+  // Por servicio (histórico): top 4 + Otros
   const svcMap={};
   allTrabajos.forEach(t=>{ svcMap[t.servicio]=(svcMap[t.servicio]||0)+(parseFloat(t.monto)||0); });
-  if(chartPie) chartPie.destroy();
-  chartPie=new Chart(document.getElementById('chart-pie'),{type:'doughnut',data:{labels:Object.keys(svcMap),datasets:[{data:Object.values(svcMap),backgroundColor:['#B85228','#d4724a','#e8956e','#7A7A72','#4a4a47']}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#F0ECE4',font:{size:11}}}}}});
+  const orden=Object.entries(svcMap).filter(([,v])=>v>0).sort((x,y)=>y[1]-x[1]);
+  const filas=orden.slice(0,4); const resto=orden.slice(4).reduce((a,[,v])=>a+v,0); if(resto>0) filas.push(['Otros',resto]);
+  const total=filas.reduce((a,[,v])=>a+v,0);
+  const colores=['var(--pf-marca)','color-mix(in srgb,var(--pf-marca) 62%,transparent)','color-mix(in srgb,var(--pf-marca) 36%,transparent)','var(--pf-tenue)','var(--pf-borde)'];
+  const svcEl=document.getElementById('pd-servicios');
+  svcEl.innerHTML=filas.length?`<div class="pd-barra">${filas.map(([,v],i)=>`<i data-w="${v/total*100}" style="background:${colores[i]}"></i>`).join('')}</div>
+    <div class="pd-svc">${filas.map(([n,v],i)=>`<div><span class="c" style="background:${colores[i]}"></span><span class="n">${esc(n)}</span><span class="m">${pdDinero(v)}</span><span class="p">${Math.round(v/total*100)}%</span></div>`).join('')}</div>`
+    :'<div class="pd-vacio" style="text-align:center;padding:24px">Sin trabajos registrados</div>';
+  requestAnimationFrame(()=>svcEl.querySelectorAll('.pd-barra i').forEach(i=>i.style.width=`calc(${i.dataset.w}% - 3px)`));
 
-  // Recent jobs table
-  const tbody=document.getElementById('dash-trabajos');
+  // Últimos trabajos
   const recent=allTrabajos.slice(0,8);
-  tbody.innerHTML=recent.length?recent.map(t=>`<tr onclick="openTrabajo('${t.id}')"><td>${esc(t.cliente)}</td><td>${esc(t.servicio)}</td><td>${fmtFecha(t.fecha)}</td><td>$${parseFloat(t.monto||0).toFixed(2)}</td><td><span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span></td></tr>`).join(''):
-    '<tr><td colspan="5" class="empty">No hay trabajos registrados</td></tr>';
-
-  // Alert badge
-  updateBadge(allAlertas);
+  document.getElementById('dash-trabajos').innerHTML=recent.length?recent.map(t=>{
+    const e=pdEstado(t);
+    const ini=String(t.cliente||'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'·';
+    return `<div class="pd-fila" onclick="openTrabajo('${esc(escJs(t.id))}')"><span class="pd-av">${esc(ini)}</span><span class="q"><b>${esc(t.cliente)}</b><small>${esc(t.servicio)} · ${fmtFecha(t.fecha)}</small></span><span class="m">${pdDinero(parseFloat(t.monto)||0)}</span><span class="pd-est" style="color:${e.c}"><i></i>${e.t}</span></div>`;
+  }).join(''):'<div class="pd-vacio" style="text-align:center;padding:24px">No hay trabajos registrados</div>';
 }
+
+// Same rule as the Trabajos list: monthly contracts (grupo B) and "Clases"
+// show the client relationship; one-off jobs show Pagado / Pendiente.
+function pdEstado(t){
+  if((t.grupo||SVC_GRUPO[t.servicio])==='B' || t.servicio==='Clases'){
+    const er=estadoClienteDe(t.cliente);
+    return {t:ESTADO_CLIENTE_LABEL[er]||er, c:er==='activo'?'var(--pf-exito)':er==='pausado'?'var(--pf-aviso)':'var(--pf-error)'};
+  }
+  return t.estado==='pagado'?{t:'Pagado',c:'var(--pf-exito)'}:{t:'Pendiente',c:'var(--pf-aviso)'};
+}
+
+// "$4,850" for whole amounts, "$4,850.50" with cents.
+function pdDinero(v){
+  const n=Number(v)||0;
+  return '$'+n.toLocaleString('en-US',{minimumFractionDigits:Number.isInteger(n)?0:2,maximumFractionDigits:2});
+}
+
+const pdQuieto=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function pdContar(id, valor){
+  const el=document.getElementById(id);
+  const desde=Number(el.dataset.v||0); el.dataset.v=valor;
+  if(pdQuieto||desde===valor){ el.textContent=pdDinero(valor); return; }
+  const t0=performance.now(), dur=700;
+  const paso=now=>{ const k=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-k,3);
+    const x=desde+(valor-desde)*e; el.textContent=pdDinero(k<1?Math.round(x):valor); if(k<1) requestAnimationFrame(paso); };
+  requestAnimationFrame(paso);
+}
+
+// Replays the entrance on every visit: cards rise, numbers count from 0,
+// the curve draws, the service bar fills.
+function pdEntrada(){
+  const pg=document.getElementById('page-dashboard');
+  pg.querySelectorAll('.pd-in').forEach(n=>{ n.classList.remove('pd-in'); void n.offsetWidth; n.classList.add('pd-in'); });
+  ['d-ingresos','d-ganancia','d-pendiente','d-ingresos-prev'].forEach(id=>{ const el=document.getElementById(id); const v=Number(el.dataset.v||0); el.dataset.v=0; pdContar(id,v); });
+  const bar=pg.querySelectorAll('.pd-barra i'); bar.forEach(i=>{ i.style.transition='none'; i.style.width='0'; });
+  requestAnimationFrame(()=>requestAnimationFrame(()=>bar.forEach(i=>{ i.style.transition=''; i.style.width=`calc(${i.dataset.w}% - 3px)`; })));
+  const l=pg.querySelector('.pd-curva .linea'), ar=pg.querySelector('.pd-curva .area'), pt=pg.querySelector('.pd-punto');
+  if(l&&!pdQuieto){ l.style.animation='none'; void l.offsetWidth; l.style.animation='pdDraw .9s ease-out both';
+    ar.style.animation='none'; void ar.offsetWidth; ar.style.animation='pdRise .9s ease-out both';
+    pt.style.animation='none'; void pt.offsetWidth; pt.style.animation='pdIn .4s .75s both'; }
+}
+
+// Edge-to-edge income curve (monotone, so it never dips below real values).
+function pdCurva(serie){
+  const W=1000, H=170, top=24, n=serie.length;
+  const max=Math.max(1,...serie.map(p=>p.v))*1.2;
+  const P=serie.map((p,i)=>[i/(n-1)*W, H-(p.v/max)*(H-top)]);
+  const dx=W/(n-1), m=[];
+  const s=P.slice(0,-1).map((p,i)=>(P[i+1][1]-p[1])/dx);
+  for(let i=0;i<n;i++) m.push(i===0?s[0]:i===n-1?s[n-2]:(s[i-1]*s[i]<=0?0:(s[i-1]+s[i])/2));
+  let d=`M${P[0][0]},${P[0][1]}`;
+  for(let i=0;i<n-1;i++){ const [x0,y0]=P[i],[x1,y1]=P[i+1];
+    d+=` C${x0+dx/3},${y0+m[i]*dx/3} ${x1-dx/3},${y1-m[i+1]*dx/3} ${x1},${y1}`; }
+  const ult=P[n-1];
+  document.getElementById('pd-curva').innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+    <defs><linearGradient id="pd-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--pf-marca)" stop-opacity=".24"/><stop offset="1" stop-color="var(--pf-marca)" stop-opacity="0"/></linearGradient></defs>
+    <path class="area" d="${d} L${W},${H} L0,${H} Z"/>
+    <path class="linea" d="${d}" pathLength="1" stroke-dasharray="1"/></svg>
+    <span class="pd-punto" style="left:${ult[0]/W*100}%;top:${ult[1]/H*100}%"></span>`;
+  document.getElementById('pd-ejes').innerHTML=serie.map(p=>`<span>${p.l}</span>`).join('');
+}
+
+// Month picker: the current quarter as buttons (Jul·Ago·Sep, Oct·Nov·Dic…),
+// plus a calendar menu for any other month. Drives the hidden #dash-mes.
+function pdMeses(){
+  const sel=document.getElementById('dash-mes'), cont=document.getElementById('pd-meses');
+  const hoy=new Date().getMonth(), ini=Math.floor(hoy/3)*3, cur=parseInt(sel.value);
+  const abrev=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'], y=new Date().getFullYear();
+  cont.querySelectorAll('button').forEach(b=>b.remove());
+  const otro=document.getElementById('pd-otro');
+  for(let i=ini;i<ini+3;i++){
+    const b=document.createElement('button'); b.type='button';
+    b.textContent=abrev[i]+' '+y; if(i>hoy) b.classList.add('fut'); if(i===cur) b.classList.add('on');
+    b.onclick=()=>{ sel.value=i; loadDashboard(); };
+    cont.insertBefore(b, otro);
+  }
+  const fuera=cur<ini||cur>ini+2;
+  otro.classList.toggle('on',fuera);
+  document.getElementById('pd-otro-txt').textContent=fuera?abrev[cur]+' '+y:'';
+  const activo=fuera?otro:cont.querySelector('button.on'), pill=document.getElementById('pd-pill');
+  if(activo){ pill.style.left=activo.offsetLeft+'px'; pill.style.width=activo.offsetWidth+'px'; }
+}
+
+function pdSaludo(){
+  const h=new Date().getHours(), base=h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches';
+  const n=(currentUser?.nombre||'').trim().split(' ')[0];
+  document.getElementById('pd-saludo').textContent=n?`${base}, ${n}`:base;
+}
+
+// Search: trabajos by client or service, opens the trabajo.
+(function(){
+  const q=document.getElementById('pd-q'), res=document.getElementById('pd-res');
+  document.getElementById('pd-kbd').textContent=/Mac|iPhone|iPad/.test(navigator.platform)?'⌘K':'Ctrl K';
+  let lista=[], sel=0;
+  const norm=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  function pintar(){
+    const t=norm(q.value.trim());
+    if(!t){ res.classList.remove('on'); return; }
+    lista=allTrabajos.filter(x=>norm(x.cliente).includes(t)||norm(x.servicio).includes(t)).slice(0,6); sel=0;
+    res.innerHTML=lista.length?lista.map((x,i)=>`<div class="pd-ri${i===0?' sel':''}" data-id="${esc(x.id)}"><span class="ico"><svg><use href="#i-trabajos"/></svg></span><span style="min-width:0"><b>${esc(x.cliente)}</b><small>${esc(x.servicio)} · ${fmtFecha(x.fecha)}</small></span><span class="m">${pdDinero(parseFloat(x.monto)||0)}</span></div>`).join('')
+      :`<div class="pd-vacio">Sin resultados para “${esc(q.value.trim())}”</div>`;
+    res.classList.add('on');
+  }
+  function abrir(id){ q.value=''; res.classList.remove('on'); q.blur(); openTrabajo(id); }
+  q.addEventListener('input',pintar);
+  q.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){ q.value=''; res.classList.remove('on'); q.blur(); }
+    else if(e.key==='Enter'&&lista[sel]){ e.preventDefault(); abrir(lista[sel].id); }
+    else if((e.key==='ArrowDown'||e.key==='ArrowUp')&&lista.length){ e.preventDefault(); sel=(sel+(e.key==='ArrowDown'?1:lista.length-1))%lista.length; res.querySelectorAll('.pd-ri').forEach((n,i)=>n.classList.toggle('sel',i===sel)); }
+  });
+  res.addEventListener('mousedown',e=>{ const r=e.target.closest('.pd-ri'); if(r){ e.preventDefault(); abrir(r.dataset.id); } });
+  q.addEventListener('blur',()=>setTimeout(()=>res.classList.remove('on'),120));
+  document.addEventListener('keydown',e=>{
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'&&document.getElementById('page-dashboard').classList.contains('active')){ e.preventDefault(); q.focus(); }
+  });
+})();
+
+// Appearance: Oscuro / Claro / Automático — same choice as the app, per browser.
+const TEMAS=['oscuro','claro','sistema'], TEMA_TXT={oscuro:'Oscuro',claro:'Claro',sistema:'Automático'}, TEMA_IC={oscuro:'luna',claro:'sol',sistema:'auto'};
+function temaGuardado(){ try{ return localStorage.getItem('noktaApariencia')||'oscuro'; }catch{ return 'oscuro'; } }
+function aplicarTema(){
+  const t=temaGuardado();
+  const claro=t==='claro'||(t==='sistema'&&matchMedia('(prefers-color-scheme: light)').matches);
+  document.documentElement.dataset.tema=claro?'claro':'oscuro';
+  const b=document.getElementById('btn-tema');
+  if(b){ b.innerHTML=`<svg><use href="#i-${TEMA_IC[t]}"/></svg>`; b.title='Apariencia: '+TEMA_TXT[t]; }
+}
+function ciclarTema(){
+  const t=TEMAS[(TEMAS.indexOf(temaGuardado())+1)%TEMAS.length];
+  try{ localStorage.setItem('noktaApariencia',t); }catch{}
+  aplicarTema(); toast('Apariencia: '+TEMA_TXT[t]);
+}
+matchMedia('(prefers-color-scheme: light)').addEventListener('change',aplicarTema);
+aplicarTema();
 
 // ═══════════════════════════════════════════════════════════
 // CALENDARIO
@@ -1406,6 +1778,8 @@ function updateBadge(alertas){
   const n=(alertas||[]).filter(a=>!a.leida).length;
   const b=document.getElementById('badge-count');
   b.textContent=n; b.style.display=n?'inline':'none';
+  const pd=document.getElementById('pd-alertas-n');
+  if(pd){ pd.textContent=n>9?'9+':n; pd.hidden=!n; }
 }
 
 // ═══════════════════════════════════════════════════════════

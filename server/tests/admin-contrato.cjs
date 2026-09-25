@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
-const html = fs.readFileSync('/Users/gabrielcerritos/Library/Mobile Documents/com~apple~CloudDocs/Nokta Apps/NOKTA/server/views/admin.html', 'utf8');
+const html = fs.readFileSync(require('node:path').join(__dirname,'../views/admin.html'), 'utf8');
 
 // Pull out just the pieces contratoHTML needs, same slicing technique the
 // other admin-*.cjs tests use, then run the whole inline <script> through
@@ -30,3 +30,16 @@ assert.match(out, /10\.00 DÓLARES DE LOS ESTADOS UNIDOS DE AMÉRICA\s*\(US\$10\
 assert.match(out, /\$120\.00/); // total = 60+60
 assert.match(out, /<span class="num">9<\/span>/); // all 9 clauses present
 console.log('PASS: contratoHTML renders client data, mora clause, and total correctly');
+
+const zero = ctx.contratoHTML({mora:'0',anticipoMonto:'0',saldoMonto:'120'});
+assert.match(zero,/US\$0\.00/);
+assert(!zero.includes('US$10.00'));
+const fields={};
+ctx.document={getElementById:id=>fields[id]??={}};
+ctx.openModal=()=>{};ctx.fmtFecha=x=>x||'';ctx.SVC_GRUPO={};
+ctx.allTrabajos=[{id:'class',servicio:'Clases',monto:120,anticipo:40},{id:'ordinary',servicio:'Foto',monto:120,anticipo:0},{id:'monthly',grupo:'B',pagoMensual:250,monto:0}];
+vm.runInContext(html.slice(html.indexOf('function abrirContrato('),html.indexOf('function contratoHTML(')),ctx);
+for(const [id,total] of [['class',120],['ordinary',120],['monthly',250]]){
+ ctx.abrirContrato(id);assert.equal(fields['ct-anticipo-monto'].value,0);assert.equal(fields['ct-saldo-monto'].value,total);
+}
+console.log('PASS: no inferred deposits, monthly amount, zero late fee preserved');

@@ -36,10 +36,8 @@ function makeModel(seed = []) {
         if (update.$set) Object.assign(doc, update.$set);
         if (update.$push) for (const [k, v] of Object.entries(update.$push)) { doc[k] = doc[k] || []; doc[k].push(v); }
       } else {
-        // Faithful to real MongoDB: a non-operator update document REPLACES
-        // the whole matched document (except _id/id). This is what exposes
-        // the "missing $set" class of bug if it's ever reintroduced.
-        for (const k of Object.keys(doc)) if (k !== '_id' && k !== 'id') delete doc[k];
+        // Mongoose wraps plain updateOne fields in $set; it does not
+        // replace the document (replaceOne is the separate replacement API).
         Object.assign(doc, update);
       }
       return Promise.resolve({ matchedCount: 1 });

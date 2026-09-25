@@ -16,6 +16,14 @@ const daysFromNow = (n, base) => new Date(base.getTime() + n * 86400000);
 (async () => {
   const NOW = new Date('2026-03-10T12:00:00Z'); // fixed "today" for every test below
 
+  await test('fechas de inicio inválidas no inventan quincenas después del día 15', async () => {
+    for (const fechaInicio of ['no-es-fecha', '2026-13-01', '2026-02-30', '2026-09-01Tinvalid', {}, '']) {
+      const ctx = newWorld({ trabajos: [{ id: 'invalid', grupo: 'B', cliente: 'Demo', pagoMensual: 100, fechaInicio }] }, new Date('2026-09-24T12:00:00Z'));
+      await ctx.__checkAlerts();
+      assert.equal(ctx.Alerta._docs().length, 0, JSON.stringify(fechaInicio));
+    }
+  });
+
   // ── 1. Comportamiento esperado ─────────────────────────────────────
   await test('cliente a 2 días de expirar genera link_venciendo con diasRestantes correcto', async () => {
     const ctx = newWorld({

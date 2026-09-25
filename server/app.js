@@ -204,12 +204,26 @@ app.use(session({
 }));
 
 // ── Auth middleware ─────────────────────────────────────────
-function requireAdmin(req, res, next) {
-  if (req.session.userId) return next();
-  res.status(401).json({ error: 'No autorizado' });
+async function requireAdmin(req, res, next) {
+  if (!req.session.userId) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    // Sessions identify a user; current database state determines access.
+    const user = await Usuario.findById(req.session.userId, '-password').lean();
+    if (!user) {
+      return req.session.destroy(err => {
+        if (err) return handleError(res, err);
+        res.status(401).json({ error: 'No autorizado' });
+      });
+    }
+    req.authUser = user;
+    req.session.username = user.username;
+    req.session.nombre = user.nombre;
+    req.session.role = user.role;
+    return next();
+  } catch (err) { handleError(res, err); }
 }
 function requireSuperAdmin(req, res, next) {
-  if (req.session.role === 'admin') return next();
+  if (req.authUser?.role === 'admin') return next();
   res.status(403).json({ error: 'Acceso denegado' });
 }
 
@@ -231,9 +245,13 @@ async function generateCode(tipo) {
 // — parse the "YYYY-MM" text directly instead, same fix already applied to
 // admin.html's mesAnioDeFecha/_generarPeriodos.
 function anioMesDeFecha(f) {
-  if (!f || f.length < 7) return null;
-  const anio = parseInt(f.slice(0, 4), 10), mes = parseInt(f.slice(5, 7), 10);
-  if (!anio || !mes) return null;
+  if (typeof f !== 'string') return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/.exec(f);
+  if (!match) return null;
+  const anio = Number(match[1]), mes = Number(match[2]), dia = Number(match[3]);
+  const date = new Date(anio, mes - 1, dia);
+  if (date.getFullYear() !== anio || date.getMonth() !== mes - 1 || date.getDate() !== dia) return null;
+  if (f.includes('T') && Number.isNaN(Date.parse(f))) return null;
   return { anio, mes: mes - 1 };
 }
 
@@ -304,7 +322,8 @@ async function checkAlerts() {
 
     // Generate periods from start to current month
     const inicioAM = anioMesDeFecha(t.fechaInicio);
-    let cur = inicioAM ? new Date(inicioAM.anio, inicioAM.mes, 1) : new Date(now.getFullYear(), now.getMonth(), 1);
+    if (!inicioAM) continue;
+    let cur = new Date(inicioAM.anio, inicioAM.mes, 1);
     let fin = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
     while (cur < fin) {
@@ -384,16 +403,17 @@ app.post('/api/admin/login', loginLimiter, async (req, res) => {
 });
 
 app.post('/api/admin/logout', (req, res) => {
-  req.session.destroy();
-  res.json({ ok: true });
+  req.session.destroy(err => {
+    if (err) return handleError(res, err);
+    // Also drop the browser's session cookie so nothing lingers client-side.
+    res.clearCookie('connect.sid', { path: '/', secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
+    res.json({ ok: true });
+  });
 });
 
 
-app.get('/api/admin/me', requireAdmin, async (req, res) => {
-  try {
-    const u = await Usuario.findById(req.session.userId, '-password').lean();
-    res.json(u || { _id: req.session.userId, username: req.session.username, nombre: req.session.nombre, role: req.session.role });
-  } catch { res.json({ _id: req.session.userId, username: req.session.username, nombre: req.session.nombre, role: req.session.role }); }
+app.get('/api/admin/me', requireAdmin, (req, res) => {
+  res.json(req.authUser);
 });
 
 // ══════════════════════════════════════════════════════════════
@@ -410,7 +430,7 @@ app.get('/api/usuarios', requireAdmin, requireSuperAdmin, async (req, res) => {
 app.post('/api/usuarios', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
     const { username, nombre, password, role } = req.body;
-    if (!username || !password) return res.status(400).json({ error: 'Faltan campos' });
+    if (typeof username !== 'string' || !username.trim() || typeof password !== 'string' || !password) return res.status(400).json({ error: 'Faltan campos' });
     const hash = await bcrypt.hash(password, 10);
     const u = await Usuario.create({ username: username.trim().toLowerCase(), nombre, password: hash, role: role || 'editor', creado: new Date().toISOString() });
     res.json({ ok: true, usuario: { _id: u._id, username: u.username, nombre: u.nombre, role: u.role } });
@@ -422,18 +442,29 @@ app.post('/api/usuarios', requireAdmin, requireSuperAdmin, async (req, res) => {
 
 app.put('/api/usuarios/:id', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
-    const update = { nombre: req.body.nombre, role: req.body.role, icono: req.body.icono };
+    const update = pick(req.body, ['nombre', 'role', 'icono']);
+    if (req.body.username !== undefined) {
+      if (typeof req.body.username !== 'string' || !req.body.username.trim()) {
+        return res.status(400).json({ error: 'El usuario no puede estar vacío' });
+      }
+      update.username = req.body.username.trim().toLowerCase();
+    }
     if (req.body.password) update.password = await bcrypt.hash(req.body.password, 10);
     // Clear foto if user explicitly reset to an icon (no foto sent)
     if (req.body.foto === null) update.foto = null;
-    await Usuario.updateOne({ _id: req.params.id }, { $set: update });
+    const result = await Usuario.updateOne({ _id: req.params.id }, { $set: update });
+    if (!result.matchedCount) return res.status(404).json({ error: 'Usuario no encontrado' });
     // If editing own profile, refresh session data so sidebar updates immediately
     if (req.session.userId === req.params.id) {
-      req.session.nombre = req.body.nombre;
-      req.session.role = req.body.role;
+      for (const key of ['username', 'nombre', 'role']) {
+        if (update[key] !== undefined) req.session[key] = update[key];
+      }
     }
     res.json({ ok: true });
-  } catch (err) { handleError(res, err); }
+  } catch (err) {
+    if (err.code === 11000) return res.status(400).json({ error: 'El usuario ya existe' });
+    handleError(res, err);
+  }
 });
 
 app.post('/api/usuarios/:id/foto', requireAdmin, async (req, res) => {

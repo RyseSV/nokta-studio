@@ -957,7 +957,17 @@ function loadSection(id){
   else if(id==='contratos') loadContratos();
 }
 
-async function logout(){ await fetch('/api/admin/logout',{method:'POST'}); location.href='/admin'; }
+async function logout(){
+  // Only leave once the server confirms the session is gone; otherwise say so
+  // instead of silently reloading straight back into the panel.
+  try {
+    const r = await fetch('/api/admin/logout',{method:'POST',credentials:'same-origin'});
+    if(!r.ok) throw new Error();
+    location.replace('/admin');
+  } catch {
+    toast('No se pudo cerrar sesión. Revisa tu conexión e intenta de nuevo.','err');
+  }
+}
 
 // ═══════════════════════════════════════════════════════════
 // INIT — cargar sesión del usuario actual
@@ -2207,8 +2217,9 @@ let _contratoTrabajoId = null;
 function abrirContrato(trabajoId){
   const t = allTrabajos.find(x=>x.id===trabajoId); if(!t) return;
   _contratoTrabajoId = trabajoId;
-  const total = parseFloat(t.monto||t.pagoMensual||0);
-  const mitad = Math.round(total/2);
+  const total = Number((t.grupo||SVC_GRUPO[t.servicio])==='B' ? t.pagoMensual??0 : t.monto??0);
+  // Session payments are not deposits; never infer a 50% down payment.
+  const anticipo = t.servicio==='Clases'||(t.sesiones||[]).length ? 0 : Math.max(0,Math.min(total,Number(t.anticipo)||0));
   document.getElementById('ct-fecha').value = new Date().toISOString().slice(0,10);
   document.getElementById('ct-cliente-nombre').value = t.cliente||'';
   document.getElementById('ct-dui').value = '';
@@ -2219,9 +2230,9 @@ function abrirContrato(trabajoId){
   document.getElementById('ct-servicio-fecha').value = fmtFecha(t.fecha||t.fechaInicio);
   document.getElementById('ct-servicio-lugar').value = t.lugar||'';
   document.getElementById('ct-entregables').value = '';
-  document.getElementById('ct-anticipo-monto').value = mitad;
+  document.getElementById('ct-anticipo-monto').value = anticipo;
   document.getElementById('ct-anticipo-fecha').value = '';
-  document.getElementById('ct-saldo-monto').value = total-mitad;
+  document.getElementById('ct-saldo-monto').value = total-anticipo;
   document.getElementById('ct-saldo-fecha').value = '';
   document.getElementById('ct-plazo').value = '7';
   document.getElementById('ct-mora').value = '10';
@@ -2239,7 +2250,7 @@ function contratoHTML(d){
   const fmt = v => (parseFloat(v)||0).toFixed(2);
   const logoUrl = location.origin+'/img/logo/nokta_lockup_color_transparent.png';
   const total = (parseFloat(d.anticipoMonto)||0)+(parseFloat(d.saldoMonto)||0);
-  const mora = parseFloat(d.mora)||10;
+  const mora = Number.isFinite(Number(d.mora)) ? Number(d.mora) : 0;
 
   const cuerpo = `
     <div class="mast">
@@ -2357,6 +2368,9 @@ async function confirmarContrato(){
   if(!val('ct-cliente-nombre').trim() || !val('ct-dui').trim()){
     toast('Escribe el nombre y el DUI del cliente antes de generar el contrato','err');
     return;
+  }
+  if(['ct-anticipo-monto','ct-saldo-monto','ct-mora'].some(id=>!val(id).trim() || !Number.isFinite(Number(val(id))) || Number(val(id))<0)){
+    toast('Escribe montos válidos mayores o iguales a cero','err'); return;
   }
   const datos = {
     trabajoId: _contratoTrabajoId,

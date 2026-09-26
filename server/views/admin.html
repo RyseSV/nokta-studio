@@ -312,6 +312,85 @@ body{transition:background .25s}
   .pd-est{width:auto}
 }
 @media(prefers-reduced-motion:reduce){.pd-in,.pd-res.on{animation:none}.pd-barra i,.pd-meses .pill-mov{transition:none}}
+
+/* ═══ Calendario premium (semana con horario) ═══ */
+#page-calendario{color:var(--pf-texto)}
+.pc{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;max-width:1500px;margin:0 auto;padding:0 12px 12px}
+.pc *{box-sizing:border-box}
+.pc-top{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.pc-top h1{font-weight:300;font-size:34px;letter-spacing:-.03em;line-height:1.15}
+.pc-top p{font-size:14px;color:var(--pf-suave);margin-top:4px}
+.pc-top .sp{flex:1}
+.pc-nav{display:flex;gap:2px;padding:3px;border-radius:11px;background:var(--pf-sup);border:1px solid var(--pf-borde)}
+.pc-nav button{border:0;background:none;color:var(--pf-texto);height:30px;min-width:30px;padding:0 10px;border-radius:8px;cursor:pointer;font:500 12px 'Poppins',sans-serif}
+.pc-nav button:hover{background:var(--pf-sup2)}
+.pc-nav svg,.pc-mhead svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8}
+.pc-body{display:grid;grid-template-columns:250px minmax(0,1fr);gap:16px;align-items:start}
+.pc-col{display:grid;gap:16px}
+.pc-card{background:var(--pf-sup);border:1px solid var(--pf-borde);border-radius:20px;box-shadow:var(--pf-sombra)}
+.pc-mini{padding:16px}
+.pc-mhead{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.pc-mhead b{flex:1;font-size:13px;font-weight:500}
+.pc-mhead button{border:0;background:none;color:var(--pf-suave);cursor:pointer;width:22px;height:22px;border-radius:6px}
+.pc-mhead button:hover{background:var(--pf-sup2);color:var(--pf-texto)}
+.pc-mg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.pc-mg .w{font-size:9px;font-weight:500;color:var(--pf-tenue);height:20px;line-height:20px}
+.pc-md{border:0;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;padding:2px 0;border-radius:7px;color:var(--pf-suave);font:400 11px 'Poppins',sans-serif}
+.pc-md:hover{background:var(--pf-sup2)}
+.pc-md.sem{background:var(--pf-sup2);color:var(--pf-texto)}
+.pc-md span{width:24px;height:24px;display:grid;place-items:center;border-radius:50%}
+.pc-md.hoy span{background:var(--pf-marca);color:#fff;font-weight:500}
+.pc-md i{width:4px;height:4px;border-radius:50%;background:var(--c,transparent)}
+.pc-res{padding:16px;display:grid;gap:12px}
+.pc-res h3{font-size:13px;font-weight:500}
+.pc-res div{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--pf-suave)}
+.pc-res div i{width:6px;height:6px;border-radius:50%;background:var(--c)}
+.pc-res div b{margin-left:auto;font-size:13px;font-weight:500;color:var(--pf-texto)}
+.pc-sem{overflow:hidden}
+.pc-g{display:grid;grid-template-columns:52px repeat(7,minmax(0,1fr))}
+.pc-dh{text-align:center;padding:12px 4px;border-bottom:1px solid var(--pf-borde)}
+.pc-dh small{display:block;font-size:10px;font-weight:500;letter-spacing:1.2px;color:var(--pf-tenue)}
+.pc-dh b{display:block;font-size:22px;font-weight:300;letter-spacing:-.02em}
+.pc-dh.hoy small,.pc-dh.hoy b{color:var(--pf-marca)}
+.pc-ad{border-left:1px solid var(--pf-borde);border-bottom:1px solid var(--pf-borde);padding:4px;min-height:34px;display:grid;align-content:start;gap:4px}
+.pc-adl{font-size:8px;font-weight:500;letter-spacing:1px;color:var(--pf-tenue);text-align:right;padding:8px 8px 0 0;border-bottom:1px solid var(--pf-borde);line-height:1.3}
+.pc-chip{display:flex;align-items:center;gap:5px;padding:4px 6px;border-radius:6px;background:color-mix(in srgb,var(--c) 13%,transparent);font-size:10px;cursor:pointer;min-width:0;border:1px solid transparent;transition:border-color .15s}
+.pc-chip:hover{border-color:color-mix(in srgb,var(--c) 70%,transparent)}
+.pc-chip i{width:5px;height:5px;border-radius:50%;background:var(--c);flex:none}
+.pc-chip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc-mas{font-size:10px;color:var(--pf-suave);padding-left:4px}
+.pc-hl{font-size:10px;color:var(--pf-tenue);text-align:right;padding-right:8px;display:flex;align-items:center;justify-content:flex-end;border-top:1px solid color-mix(in srgb,var(--pf-borde) 70%,transparent)}
+.pc-dc{position:relative;border-left:1px solid var(--pf-borde);background-image:repeating-linear-gradient(to bottom,color-mix(in srgb,var(--pf-borde) 70%,transparent) 0 1px,transparent 1px var(--h))}
+.pc-dc.hoy{background-color:color-mix(in srgb,var(--pf-marca) 2%,transparent)}
+.pc-b{position:absolute;display:flex;border-radius:9px;overflow:hidden;background:color-mix(in srgb,var(--c) 17%,var(--pf-sup));border:1px solid color-mix(in srgb,var(--c) 25%,transparent);cursor:pointer;transform-origin:top;animation:pcGrow .7s cubic-bezier(.2,.9,.25,1.1) both;animation-delay:calc(.15s + var(--i)*90ms);transition:transform .2s,box-shadow .2s,border-color .2s}
+.pc-b:hover{transform:scale(1.03);z-index:2;border-color:color-mix(in srgb,var(--c) 80%,transparent);box-shadow:0 8px 18px rgba(0,0,0,.3)}
+.pc-b::before{content:"";width:3px;background:var(--c);flex:none}
+.pc-b div{padding:5px 7px;min-width:0}
+.pc-b b{display:block;font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.pc-b small{display:block;font-size:9px;color:var(--pf-suave);white-space:nowrap}
+.pc-now{position:absolute;left:0;right:0;height:2px;background:var(--pf-marca);box-shadow:0 0 6px var(--pf-marca);pointer-events:none}
+.pc-now::before{content:"";position:absolute;left:-4px;top:-3.5px;width:9px;height:9px;border-radius:50%;background:var(--pf-marca)}
+.pc-hrs{animation:pcSlide .45s cubic-bezier(.2,.9,.25,1) both}
+@keyframes pcGrow{from{opacity:0;transform:scaleY(.2)}}
+@keyframes pcSlide{from{opacity:0;transform:translateX(calc(var(--dir,1)*40px))}}
+.pc-ag{padding:16px;display:none}
+.pc-agd{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--pf-borde)}
+.pc-agd:last-child{border-bottom:0}
+.pc-agd .f{width:40px;text-align:center;flex:none}
+.pc-agd .f small{display:block;font-size:9px;font-weight:500;letter-spacing:1px}
+.pc-agd .f b{display:block;font-size:20px;font-weight:300}
+.pc-agd.hoy .f{color:var(--pf-marca)}
+.pc-agd .l{flex:1;min-width:0;display:grid;gap:6px}
+.pc-libre{font-size:12px;color:var(--pf-tenue);padding-top:8px}
+@media(max-width:900px){
+  .pc{padding:0}
+  .pc-top h1{font-size:28px}
+  .pc-body{grid-template-columns:1fr}
+  .pc-res{display:none}
+  .pc-sem{display:none}
+  .pc-ag{display:block}
+}
+@media(prefers-reduced-motion:reduce){.pc-b,.pc-hrs{animation:none}}
 @media print{.sb,.page-header .btn,.sb-toggle{display:none!important}.main{margin-left:0}}
 </style>
 </head>
@@ -450,16 +529,28 @@ body{transition:background .25s}
 
 <!-- ═══════════════ CALENDARIO ═══════════════ -->
 <section class="page" id="page-calendario">
-  <div class="page-header">
-    <div class="page-title">Calendario</div>
-    <button class="btn btn-primary" onclick="openEventoForm()">＋ Agregar evento</button>
+<div class="pc">
+  <div class="pc-top pd-in" style="--i:0">
+    <div><h1>Calendario</h1><p id="pc-sub"></p></div>
+    <span class="sp"></span>
+    <div class="pc-nav">
+      <button onclick="calPrev()" title="Semana anterior" aria-label="Semana anterior"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+      <button onclick="calHoy()">Hoy</button>
+      <button onclick="calNext()" title="Semana siguiente" aria-label="Semana siguiente"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <button class="pd-new" onclick="openEventoForm()"><svg><use href="#i-plus"/></svg><span>Evento</span></button>
   </div>
-  <div class="cal-nav">
-    <button onclick="calPrev()">‹</button>
-    <div class="cal-title" id="cal-title"></div>
-    <button onclick="calNext()">›</button>
+  <div class="pc-body">
+    <div class="pc-col pd-in" style="--i:1">
+      <div class="pc-card pc-mini" id="pc-mini"></div>
+      <div class="pc-card pc-res" id="pc-res"></div>
+    </div>
+    <div class="pd-in" style="--i:2">
+      <div class="pc-card pc-sem" id="pc-sem"></div>
+      <div class="pc-card pc-ag" id="pc-ag"></div>
+    </div>
   </div>
-  <div class="cal-grid" id="cal-grid"></div>
+</div>
 </section>
 
 <!-- ═══════════════ ALERTAS ═══════════════ -->
@@ -1141,7 +1232,7 @@ function nav(id){
   document.getElementById('page-'+id).classList.add('active');
   // Only the Dashboard follows the premium light/dark theme so far; the other
   // sections keep their original dark background.
-  document.body.classList.toggle('en-dash', id==='dashboard');
+  document.body.classList.toggle('en-dash', id==='dashboard'||id==='calendario');
   document.querySelectorAll('.sb-link').forEach(l=>{ if(l.getAttribute('onclick')?.includes(`'${id}'`)) l.classList.add('active'); });
   closeSb();
   loadSection(id);
@@ -1644,54 +1735,131 @@ async function loadCalendario(){
   [allEventos, allClienteEstados] = await Promise.all([api('/api/eventos'), api('/api/clientes-estados')]);
   if(!allTrabajos.length) allTrabajos = await api('/api/trabajos');
   renderCalendario();
+  // Replay the entrance each visit
+  document.querySelectorAll('#page-calendario .pd-in').forEach(n=>{ n.classList.remove('pd-in'); void n.offsetWidth; n.classList.add('pd-in'); });
 }
-function calPrev(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendario(); }
-function calNext(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendario(); }
-function renderCalendario(){
-  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  document.getElementById('cal-title').textContent=meses[calMonth]+' '+calYear;
-  const grid=document.getElementById('cal-grid');
-  grid.innerHTML='';
-  ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'].forEach(d=>{ const el=document.createElement('div'); el.className='cal-day-name'; el.textContent=d; grid.appendChild(el); });
-  const first=new Date(calYear,calMonth,1).getDay();
-  const days=new Date(calYear,calMonth+1,0).getDate();
-  const today=new Date(); const todayStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-  for(let i=0;i<first;i++){ const el=document.createElement('div'); el.className='cal-cell other-month'; grid.appendChild(el); }
-  for(let d=1;d<=days;d++){
-    const dateStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const cell=document.createElement('div');
-    cell.className='cal-cell'+(dateStr===todayStr?' today':'');
-    const evs=allEventos.filter(e=>e.fecha===dateStr);
-    // Quincenas: pendientes/retrasadas aparecen el día 1 o 15; pagadas en su fechaPago
-    const qEvs=[];
-    // Same relationship rule as cobrosPendientes: a paused/cancelled client has
-    // nothing left to collect — only already-paid history stays on the calendar.
-    const activo=t=>(allClienteEstados.find(e=>e.nombre===t.cliente)?.estado??t.estadoContrato??'activo').toLowerCase()==='activo';
-    allTrabajos.forEach(t=>{
-      // Class sessions ("Clases" etc.): each one on its own date.
-      (t.sesiones||[]).forEach(ses=>{
-        if(ses.fecha!==dateStr||ses.estado==='oculta'||ses.estado==='cancelado') return;
-        const pagada=ses.estado==='pagado';
-        if(!pagada&&!activo(t)) return;
-        qEvs.push(`<div class="cal-event" style="background:${pagada?'var(--green)':'var(--yellow)'};color:#000;cursor:pointer" onclick="openTrabajo('${esc(escJs(t.id))}')">${pagada?'✓':'$'} ${esc(t.cliente)} · Clase</div>`);
-      });
-      const g=t.grupo||SVC_GRUPO[t.servicio]||'';
-      if(g!=='B') return;
-      (t.quincenas||[]).forEach(q=>{
-        if(q.estado==='oculta'||(q.estado!=='pagado'&&!activo(t))) return;
-        let qDate='';
-        if(q.estado==='pagado' && q.fechaPago) qDate=q.fechaPago.slice(0,10);
-        else if(q.estado!=='pagado') qDate=`${q.periodo}-${q.q===1?'01':'15'}`;
-        if(qDate===dateStr){
-          const color=q.estado==='pagado'?'var(--green)':q.estado==='retrasado'?'#e55':'var(--yellow)';
-          const label=q.estado==='pagado'?'✓':'$';
-          qEvs.push(`<div class="cal-event" style="background:${color};color:${q.estado==='pagado'?'#000':'#000'};cursor:pointer" onclick="openTrabajo('${t.id}')">${label} ${esc(t.cliente)} Q${q.q}</div>`);
-        }
-      });
-    });
-    cell.innerHTML=`<div class="cal-num">${d}</div>`+evs.map(e=>`<div class="cal-event" onclick="openEvento('${e.id}')">${esc(e.titulo||e.tipo)}</div>`).join('')+qEvs.join('');
-    grid.appendChild(cell);
+
+// Week view state: Sunday of the shown week; the mini month follows it.
+const _hoyCal=new Date();
+let calWeekStart=new Date(_hoyCal.getFullYear(),_hoyCal.getMonth(),_hoyCal.getDate()-_hoyCal.getDay());
+let calDir=1;
+const CAL_MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const CAL_DIAS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const CAL_COLOR={evento:'var(--pf-marca)',cobrado:'var(--pf-exito)',porCobrar:'var(--pf-aviso)',retrasado:'var(--pf-error)'};
+const calIso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const calAdd=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+function calSyncMes(){ const m=calAdd(calWeekStart,3); calMonth=m.getMonth(); calYear=m.getFullYear(); }
+function calPrev(){ calDir=-1; calWeekStart=calAdd(calWeekStart,-7); calSyncMes(); renderCalendario(); }
+function calNext(){ calDir=1; calWeekStart=calAdd(calWeekStart,7); calSyncMes(); renderCalendario(); }
+function calHoy(){ const h=new Date(), w=calAdd(new Date(h.getFullYear(),h.getMonth(),h.getDate()),-h.getDay()); calDir=w<calWeekStart?-1:1; calWeekStart=w; calSyncMes(); renderCalendario(); }
+function calMes(n){ calMonth+=n; if(calMonth<0){calMonth=11;calYear--;} if(calMonth>11){calMonth=0;calYear++;} renderCalendario(); }
+function calElegir(iso){ const [y,m,d]=iso.split('-').map(Number); const f=new Date(y,m-1,d); const w=calAdd(f,-f.getDay()); calDir=w<calWeekStart?-1:1; calWeekStart=w; renderCalendario(); }
+
+// Same relationship rule as cobrosPendientes: paused/cancelled clients have
+// nothing left to collect — only already-paid history stays.
+function calActivo(t){ return (allClienteEstados.find(e=>e.nombre===t.cliente)?.estado??t.estadoContrato??'activo').toLowerCase()==='activo'; }
+// The class session an event stands for: same date, title starts with the client's name.
+function calSesionDe(ev){
+  const tit=String(ev.titulo||'').trim().toLowerCase();
+  for(const t of allTrabajos){
+    if(!t.cliente||!tit.startsWith(String(t.cliente).toLowerCase())) continue;
+    const ses=(t.sesiones||[]).find(x=>x.fecha===ev.fecha&&x.estado!=='oculta'&&x.estado!=='cancelado');
+    if(ses) return {t,ses};
   }
+  return null;
+}
+// One label per class: the event itself, colored by whether it's paid.
+function calTipoEv(ev){ const e=calSesionDe(ev); if(!e) return 'evento'; if(e.ses.estado==='pagado') return 'cobrado'; return calActivo(e.t)?'porCobrar':'evento'; }
+function calHora(txt){
+  const t=String(txt||'').trim().toLowerCase(); if(!t) return null;
+  const n=t.split(/[^0-9]+/).filter(Boolean).map(Number); if(!n.length||n[0]>=24) return null;
+  let h=n[0]; const m=n[1]||0; if(/p\.?m/.test(t)&&h<12) h+=12; if(/a\.?m/.test(t)&&h===12) h=0; return h+Math.min(m,59)/60;
+}
+function calBloques(iso){
+  return allEventos.filter(e=>e.fecha===iso).map(ev=>{
+    const ini=calHora(ev.horaInicio); if(ini==null) return null;
+    const fin=Math.max(ini+.5, calHora(ev.horaFin)??ini+1);
+    return {id:ev.id, titulo:ev.titulo||ev.tipo||'Evento', horario:(ev.horaInicio||'')+(ev.horaFin?' – '+ev.horaFin:''), ini, fin, tipo:calTipoEv(ev), click:`openEvento('${esc(escJs(ev.id))}')`};
+  }).filter(Boolean);
+}
+function calItems(iso){
+  const items=[], conEvento=new Set();
+  allEventos.filter(e=>e.fecha===iso).forEach(ev=>{
+    const e=calSesionDe(ev); if(e) conEvento.add(e.ses.id);
+    items.push({id:ev.id, label:ev.titulo||ev.tipo||'Evento', tipo:calTipoEv(ev), monto:e?e.ses.monto:ev.monto, click:`openEvento('${esc(escJs(ev.id))}')`});
+  });
+  allTrabajos.forEach(t=>{
+    (t.sesiones||[]).forEach(ses=>{
+      if(ses.fecha!==iso||ses.estado==='oculta'||ses.estado==='cancelado'||conEvento.has(ses.id)) return;
+      const pagada=ses.estado==='pagado'; if(!pagada&&!calActivo(t)) return;
+      items.push({id:t.id+'-'+ses.id, label:t.cliente+' · Clase', tipo:pagada?'cobrado':'porCobrar', monto:ses.monto, click:`openTrabajo('${esc(escJs(t.id))}')`});
+    });
+    if((t.grupo||SVC_GRUPO[t.servicio]||'')!=='B') return;
+    (t.quincenas||[]).forEach(q=>{
+      if(q.estado==='oculta'||(q.estado!=='pagado'&&!calActivo(t))) return;
+      let qd=''; if(q.estado==='pagado'&&q.fechaPago) qd=q.fechaPago.slice(0,10); else if(q.estado!=='pagado') qd=`${q.periodo}-${q.q===1?'01':'15'}`;
+      if(qd!==iso) return;
+      items.push({id:t.id+'-'+q.periodo+'-'+q.q, label:`${t.cliente} · Q${q.q}`, tipo:q.estado==='pagado'?'cobrado':q.estado==='retrasado'?'retrasado':'porCobrar', monto:q.monto??(Number(t.pagoMensual||0)/2), click:`openTrabajo('${esc(escJs(t.id))}')`});
+    });
+  });
+  return items;
+}
+function calChip(it){ return `<div class="pc-chip" style="--c:${CAL_COLOR[it.tipo]}" onclick="${it.click}" title="${esc(it.label)}${it.monto?' · '+pdDinero(Number(it.monto)):''}"><i></i><span>${esc(it.label)}</span></div>`; }
+
+function renderCalendario(){
+  const dias=[...Array(7)].map((_,i)=>calAdd(calWeekStart,i)), hoy=calIso(new Date());
+  const a=dias[0], b=dias[6];
+  document.getElementById('pc-sub').textContent = a.getMonth()===b.getMonth()
+    ? `Semana del ${a.getDate()} al ${b.getDate()} de ${CAL_MESES[b.getMonth()].toLowerCase()}`
+    : `Semana del ${a.getDate()} de ${CAL_MESES[a.getMonth()].toLowerCase()} al ${b.getDate()} de ${CAL_MESES[b.getMonth()].toLowerCase()}`;
+
+  // Mini month
+  const semana=new Set(dias.map(calIso)), first=new Date(calYear,calMonth,1).getDay(), nd=new Date(calYear,calMonth+1,0).getDate();
+  let mg=CAL_DIAS.map(d=>`<span class="w">${d[0]}</span>`).join('')+'<span></span>'.repeat(first);
+  const mesItems=[];
+  for(let d=1;d<=nd;d++){
+    const iso=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`, its=calItems(iso); mesItems.push(...its);
+    mg+=`<button class="pc-md${semana.has(iso)?' sem':''}${iso===hoy?' hoy':''}" onclick="calElegir('${iso}')"><span>${d}</span><i style="--c:${its.length?CAL_COLOR[its[0].tipo]:'transparent'}"></i></button>`;
+  }
+  document.getElementById('pc-mini').innerHTML=`<div class="pc-mhead"><b>${CAL_MESES[calMonth]} ${calYear}</b>
+    <button onclick="calMes(-1)" aria-label="Mes anterior"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+    <button onclick="calMes(1)" aria-label="Mes siguiente"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button></div><div class="pc-mg">${mg}</div>`;
+
+  // Month totals
+  const pref=`${calYear}-${String(calMonth+1).padStart(2,'0')}`, suma=t=>mesItems.filter(i=>t.includes(i.tipo)).reduce((s,i)=>s+(Number(i.monto)||0),0);
+  const retr=mesItems.filter(i=>i.tipo==='retrasado').length;
+  document.getElementById('pc-res').innerHTML=`<h3>En ${CAL_MESES[calMonth].toLowerCase()}</h3>
+    <div><i style="--c:var(--pf-marca)"></i>Eventos<b>${allEventos.filter(e=>(e.fecha||'').startsWith(pref)).length}</b></div>
+    <div><i style="--c:var(--pf-exito)"></i>Cobrado<b>${pdDinero(suma(['cobrado']))}</b></div>
+    <div><i style="--c:var(--pf-aviso)"></i>Por cobrar<b>${pdDinero(suma(['porCobrar','retrasado']))}</b></div>
+    ${retr?`<div><i style="--c:var(--pf-error)"></i>Retrasados<b>${retr}</b></div>`:''}`;
+
+  // Week grid: 9am–7pm, stretched only to fit events
+  const bloques=dias.map(d=>calBloques(calIso(d)));
+  let hi=9, hf=19; bloques.flat().forEach(x=>{ hi=Math.min(hi,Math.floor(x.ini)); hf=Math.max(hf,Math.ceil(x.fin)); });
+  const H=40;
+  let g=`<div class="pc-g"><div class="pc-dh" style="border-bottom:1px solid var(--pf-borde)"></div>`;
+  dias.forEach(d=>{ const iso=calIso(d); g+=`<div class="pc-dh${iso===hoy?' hoy':''}"><small>${CAL_DIAS[d.getDay()].toUpperCase()}</small><b>${d.getDate()}</b></div>`; });
+  g+=`<div class="pc-adl">TODO EL<br>DÍA</div>`;
+  dias.forEach(d=>{ const its=calItems(calIso(d)).filter(it=>!bloques[dias.indexOf(d)].some(x=>x.id===it.id));
+    g+=`<div class="pc-ad">${its.slice(0,3).map(calChip).join('')}${its.length>3?`<span class="pc-mas">+${its.length-3} más</span>`:''}</div>`; });
+  g+=`</div><div class="pc-g pc-hrs" style="--dir:${calDir}"><div>${[...Array(hf-hi)].map((_,k)=>{const h=hi+k; return `<div class="pc-hl" style="height:${H}px">${h===12?'12 pm':h<12?h+' am':(h-12)+' pm'}</div>`;}).join('')}</div>`;
+  let n=0; const ahora=new Date(), hAhora=ahora.getHours()+ahora.getMinutes()/60;
+  dias.forEach((d,k)=>{
+    const iso=calIso(d), lista=bloques[k].slice().sort((x,y)=>x.ini-y.ini), fines=[], pos=[];
+    lista.forEach(x=>{ let c=fines.findIndex(f=>f<=x.ini); if(c<0){ fines.push(x.fin); c=fines.length-1; } else fines[c]=x.fin; pos.push(c); });
+    const nc=Math.max(1,fines.length);
+    g+=`<div class="pc-dc${iso===hoy?' hoy':''}" style="--h:${H}px;height:${H*(hf-hi)}px">`+lista.map((x,j)=>`<div class="pc-b" style="--c:${CAL_COLOR[x.tipo]};--i:${n++};top:${(x.ini-hi)*H+1}px;height:${Math.max(24,(x.fin-x.ini)*H-3)}px;left:calc(3px + (100% - 6px) * ${pos[j]} / ${nc});width:calc((100% - 6px) / ${nc} - 3px)" onclick="${x.click}" title="${esc(x.titulo)} · ${esc(x.horario)}"><div><b>${esc(x.titulo)}</b><small>${esc(x.horario)}</small></div></div>`).join('')
+      +(iso===hoy&&hAhora>=hi&&hAhora<=hf?`<div class="pc-now" style="top:${(hAhora-hi)*H-1}px"></div>`:'')+`</div>`;
+  });
+  g+=`</div>`;
+  document.getElementById('pc-sem').innerHTML=g;
+
+  // Phone: agenda of the week
+  document.getElementById('pc-ag').innerHTML=dias.map(d=>{
+    const iso=calIso(d), its=calItems(iso);
+    return `<div class="pc-agd${iso===hoy?' hoy':''}"><div class="f"><small>${CAL_DIAS[d.getDay()].toUpperCase()}</small><b>${d.getDate()}</b></div><div class="l">${its.length?its.map(calChip).join(''):'<span class="pc-libre">Libre</span>'}</div></div>`;
+  }).join('');
 }
 function openEvento(id){
   const ev=allEventos.find(e=>e.id===id); if(!ev) return;

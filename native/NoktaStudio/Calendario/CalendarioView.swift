@@ -140,7 +140,7 @@ final class CalendarioViewModel {
             guard let ini = Self.hora(ev.horaInicio) else { return nil }
             let fin = max(ini + 0.5, Self.hora(ev.horaFin) ?? ini + 1)
             let horario = (ev.horaInicio ?? "") + (ev.horaFin.map { $0.isEmpty ? "" : " – \($0)" } ?? "")
-            return CalBloque(id: ev.id, titulo: ev.titulo ?? ev.tipo ?? "Evento", horario: horario, inicio: ini, fin: fin, tipo: .evento) { [weak self] in
+            return CalBloque(id: ev.id, titulo: ev.titulo ?? ev.tipo ?? "Evento", horario: horario, inicio: ini, fin: fin, tipo: tipo(de: ev)) { [weak self] in
                 self?.eventoMostrado = ev
             }
         }
@@ -155,7 +155,7 @@ final class CalendarioViewModel {
     var resumenMes: (eventos: Int, cobrado: Double, porCobrar: Double, retrasados: Int) {
         let todos = days.compactMap { $0 }.flatMap { items(for: $0.dateStr) }
         return (
-            todos.filter { $0.tipo == .evento }.count,
+            eventos.filter { $0.fecha.hasPrefix(String(format: "%04d-%02d", year, month + 1)) }.count,
             todos.filter { $0.tipo == .cobrado }.reduce(0) { $0 + ($1.monto ?? 0) },
             todos.filter { $0.tipo == .porCobrar || $0.tipo == .retrasado }.reduce(0) { $0 + ($1.monto ?? 0) },
             todos.filter { $0.tipo == .retrasado }.count
@@ -200,16 +200,39 @@ final class CalendarioViewModel {
         return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
     }
 
-    func items(for dateStr: String) -> [CalItem] {
-        var items: [CalItem] = eventos.filter { $0.fecha == dateStr }.map { ev in
-            CalItem(id: ev.id, label: ev.titulo ?? ev.tipo ?? "Evento", tipo: .evento, monto: ev.monto) { [weak self] in
-                self?.eventoMostrado = ev
+    /// Same relationship rule as IngresosCalculator: a paused/cancelled client
+    /// has nothing left to collect — only already-paid history stays.
+    func activo(_ t: NoktaTrabajo) -> Bool {
+        (estados.first { $0.nombre == t.cliente }?.estado ?? t.estadoContrato ?? "activo").lowercased() == "activo"
+    }
+
+    /// The class session an event stands for: same date, and the event title
+    /// starts with the client's name ("Clases de IA Fátima — Clases").
+    func sesion(de ev: NoktaEvento) -> (trabajo: NoktaTrabajo, sesion: NoktaSesion)? {
+        let titulo = (ev.titulo ?? "").trimmingCharacters(in: .whitespaces).lowercased()
+        for t in trabajos where !t.cliente.isEmpty && titulo.hasPrefix(t.cliente.lowercased()) {
+            if let ses = (t.sesiones ?? []).first(where: { $0.fecha == ev.fecha && $0.estado != "oculta" && $0.estado != "cancelado" }) {
+                return (t, ses)
             }
         }
-        // Same relationship rule as IngresosCalculator: a paused/cancelled client
-        // has nothing left to collect — only already-paid history stays.
-        func activo(_ t: NoktaTrabajo) -> Bool {
-            (estados.first { $0.nombre == t.cliente }?.estado ?? t.estadoContrato ?? "activo").lowercased() == "activo"
+        return nil
+    }
+
+    /// One label per class: the event itself, colored by whether it's paid.
+    func tipo(de ev: NoktaEvento) -> CalTipo {
+        guard let (t, ses) = sesion(de: ev) else { return .evento }
+        if ses.estado == "pagado" { return .cobrado }
+        return activo(t) ? .porCobrar : .evento
+    }
+
+    func items(for dateStr: String) -> [CalItem] {
+        var sesionesConEvento = Set<String>()
+        var items: [CalItem] = eventos.filter { $0.fecha == dateStr }.map { ev in
+            let enlace = sesion(de: ev)
+            if let enlace { sesionesConEvento.insert(enlace.sesion.id) }
+            return CalItem(id: ev.id, label: ev.titulo ?? ev.tipo ?? "Evento", tipo: tipo(de: ev), monto: enlace?.sesion.monto ?? ev.monto) { [weak self] in
+                self?.eventoMostrado = ev
+            }
         }
         for t in trabajos where t.grupoResuelto == "B" {
             for q in t.quincenas ?? [] where q.estado != "oculta" && (q.estado == "pagado" || activo(t)) {
@@ -228,7 +251,7 @@ final class CalendarioViewModel {
         }
         // Class sessions ("Clases" etc.): each one on its own date.
         for t in trabajos {
-            for ses in t.sesiones ?? [] where ses.fecha == dateStr && ses.estado != "oculta" && ses.estado != "cancelado" {
+            for ses in t.sesiones ?? [] where ses.fecha == dateStr && ses.estado != "oculta" && ses.estado != "cancelado" && !sesionesConEvento.contains(ses.id) {
                 let pagada = ses.estado == "pagado"
                 guard pagada || activo(t) else { continue }
                 items.append(CalItem(id: "\(t.id)-ses-\(ses.id)", label: "\(t.cliente) · Clase", tipo: pagada ? .cobrado : .porCobrar, monto: ses.monto) { [weak self] in

@@ -3,7 +3,7 @@ import AppIntents
 
 @main
 struct NoktaStudioApp: App {
-    @AppStorage("noktaApariencia") private var apariencia: NoktaApariencia = .oscuro
+
 
     init() {
         NoktaShortcuts.updateAppShortcutParameters()
@@ -12,8 +12,9 @@ struct NoktaStudioApp: App {
 
     var body: some Scene {
         WindowGroup {
-            SessionGateView()
-                .preferredColorScheme(apariencia.colorScheme)
+            NoktaAppearanceHost {
+                SessionGateView()
+            }
         }
     }
 }

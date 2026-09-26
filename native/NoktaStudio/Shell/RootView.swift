@@ -92,7 +92,7 @@ struct RootView: View {
     @State private var isLoading = false
     @State private var canGoBack = false
     @State private var unreadAlertas = 0
-    @AppStorage("noktaApariencia") private var apariencia: NoktaApariencia = .oscuro
+    @State private var appearance = NoktaAppearance.shared
     /// Trabajo to open directly when navigating to Trabajos from the
     /// Dashboard search; cleared whenever a sidebar row is picked.
     @State private var trabajoAbrir: String?
@@ -368,24 +368,21 @@ struct RootView: View {
     /// Light / Dark / Automatic switch — persisted, applied app-wide in
     /// NoktaStudioApp via `.preferredColorScheme`.
     private var aparienciaMenu: some View {
-        Menu {
-            Picker("Apariencia", selection: $apariencia) {
-                ForEach(NoktaApariencia.allCases) { a in
-                    Label(a.label, systemImage: a.icon).tag(a)
-                }
-            }
-            .pickerStyle(.inline)
+        // One button that cycles Oscuro → Claro → Automático (same as the web
+        // panel). A Menu here stopped registering the choice on macOS.
+        Button {
+            let todos: [NoktaApariencia] = [.oscuro, .claro, .sistema]
+            let siguiente = todos[(todos.firstIndex(of: appearance.selection).map { $0 + 1 } ?? 0) % todos.count]
+            withAnimation(.easeInOut(duration: 0.25)) { appearance.selection = siguiente }
         } label: {
-            Image(systemName: apariencia.icon).font(.system(size: 13, weight: .light))
+            Image(systemName: appearance.selection.icon).font(.system(size: 13, weight: .light))
                 .foregroundStyle(NoktaTheme.textoSuave)
+                .contentTransition(.symbolEffect(.replace))
                 .frame(width: 26, height: 28)
                 .contentShape(Rectangle())
         }
-        .menuStyle(.button)
         .buttonStyle(.plain)
-        .menuIndicator(.hidden)
-        .fixedSize()
-        .help("Apariencia")
+        .help("Apariencia: \(appearance.selection.label) — clic para cambiar")
     }
 
     // MARK: - iOS: plain NavigationStack + real NavigationLink push. A
@@ -418,12 +415,12 @@ struct RootView: View {
                     }
                 }
                 Section {
-                    Picker(selection: $apariencia) {
+                    Picker(selection: $appearance.selection) {
                         ForEach(NoktaApariencia.allCases) { a in
                             Label(a.label, systemImage: a.icon).tag(a)
                         }
                     } label: {
-                        Label("Apariencia", systemImage: apariencia.icon)
+                        Label("Apariencia", systemImage: appearance.selection.icon)
                             .font(NoktaFont.poppins(13))
                             .foregroundStyle(NoktaTheme.texto)
                     }

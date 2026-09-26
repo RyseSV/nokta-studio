@@ -1641,7 +1641,7 @@ aplicarTema();
 // CALENDARIO
 // ═══════════════════════════════════════════════════════════
 async function loadCalendario(){
-  allEventos = await api('/api/eventos');
+  [allEventos, allClienteEstados] = await Promise.all([api('/api/eventos'), api('/api/clientes-estados')]);
   if(!allTrabajos.length) allTrabajos = await api('/api/trabajos');
   renderCalendario();
 }
@@ -1664,10 +1664,21 @@ function renderCalendario(){
     const evs=allEventos.filter(e=>e.fecha===dateStr);
     // Quincenas: pendientes/retrasadas aparecen el día 1 o 15; pagadas en su fechaPago
     const qEvs=[];
+    // Same relationship rule as cobrosPendientes: a paused/cancelled client has
+    // nothing left to collect — only already-paid history stays on the calendar.
+    const activo=t=>(allClienteEstados.find(e=>e.nombre===t.cliente)?.estado??t.estadoContrato??'activo').toLowerCase()==='activo';
     allTrabajos.forEach(t=>{
+      // Class sessions ("Clases" etc.): each one on its own date.
+      (t.sesiones||[]).forEach(ses=>{
+        if(ses.fecha!==dateStr||ses.estado==='oculta'||ses.estado==='cancelado') return;
+        const pagada=ses.estado==='pagado';
+        if(!pagada&&!activo(t)) return;
+        qEvs.push(`<div class="cal-event" style="background:${pagada?'var(--green)':'var(--yellow)'};color:#000;cursor:pointer" onclick="openTrabajo('${esc(escJs(t.id))}')">${pagada?'✓':'$'} ${esc(t.cliente)} · Clase</div>`);
+      });
       const g=t.grupo||SVC_GRUPO[t.servicio]||'';
       if(g!=='B') return;
       (t.quincenas||[]).forEach(q=>{
+        if(q.estado==='oculta'||(q.estado!=='pagado'&&!activo(t))) return;
         let qDate='';
         if(q.estado==='pagado' && q.fechaPago) qDate=q.fechaPago.slice(0,10);
         else if(q.estado!=='pagado') qDate=`${q.periodo}-${q.q===1?'01':'15'}`;

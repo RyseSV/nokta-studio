@@ -1,32 +1,32 @@
 import SwiftUI
 import CoreText
 
-/// Exact colors copied from `:root` in server/views/admin.html — this is a
-/// port, not a redesign. Keep these in lockstep with the CSS variables if
-/// the web palette ever changes.
+/// Legacy palette names, now mapped onto the premium adaptive `NoktaTheme`
+/// (2026-09 redesign) so every screen picks up the new colors and follows the
+/// Claro/Oscuro/Automático setting. New code should use `NoktaTheme` directly.
 enum NoktaPalette {
-    static let bg = Color(hex: 0x1C1C1A)
-    static let sb = Color(hex: 0x111110)
-    static let card = Color(hex: 0x2E2E2B)
-    static let ember = Color(hex: 0xB85228)
-    static let cream = Color(hex: 0xF0ECE4)
-    static let muted = Color(hex: 0x7A7A72)
-    static let green = Color(hex: 0x4CAF7D)
-    static let yellow = Color(hex: 0xE6A817)
-    static let red = Color(hex: 0xE05A5A)
-    static let border = Color(hex: 0x3A3A37)
+    static let bg = NoktaTheme.fondo
+    static let sb = NoktaTheme.fondo
+    static let card = NoktaTheme.superficie
+    static let ember = NoktaTheme.marca
+    static let cream = NoktaTheme.texto
+    static let muted = NoktaTheme.textoSuave
+    static let green = NoktaTheme.exito
+    static let yellow = NoktaTheme.aviso
+    static let red = NoktaTheme.error
+    static let border = NoktaTheme.borde
     /// `.pill-blue` — hardcoded in the CSS, never promoted to a `--variable`.
-    static let blue = Color(hex: 0x6495ED)
-    /// `#e55` (quincena "retrasado") — distinct from `--red`.
-    static let overdue = Color(hex: 0xEE5555)
+    static let blue = Color(light: 0x3F6FD8, dark: 0x6495ED)
+    /// Quincena "retrasado" — same family as `red`.
+    static let overdue = NoktaTheme.error
 
-    /// Chart.js doughnut palette for "Por tipo de servicio".
+    /// Doughnut palette for "Por tipo de servicio".
     static let servicioPie: [Color] = [
-        Color(hex: 0xB85228), Color(hex: 0xD4724A), Color(hex: 0xE8956E),
-        Color(hex: 0x7A7A72), Color(hex: 0x4A4A47),
+        NoktaTheme.marca, NoktaTheme.marca.opacity(0.62), NoktaTheme.marca.opacity(0.36),
+        NoktaTheme.textoTenue, NoktaTheme.superficie2,
     ]
-    /// Chart.js doughnut palette for "Nuevos vs recurrentes".
-    static let nuevosRecurrentes: [Color] = [Color(hex: 0xB85228), Color(hex: 0x4CAF7D)]
+    /// Doughnut palette for "Nuevos vs recurrentes".
+    static let nuevosRecurrentes: [Color] = [NoktaTheme.marca, NoktaTheme.exito]
 }
 
 extension Color {

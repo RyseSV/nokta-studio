@@ -52,6 +52,7 @@
 		CC3CA470BDC9BEA7557505BA /* GaleriasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B2738B2E23301A6DBF6A1B /* GaleriasView.swift */; };
 		EC3617447E8154DA68742268 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91B271F66E0C9D033658882F /* DesignSystem.swift */; };
 		EAAF3A63BB14AF394CAE8F97 /* Ingresos.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBF1E26111ECB99F91A8D12 /* Ingresos.swift */; };
+		6270E13514A5B456EEF31ABB /* NoktaComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9C25845F51F5A4454B92D85 /* NoktaComponents.swift */; };
 		F28609B92C560C59DA99381C /* QuincenaEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E16B11E88470515D85E279B /* QuincenaEngine.swift */; };
 		3AE504125F87E4AD848630F8 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105203992F135ED07A66C361 /* DashboardView.swift */; };
 		784B126DB513A475B3EEA8E6 /* ContratosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A9CFCAA9829E8E32685CB5 /* ContratosView.swift */; };
@@ -111,6 +112,7 @@
 		803AE00A07484800E4D05E0E /* GaleriasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B2738B2E23301A6DBF6A1B /* GaleriasView.swift */; };
 		DFF256C3C42D973B6257D35D /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91B271F66E0C9D033658882F /* DesignSystem.swift */; };
 		53BE993D03FC5C8ACC4238FE /* Ingresos.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBF1E26111ECB99F91A8D12 /* Ingresos.swift */; };
+		3438DD7ABC9DF0A4EC2418AA /* NoktaComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9C25845F51F5A4454B92D85 /* NoktaComponents.swift */; };
 		83D5FF69F03D4C697ECB9E70 /* QuincenaEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E16B11E88470515D85E279B /* QuincenaEngine.swift */; };
 		5805B630C9630207E29320B4 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105203992F135ED07A66C361 /* DashboardView.swift */; };
 		EE30F24F00A0B413CD1BD1DE /* ContratosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A9CFCAA9829E8E32685CB5 /* ContratosView.swift */; };
@@ -187,6 +189,7 @@
 		25B2738B2E23301A6DBF6A1B /* GaleriasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaleriasView.swift; sourceTree = "<group>"; };
 		91B271F66E0C9D033658882F /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		BEBF1E26111ECB99F91A8D12 /* Ingresos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ingresos.swift; sourceTree = "<group>"; };
+		E9C25845F51F5A4454B92D85 /* NoktaComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoktaComponents.swift; sourceTree = "<group>"; };
 		5E16B11E88470515D85E279B /* QuincenaEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuincenaEngine.swift; sourceTree = "<group>"; };
 		105203992F135ED07A66C361 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		A1A9CFCAA9829E8E32685CB5 /* ContratosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContratosView.swift; sourceTree = "<group>"; };
@@ -362,6 +365,7 @@
 			children = (
 				91B271F66E0C9D033658882F,
 				BEBF1E26111ECB99F91A8D12,
+				E9C25845F51F5A4454B92D85,
 				5E16B11E88470515D85E279B,
 			);
 			path = "Core";
@@ -628,6 +632,7 @@
 				CC3CA470BDC9BEA7557505BA /* GaleriasView.swift in Sources */,
 				EC3617447E8154DA68742268 /* DesignSystem.swift in Sources */,
 				EAAF3A63BB14AF394CAE8F97 /* Ingresos.swift in Sources */,
+				6270E13514A5B456EEF31ABB /* NoktaComponents.swift in Sources */,
 				F28609B92C560C59DA99381C /* QuincenaEngine.swift in Sources */,
 				3AE504125F87E4AD848630F8 /* DashboardView.swift in Sources */,
 				784B126DB513A475B3EEA8E6 /* ContratosView.swift in Sources */,
@@ -694,6 +699,7 @@
 				803AE00A07484800E4D05E0E /* GaleriasView.swift in Sources */,
 				DFF256C3C42D973B6257D35D /* DesignSystem.swift in Sources */,
 				53BE993D03FC5C8ACC4238FE /* Ingresos.swift in Sources */,
+				3438DD7ABC9DF0A4EC2418AA /* NoktaComponents.swift in Sources */,
 				83D5FF69F03D4C697ECB9E70 /* QuincenaEngine.swift in Sources */,
 				5805B630C9630207E29320B4 /* DashboardView.swift in Sources */,
 				EE30F24F00A0B413CD1BD1DE /* ContratosView.swift in Sources */,

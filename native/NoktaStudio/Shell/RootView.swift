@@ -226,10 +226,7 @@ struct RootView: View {
         // nested stack's navigation state just because the branch changed.
         // Forcing a distinct identity per section guarantees a clean rebuild.
         .id(item)
-        // Only the Dashboard follows the premium light/dark theme so far; the
-        // rest still paint the original dark `NoktaPalette`, so keep their
-        // system controls dark too until each one is redesigned.
-        .environment(\.colorScheme, item == .dashboard ? currentScheme : .dark)
+
     }
 
     private var webPanel: some View {
@@ -367,10 +364,6 @@ struct RootView: View {
             .font(NoktaFont.poppins(12, .medium)).foregroundStyle(NoktaTheme.texto)
     }
 
-    private var currentScheme: ColorScheme {
-        apariencia.colorScheme ?? systemScheme
-    }
-    @Environment(\.colorScheme) private var systemScheme
 
     /// Light / Dark / Automatic switch — persisted, applied app-wide in
     /// NoktaStudioApp via `.preferredColorScheme`.

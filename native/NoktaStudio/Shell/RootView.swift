@@ -203,8 +203,8 @@ struct RootView: View {
                     }
                 )
             case .asistente: AssistantView(vm: assistant)
-            case .nuevoTrabajo: NuevoTrabajoView()
-            case .trabajos: TrabajosContainerView(abrir: trabajoAbrir)
+            case .nuevoTrabajo: NuevoTrabajoView(alGuardar: { ir(a: .trabajos) })
+            case .trabajos: TrabajosContainerView(abrir: trabajoAbrir, onNuevo: { ir(a: .nuevoTrabajo) })
             case .calendario: CalendarioView()
             case .alertas: AlertasView(onUnreadChange: { unreadAlertas = $0 })
             case .clientes: ClientesContainerView()

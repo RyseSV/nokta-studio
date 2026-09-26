@@ -35,6 +35,64 @@ extension View {
     func noktaHover(radio: CGFloat = 10) -> some View { modifier(NoktaHover(radio: radio)) }
 }
 
+extension View {
+    /// Tarjeta con "foco que sigue al cursor": una luz del color dado ilumina
+    /// el borde y el fondo donde está el puntero. En reposo (y en iPhone) queda
+    /// un brillo suave arriba al centro.
+    func noktaFoco(_ color: Color, radio: CGFloat = 20) -> some View { modifier(NoktaFoco(color: color, radio: radio)) }
+}
+
+private struct NoktaFoco: ViewModifier {
+    var color: Color
+    var radio: CGFloat
+    @State private var punto: CGPoint?
+    @State private var encima = false
+    @Environment(\.colorScheme) private var scheme
+
+    func body(content: Content) -> some View {
+        let forma = RoundedRectangle(cornerRadius: radio, style: .continuous)
+        content
+            .background {
+                GeometryReader { g in
+                    let centro = unidad(g.size)
+                    ZStack {
+                        forma.fill(NoktaTheme.superficie)
+                        forma.fill(RadialGradient(colors: [color.opacity(scheme == .dark ? 0.15 : 0.1), .clear],
+                                                  center: centro, startRadius: 0, endRadius: encima ? 260 : 200))
+                            .opacity(encima ? 1 : 0.55)
+                    }
+                }
+            }
+            .overlay {
+                GeometryReader { g in
+                    forma.strokeBorder(
+                        RadialGradient(colors: [color.opacity(encima ? 1 : 0.55), color.opacity(0.18), NoktaTheme.borde],
+                                       center: unidad(g.size), startRadius: 0, endRadius: encima ? 190 : 150),
+                        lineWidth: encima ? 1.4 : 1
+                    )
+                }
+                .allowsHitTesting(false)
+            }
+            .shadow(color: .black.opacity(encima ? 0.22 : 0.08), radius: encima ? 18 : 8, y: encima ? 10 : 3)
+            .contentShape(forma)
+            .onContinuousHover { fase in
+                switch fase {
+                case .active(let p):
+                    punto = p
+                    if !encima { withAnimation(.easeOut(duration: 0.25)) { encima = true } }
+                case .ended:
+                    withAnimation(.easeOut(duration: 0.45)) { encima = false; punto = nil }
+                }
+            }
+    }
+
+    /// Posición del puntero en 0…1; en reposo, arriba al centro.
+    private func unidad(_ size: CGSize) -> UnitPoint {
+        guard let p = punto, size.width > 0, size.height > 0 else { return UnitPoint(x: 0.5, y: 0) }
+        return UnitPoint(x: p.x / size.width, y: p.y / size.height)
+    }
+}
+
 private struct NoktaEntrada: ViewModifier {
     var visible: Bool
     var orden: Int

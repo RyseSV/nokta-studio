@@ -112,6 +112,36 @@ enum IngresosCalculator {
         return (cobros.reduce(0) { $0 + $1.monto }, Set(cobros.map(\.trabajoID)).count)
     }
 
+    /// Dinero que ya entró por un trabajo, en toda su vida: quincenas pagadas
+    /// (mensuales), clases pagadas (sesiones) o monto − saldo (trabajos sueltos).
+    static func cobrado(_ t: NoktaTrabajo) -> Double {
+        if t.grupoResuelto == "B" {
+            return (t.quincenas ?? []).filter { $0.estado == "pagado" }.reduce(0) { $0 + ($1.monto ?? 0) }
+        }
+        if let sesiones = t.sesiones, !sesiones.isEmpty {
+            return sesiones.filter { $0.estado == "pagado" }.reduce(0) { $0 + ($1.monto ?? 0) }
+        }
+        let monto = t.monto ?? 0
+        if t.estado == "pagado" { return monto }
+        return max(0, monto - (t.saldo ?? monto))
+    }
+
+    /// Lo que ese trabajo debe ahora mismo. Mismas reglas que el Dashboard
+    /// (quincenas del mes de contratos activos, solo la próxima clase sin
+    /// pagar), pero un trabajo suelto cuenta su saldo sin importar el mes.
+    /// Clientes pausados o cancelados no deben nada.
+    static func porCobrar(_ t: NoktaTrabajo, estados: [NoktaClienteEstado]) -> Double {
+        let esContrato = t.grupoResuelto == "B" || t.servicio == "Clases" || !(t.sesiones ?? []).isEmpty
+        if esContrato {
+            let relacion = (estados.first { $0.nombre == t.cliente }?.estado ?? t.estadoContrato ?? "activo").lowercased()
+            guard relacion == "activo" else { return 0 }
+            if t.grupoResuelto == "B" || !(t.sesiones ?? []).isEmpty {
+                return cobrosPendientes(periodoActual, trabajos: [t], estados: estados).reduce(0) { $0 + $1.monto }
+            }
+        }
+        return t.estado == "pagado" ? 0 : max(0, t.saldo ?? 0)
+    }
+
     static var periodoActual: String {
         let cal = Calendar.current
         return FechaUtil.periodo(anio: cal.component(.year, from: Date()), mes: cal.component(.month, from: Date()))

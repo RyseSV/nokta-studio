@@ -22,12 +22,31 @@ final class TrabajosListViewModel {
         estados.first { $0.nombre == cliente }?.estado ?? "activo"
     }
 
+    /// "cobrar" (te debe algo ahora), "aldia" (activo y sin deuda) o
+    /// "inactivo" (contrato/clases de un cliente pausado o cancelado).
+    func situacion(_ t: NoktaTrabajo) -> String {
+        let esContrato = t.grupoResuelto == "B" || t.servicio == "Clases" || !(t.sesiones ?? []).isEmpty
+        if esContrato {
+            let rel = (estados.first { $0.nombre == t.cliente }?.estado ?? t.estadoContrato ?? "activo").lowercased()
+            if rel != "activo" { return "inactivo" }
+        }
+        return IngresosCalculator.porCobrar(t, estados: estados) > 0 ? "cobrar" : "aldia"
+    }
+
+    /// Solo los tipos que existen, con cuántos hay de cada uno.
+    var gruposPresentes: [(valor: String, texto: String)] {
+        ["A", "B", "C", "D", "E"].compactMap { g in
+            let n = trabajos.filter { $0.grupoResuelto == g }.count
+            return n > 0 ? (g, "\(ServicioGrupoMap.nombres[g] ?? g) \(n)") : nil
+        }
+    }
+
     var filtrados: [NoktaTrabajo] {
         let q = busqueda.trimmingCharacters(in: .whitespaces)
         let opts: String.CompareOptions = [.caseInsensitive, .diacriticInsensitive]
         return trabajos.filter { t in
             (filtroGrupo.isEmpty || t.grupoResuelto == filtroGrupo) &&
-            (filtroEstado.isEmpty || t.estado == filtroEstado) &&
+            (filtroEstado.isEmpty || situacion(t) == filtroEstado) &&
             (q.isEmpty || t.cliente.range(of: q, options: opts) != nil || t.servicio.range(of: q, options: opts) != nil)
         }
     }
@@ -38,15 +57,18 @@ struct TrabajosContainerView: View {
 
     /// `abrir`: jump straight into one trabajo's detail (used by the
     /// Dashboard search); Back still returns to the list.
-    init(abrir: String? = nil) {
+    private let onNuevo: (() -> Void)?
+
+    init(abrir: String? = nil, onNuevo: (() -> Void)? = nil) {
         _selectedId = State(initialValue: abrir)
+        self.onNuevo = onNuevo
     }
 
     var body: some View {
         if let id = selectedId {
             TrabajoDetailView(trabajoId: id, onBack: { selectedId = nil })
         } else {
-            TrabajosListView(onSelect: { selectedId = $0 })
+            TrabajosListView(onSelect: { selectedId = $0 }, onNuevo: onNuevo)
         }
     }
 }
@@ -54,6 +76,7 @@ struct TrabajosContainerView: View {
 struct TrabajosListView: View {
     @State private var vm = TrabajosListViewModel()
     var onSelect: (String) -> Void = { _ in }
+    var onNuevo: (() -> Void)?
     @State private var aparecio = false
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -62,33 +85,31 @@ struct TrabajosListView: View {
     private let compacto = false
     #endif
 
-    private var facturado: Double { vm.filtrados.reduce(0) { $0 + ($1.monto ?? 0) } }
-    private var porCobrar: Double { vm.filtrados.reduce(0) { $0 + max(0, $1.saldo ?? 0) } }
-    private var conSaldo: Int { vm.filtrados.filter { ($0.saldo ?? 0) > 0 }.count }
+    private var cobrado: Double { vm.filtrados.reduce(0) { $0 + IngresosCalculator.cobrado($1) } }
+    private var porCobrar: Double { vm.filtrados.reduce(0) { $0 + IngresosCalculator.porCobrar($1, estados: vm.estados) } }
+    private var conSaldo: Int { vm.filtrados.filter { vm.situacion($0) == "cobrar" }.count }
+    private var enCurso: Int { vm.filtrados.filter { vm.situacion($0) != "inactivo" }.count }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: compacto ? 16 : 24) {
+            VStack(alignment: .leading, spacing: compacto ? 18 : 26) {
                 NoktaEncabezado(
                     titulo: "Trabajos",
                     subtitulo: vm.trabajos.isEmpty && vm.isLoading ? "Cargando tus trabajos…"
                         : "\(vm.filtrados.count) trabajo\(vm.filtrados.count == 1 ? "" : "s")" + (vm.filtrados.count != vm.trabajos.count ? " de \(vm.trabajos.count)" : "")
                 ) {
                     NoktaBuscador(texto: $vm.busqueda, placeholder: "Buscar cliente o servicio…")
-                        .frame(maxWidth: compacto ? .infinity : 280)
+                        .frame(maxWidth: compacto ? .infinity : 260)
+                    if let onNuevo {
+                        Button(action: onNuevo) { Label("Nuevo trabajo", systemImage: "plus") }
+                            .buttonStyle(NoktaBotonPrimario())
+                    }
                 }
                 .noktaEntrada(aparecio, 0)
 
                 indicadores.noktaEntrada(aparecio, 1)
 
-                VStack(alignment: .leading, spacing: 10) {
-                    NoktaChips(
-                        opciones: [("", "Todos")] + ["A", "B", "C", "D", "E"].map { ($0, ServicioGrupoMap.nombres[$0] ?? $0) },
-                        seleccion: $vm.filtroGrupo
-                    )
-                    NoktaChips(opciones: [("", "Todos los estados"), ("pendiente", "Pendiente"), ("pagado", "Pagado")], seleccion: $vm.filtroEstado)
-                }
-                .noktaEntrada(aparecio, 2)
+                filtros.noktaEntrada(aparecio, 2)
 
                 lista.noktaEntrada(aparecio, 3)
             }
@@ -112,12 +133,36 @@ struct TrabajosListView: View {
 
     private var indicadores: some View {
         let items = Group {
-            NoktaIndicador(icono: "doc.text", titulo: "Facturado", valor: facturado, detalle: "Suma de los trabajos mostrados")
-            NoktaIndicador(icono: "clock", titulo: "Saldo por cobrar", valor: porCobrar,
-                           detalle: "\(conSaldo) trabajo\(conSaldo == 1 ? "" : "s") con saldo", acento: porCobrar > 0 ? NoktaTheme.aviso : nil)
+            TarjetaTotal(icono: "checkmark.circle", titulo: "Cobrado", valor: NoktaFormato.dinero(cobrado),
+                         detalle: "Lo que ya te pagaron", color: NoktaTheme.exito)
+            TarjetaTotal(icono: "clock", titulo: "Por cobrar", valor: NoktaFormato.dinero(porCobrar),
+                         detalle: conSaldo == 0 ? "Nadie te debe ahora" : "\(conSaldo) trabajo\(conSaldo == 1 ? "" : "s") con pago pendiente",
+                         color: porCobrar > 0 ? NoktaTheme.aviso : NoktaTheme.textoSuave)
+            TarjetaTotal(icono: "sparkles", titulo: "En curso", valor: "\(enCurso)",
+                         detalle: enCurso == vm.filtrados.count ? "Todos activos" : "\(vm.filtrados.count - enCurso) en pausa o cancelado",
+                         color: NoktaTheme.marca)
         }
         return Group {
-            if compacto { VStack(spacing: 10) { items } } else { HStack(spacing: 16) { items } }
+            if compacto { VStack(spacing: 10) { items } } else { HStack(spacing: 14) { items } }
+        }
+    }
+
+    private var filtros: some View {
+        let tipos = NoktaChips(opciones: [("", "Todos")] + vm.gruposPresentes, seleccion: $vm.filtroGrupo)
+        let estado = NoktaChips(opciones: [("", "Todos"), ("cobrar", "Por cobrar"), ("aldia", "Al día"), ("inactivo", "Pausados y cancelados")],
+                                seleccion: $vm.filtroEstado)
+        return Group {
+            if compacto {
+                VStack(alignment: .leading, spacing: 10) {
+                    ScrollView(.horizontal, showsIndicators: false) { tipos }
+                    ScrollView(.horizontal, showsIndicators: false) { estado }
+                }
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 12) { tipos; Spacer(minLength: 12); estado }
+                    VStack(alignment: .leading, spacing: 10) { tipos; estado }
+                }
+            }
         }
     }
 
@@ -141,7 +186,7 @@ struct TrabajosListView: View {
             LazyVGrid(columns: columnas, spacing: 16) {
                 ForEach(Array(vm.filtrados.enumerated()), id: \.element.id) { i, t in
                     Button { onSelect(t.id) } label: {
-                        TarjetaTrabajo(trabajo: t, estado: NoktaEstadoTrabajo.de(t, estados: vm.estados), aparecio: aparecio)
+                        TarjetaTrabajo(trabajo: t, estado: NoktaEstadoTrabajo.de(t, estados: vm.estados), estados: vm.estados, aparecio: aparecio)
                     }
                     .buttonStyle(.plain)
                     .noktaEntrada(aparecio, 4 + i)
@@ -152,111 +197,126 @@ struct TrabajosListView: View {
     }
 
     private var columnas: [GridItem] {
-        [GridItem(.adaptive(minimum: compacto ? 280 : 250, maximum: 420), spacing: 16)]
+        [GridItem(.adaptive(minimum: compacto ? 280 : 280, maximum: 460), spacing: 16)]
     }
 }
 
-/// Option A ("Tarjetas con progreso"): one card per trabajo. At rest it's
-/// neutral (hairline frame, grey icon); on hover the frame lights up in the
-/// status color (green / yellow / red) and the card lifts.
+/// Estilo 5 ("Foco que sigue al cursor"): el estado va en la pastilla y en
+/// una luz que sigue al puntero por el borde y el fondo (en reposo, un brillo
+/// suave arriba al centro). El dinero protagonista es lo ya cobrado, "de" el
+/// total; abajo, lo que sigue con ese trabajo.
 private struct TarjetaTrabajo: View {
     let trabajo: NoktaTrabajo
     let estado: (texto: String, color: Color)
+    let estados: [NoktaClienteEstado]
     let aparecio: Bool
-    @State private var encima = false
-    @State private var lleno = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.colorScheme) private var scheme
 
-    /// Share of the amount already collected: (monto − saldo) / monto.
-    private var cobrado: Double {
-        let monto = trabajo.monto ?? 0
-        guard monto > 0 else { return trabajo.estado == "pagado" ? 1 : 0 }
-        if let saldo = trabajo.saldo { return min(1, max(0, (monto - saldo) / monto)) }
-        return trabajo.estado == "pagado" ? 1 : 0
+    private var sesiones: [NoktaSesion] { trabajo.sesiones ?? [] }
+    private var esMensual: Bool { trabajo.grupoResuelto == "B" }
+    private var cobrado: Double { IngresosCalculator.cobrado(trabajo) }
+
+    /// "de $120" / "cobrado · $250 al mes" / "de $325"
+    private var deCuanto: String {
+        if esMensual { return "cobrado · " + NoktaFormato.dinero(trabajo.pagoMensual ?? trabajo.monto ?? 0) + " al mes" }
+        if !sesiones.isEmpty { return "de " + NoktaFormato.dinero(sesiones.reduce(0) { $0 + ($1.monto ?? 0) }) }
+        return "de " + NoktaFormato.dinero(trabajo.monto ?? 0)
     }
-    private var esContrato: Bool { trabajo.grupoResuelto == "B" || trabajo.servicio == "Clases" }
 
-    private var icono: String {
-        let s = trabajo.servicio.lowercased()
-        if s.contains("video") || s.contains("edición") { return "video" }
-        if s.contains("redes") || s.contains("social") || s.contains("community") { return "iphone" }
-        if s.contains("boda") || s.contains("foto") || s.contains("sesión") { return "camera" }
-        if s.contains("evento") || s.contains("fiesta") { return "party.popper" }
-        if s.contains("brand") || s.contains("logo") || s.contains("diseño") { return "sparkles" }
-        if s.contains("clase") { return "graduationcap" }
-        return "briefcase"
+    /// Lo que sigue: (etiqueta, detalle resaltado).
+    private var siguiente: (String, String) {
+        let relacion = (estados.first { $0.nombre == trabajo.cliente }?.estado ?? trabajo.estadoContrato ?? "activo").lowercased()
+        if esMensual || !sesiones.isEmpty, relacion != "activo" {
+            return ("Contrato", relacion == "pausado" ? "en pausa" : "cancelado")
+        }
+        if !sesiones.isEmpty {
+            let pendientes = sesiones.filter { $0.estado != "pagado" && $0.estado != "oculta" && $0.estado != "cancelado" }
+            guard let prox = pendientes.min(by: { $0.fecha < $1.fecha }) else { return ("Clases", "todas pagadas ✓") }
+            return ("Próxima clase", Self.diaCorto(prox.fecha) + " · " + NoktaFormato.dinero(prox.monto ?? 0))
+        }
+        if esMensual {
+            let debe = IngresosCalculator.porCobrar(trabajo, estados: estados)
+            return debe > 0 ? ("Por cobrar este mes", NoktaFormato.dinero(debe)) : ("Este mes", "al día ✓")
+        }
+        let saldo = IngresosCalculator.porCobrar(trabajo, estados: estados)
+        if saldo <= 0 { return ("Cobrado", "completo ✓") }
+        let fecha = trabajo.fechaEntrega ?? trabajo.fecha
+        return ("Falta cobrar", NoktaFormato.dinero(saldo) + (fecha.map { " · " + Self.diaCorto($0) } ?? ""))
+    }
+
+    private var detalle: String {
+        if !sesiones.isEmpty { return "\(trabajo.servicio) · \(sesiones.count) sesion\(sesiones.count == 1 ? "" : "es")" }
+        if esMensual { return "\(trabajo.servicio) · Mensual" }
+        return "\(trabajo.servicio) · \(FechaUtil.fechaCorta(trabajo.fecha))"
     }
 
     var body: some View {
-        let forma = RoundedRectangle(cornerRadius: 20, style: .continuous)
         let c = estado.color
+        let sig = siguiente
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Image(systemName: icono)
-                    .font(.system(size: 15, weight: .light))
-                    .foregroundStyle(NoktaTheme.textoSuave)
-                    .frame(width: 38, height: 38)
-                    .background(NoktaTheme.superficie2, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                Spacer()
-                NoktaEstado(texto: estado.texto, color: c, tamano: 11)
-                    .padding(.horizontal, 9).padding(.vertical, 4)
-                    .background(c.opacity(0.1), in: Capsule())
-            }
+            NoktaEstado(texto: estado.texto, color: c, tamano: 11)
+                .padding(.horizontal, 10).padding(.vertical, 4)
+                .background(c.opacity(0.12), in: Capsule())
+            Spacer(minLength: 26)
             Text(trabajo.cliente)
                 .font(NoktaFont.poppins(15, .medium)).foregroundStyle(NoktaTheme.texto)
-                .lineLimit(1).padding(.top, 16)
-            Text(esContrato ? "\(trabajo.servicio) · Mensual" : "\(trabajo.servicio) · \(FechaUtil.fechaCorta(trabajo.fecha))")
+                .lineLimit(1)
+            Text(detalle)
                 .font(NoktaFont.poppins(11)).foregroundStyle(NoktaTheme.textoTenue).lineLimit(1).padding(.top, 2)
-            Text(NoktaFormato.dinero(esContrato ? (trabajo.pagoMensual ?? trabajo.monto ?? 0) : (trabajo.monto ?? 0)))
-                .font(NoktaFont.poppins(30, .light)).tracking(-1.2)
-                .foregroundStyle(NoktaTheme.texto)
-                .padding(.top, 14)
-            if esContrato {
-                Text("por mes").font(NoktaFont.poppins(11)).foregroundStyle(NoktaTheme.textoTenue)
-            } else {
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(NoktaTheme.texto.opacity(0.07))
-                        Capsule()
-                            .fill(LinearGradient(colors: [c, c.opacity(0.6)], startPoint: .leading, endPoint: .trailing))
-                            .frame(width: geo.size.width * (lleno ? cobrado : 0))
-                    }
-                }
-                .frame(height: 5)
-                .padding(.top, 12)
-                HStack {
-                    Text("Cobrado \(Int((cobrado * 100).rounded()))%")
-                    Spacer()
-                    Text(cobrado < 1 ? "Saldo " + NoktaFormato.dinero(max(0, trabajo.saldo ?? 0)) : "Completo")
-                }
-                .font(NoktaFont.poppins(10)).foregroundStyle(NoktaTheme.textoTenue)
-                .padding(.top, 6)
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(NoktaFormato.dinero(cobrado))
+                    .font(NoktaFont.poppins(34, .light)).tracking(-1.6)
+                    .foregroundStyle(NoktaTheme.texto)
+                Text(deCuanto)
+                    .font(NoktaFont.poppins(11)).foregroundStyle(NoktaTheme.textoTenue).lineLimit(1)
             }
+            .padding(.top, 12)
+            (Text(sig.0 + " · ").foregroundStyle(NoktaTheme.textoSuave) + Text(sig.1).foregroundStyle(c))
+                .font(NoktaFont.poppins(11))
+                .lineLimit(1)
+                .padding(.top, 8)
         }
         .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            ZStack(alignment: .bottomTrailing) {
-                forma.fill(NoktaTheme.superficie)
-                // Soft glow in the status color, bottom-right corner.
-                Circle()
-                    .fill(c.opacity(scheme == .dark ? 0.14 : 0.09))
-                    .frame(width: 200, height: 200)
-                    .blur(radius: 60)
-                    .offset(x: 70, y: 90)
-                    .opacity(encima ? 1 : 0.6)
+        .frame(maxWidth: .infinity, minHeight: 200, alignment: .leading)
+        .noktaFoco(c, radio: 20)
+    }
+
+    private static func diaCorto(_ iso: String) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "es")
+        f.dateFormat = "yyyy-MM-dd"
+        guard let d = f.date(from: String(iso.prefix(10))) else { return FechaUtil.fechaCorta(iso) }
+        f.dateFormat = "EEE d MMM"
+        return f.string(from: d).replacingOccurrences(of: ".", with: "")
+    }
+}
+
+/// Total de arriba con el mismo "foco que sigue al cursor" que las tarjetas.
+private struct TarjetaTotal: View {
+    let icono: String
+    let titulo: String
+    let valor: String
+    let detalle: String
+    let color: Color
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            Image(systemName: icono)
+                .font(.system(size: 15, weight: .light))
+                .foregroundStyle(color)
+                .frame(width: 38, height: 38)
+                .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(titulo).font(NoktaFont.poppins(12)).foregroundStyle(NoktaTheme.textoSuave)
+                Text(valor)
+                    .font(NoktaFont.poppins(26, .light)).tracking(-1)
+                    .foregroundStyle(NoktaTheme.texto)
+                    .contentTransition(.numericText())
+                Text(detalle).font(NoktaFont.poppins(11)).foregroundStyle(NoktaTheme.textoTenue).lineLimit(1)
             }
-            .clipShape(forma)
+            Spacer(minLength: 0)
         }
-        .overlay(forma.strokeBorder(encima ? c.opacity(0.8) : NoktaTheme.borde, lineWidth: encima ? 1.5 : 1))
-        .shadow(color: c.opacity(encima ? 0.25 : 0), radius: 18, y: 8)
-        .shadow(color: .black.opacity(encima ? 0.25 : 0.08), radius: encima ? 20 : 8, y: encima ? 12 : 3)
-        .offset(y: encima ? -5 : 0)
-        .contentShape(forma)
-        .onHover { h in withAnimation(.spring(duration: 0.35, bounce: 0.3)) { encima = h } }
-        .onAppear {
-            withAnimation(reduceMotion ? nil : .spring(duration: 1.1, bounce: 0).delay(0.35)) { lleno = true }
-        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .noktaFoco(color, radio: 18)
     }
 }

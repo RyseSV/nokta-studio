@@ -443,6 +443,89 @@ body{transition:background .25s}
 }
 @media(prefers-reduced-motion:reduce){.pa-ic::before{animation:none}.pa-it{transition:none}}
 @media print{.sb,.page-header .btn,.sb-toggle{display:none!important}.main{margin-left:0}}
+
+/* ═══ Trabajos + Nuevo trabajo premium (foco que sigue al cursor) ═══ */
+#page-trabajos,#page-nuevo-trabajo{color:var(--pf-texto)}
+.pt{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;max-width:1240px;margin:0 auto;padding:0 12px 24px}
+.pt *{box-sizing:border-box}
+.pt-buscar{height:36px;width:260px;display:flex;align-items:center;gap:8px;padding:0 12px;border-radius:10px;background:var(--pf-sup);border:1px solid var(--pf-borde);transition:border-color .15s}
+.pt-buscar:focus-within{border-color:color-mix(in srgb,var(--pf-marca) 60%,transparent)}
+.pt-buscar svg{width:14px;height:14px;fill:none;stroke:var(--pf-tenue);stroke-width:1.6;flex:none}
+.pt-buscar input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--pf-texto);font:400 12px 'Poppins',sans-serif}
+.pt-buscar input::placeholder{color:var(--pf-tenue)}
+.foco{--c:var(--pf-marca);position:relative;isolation:isolate;border-radius:20px;background:var(--pf-sup);box-shadow:inset 0 0 0 1px var(--pf-borde),0 3px 8px rgba(0,0,0,.08);transition:box-shadow .3s}
+.foco::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;background:radial-gradient(170px circle at var(--x,50%) var(--y,0%),var(--c),color-mix(in srgb,var(--c) 18%,transparent) 55%,transparent 80%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:.55;transition:opacity .35s;pointer-events:none}
+.foco::after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(240px circle at var(--x,50%) var(--y,0%),color-mix(in srgb,var(--c) 15%,transparent),transparent 65%);opacity:.55;transition:opacity .35s;z-index:-1;pointer-events:none}
+.foco:hover::before,.foco:hover::after{opacity:1}
+.foco:hover{box-shadow:inset 0 0 0 1px var(--pf-borde),0 12px 22px -6px rgba(0,0,0,.28)}
+.pt-tot{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.pt-t{display:flex;align-items:center;gap:14px;padding:18px;border-radius:18px}
+.pt-t i{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 13%,transparent);flex:none}
+.pt-t i::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c)}
+.pt-t small{display:block;font-size:12px;color:var(--pf-suave)}
+.pt-t b{display:block;font-size:26px;font-weight:300;letter-spacing:-.04em;line-height:1.25}
+.pt-t em{display:block;font-style:normal;font-size:11px;color:var(--pf-tenue)}
+.pt-fil{display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap}
+.pt-seg{display:inline-flex;gap:2px;padding:4px;border-radius:12px;background:var(--pf-sup);border:1px solid var(--pf-borde);flex-wrap:wrap}
+.pt-seg button{border:0;background:none;color:var(--pf-suave);font:400 12px 'Poppins',sans-serif;padding:7px 14px;border-radius:9px;cursor:pointer;transition:background .2s,color .2s}
+.pt-seg button.on{background:var(--pf-sup2);color:var(--pf-texto);font-weight:500}
+.pt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.pt-card{padding:20px;min-height:200px;display:flex;flex-direction:column;cursor:pointer}
+.pt-pill{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--c);padding:4px 10px;border-radius:99px;background:color-mix(in srgb,var(--c) 12%,transparent)}
+.pt-pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.pt-card .n{margin-top:auto;padding-top:26px;font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pt-card .d{font-size:11px;color:var(--pf-tenue);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pt-card .m{display:flex;align-items:baseline;gap:6px;margin-top:12px}
+.pt-card .m b{font-size:34px;font-weight:300;letter-spacing:-.05em;line-height:1}
+.pt-card .m small{font-size:11px;color:var(--pf-tenue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pt-card .s{font-size:11px;color:var(--pf-suave);margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pt-card .s em{font-style:normal;color:var(--c)}
+.pt-vacio{padding:48px 20px;text-align:center;color:var(--pf-suave);font-size:14px;border-radius:20px;background:var(--pf-sup);border:1px solid var(--pf-borde)}
+@media(max-width:900px){.pt-tot{grid-template-columns:1fr}.pt-buscar{width:100%}.pa-top .sp{display:none}}
+
+.nt-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:28px;align-items:start}
+.nt-form{display:grid;gap:22px;min-width:0}
+.nt-lbl,.nt-form .form-group label{font-size:10px!important;font-weight:500!important;letter-spacing:.14em;text-transform:uppercase;color:var(--pf-tenue)!important;margin-bottom:8px;display:block}
+.nt-form .form-group{gap:0}
+.nt-form .form-grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px 12px}
+.nt-form .form-group input,.nt-form .form-group select,.nt-form .form-group textarea{background:var(--pf-sup);border:1px solid var(--pf-borde);border-radius:11px;color:var(--pf-texto);padding:10px 12px;min-height:40px;transition:border-color .18s,box-shadow .18s}
+.nt-form .form-group input:focus,.nt-form .form-group select:focus,.nt-form .form-group textarea:focus{border-color:color-mix(in srgb,var(--pf-marca) 65%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--pf-marca) 14%,transparent)}
+.nt-form .form-group input[readonly]{background:transparent;border-style:dashed;color:var(--pf-aviso);opacity:1!important;font-weight:500}
+.nt-form .form-group select option{background:var(--pf-sup2)}
+html:not([data-tema="claro"]) .nt-form input[type=date],html:not([data-tema="claro"]) .nt-form input[type=time]{color-scheme:dark}
+.nt-cli{position:relative;z-index:20}
+.nt-box{height:44px;display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:11px;background:var(--pf-sup);border:1px solid var(--pf-borde);transition:border-color .18s,box-shadow .18s}
+.nt-box:focus-within{border-color:color-mix(in srgb,var(--pf-marca) 65%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--pf-marca) 14%,transparent)}
+.nt-box svg{width:14px;height:14px;fill:none;stroke:var(--pf-tenue);stroke-width:1.6;flex:none}
+.nt-box input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--pf-texto);font:400 13px 'Poppins',sans-serif}
+.nt-box input::placeholder{color:var(--pf-tenue)}
+.nt-drop{position:absolute;top:50px;left:0;width:min(380px,100%);padding:6px;border-radius:13px;background:var(--pf-sup2);border:1px solid var(--pf-borde);box-shadow:0 12px 30px rgba(0,0,0,.35);max-height:300px;overflow-y:auto;animation:pdIn .25s ease both}
+.nt-op{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;font-size:12px;cursor:pointer;color:var(--pf-texto)}
+.nt-op:hover{background:color-mix(in srgb,var(--pf-texto) 6%,transparent)}
+.nt-op small{margin-left:auto;font-size:10px;color:var(--pf-tenue);white-space:nowrap}
+.nt-op.nuevo{color:var(--pf-marca);font-weight:500}
+.nt-av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:600;background:var(--pf-marca-s);color:var(--pf-marca);flex:none}
+.nt-vacio{padding:6px 10px;font-size:11px;color:var(--pf-tenue)}
+.nt-tipos{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
+.nt-tipo{position:relative;text-align:left;padding:14px;border-radius:16px;background:var(--pf-sup);border:1px solid var(--pf-borde);color:var(--pf-texto);font-family:'Poppins',sans-serif;cursor:pointer;display:grid;gap:3px;transition:transform .35s cubic-bezier(.2,.9,.25,1.3),border-color .3s,opacity .3s,box-shadow .3s}
+.nt-tipo svg{width:20px;height:20px;fill:none;stroke:var(--pf-suave);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;margin-bottom:8px;transition:stroke .3s}
+.nt-tipo b{font-size:12px;font-weight:500}.nt-tipo small{font-size:10px;color:var(--pf-tenue)}
+.nt-tipo:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--pf-texto) 18%,transparent);opacity:1}
+.nt-tipo.on{border-color:color-mix(in srgb,var(--pf-marca) 75%,transparent);background:linear-gradient(180deg,color-mix(in srgb,var(--pf-marca) 16%,transparent),color-mix(in srgb,var(--pf-marca) 2%,transparent)),var(--pf-sup);transform:translateY(-3px);box-shadow:0 8px 16px -6px color-mix(in srgb,var(--pf-marca) 45%,transparent)}
+.nt-tipo.on svg{stroke:var(--pf-marca)}
+.nt-tipo.apaga{opacity:.55}
+.nt-svcs{display:flex;flex-wrap:wrap;gap:7px}.nt-svcs:empty{display:none}
+.nt-chip{border:1px solid var(--pf-borde);background:var(--pf-sup);color:var(--pf-suave);font:400 11px 'Poppins',sans-serif;padding:7px 12px;border-radius:99px;cursor:pointer;animation:pdIn .45s cubic-bezier(.25,.9,.3,1.1) both;animation-delay:calc(var(--i,0)*45ms);transition:background .2s,color .2s}
+.nt-chip.on{background:var(--pf-marca);border-color:var(--pf-marca);color:#fff;font-weight:500}
+.nt-prev{position:sticky;top:12px;display:grid;gap:14px}
+.nt-fila{display:flex;justify-content:space-between;font-size:12px;color:var(--pf-suave);padding:10px 0;border-top:1px solid var(--pf-borde)}
+.nt-fila b{font-weight:500;color:var(--pf-texto)}.nt-fila b.w{color:var(--pf-aviso)}
+.nt-guardar{height:46px;border:0;border-radius:13px;color:#fff;font:500 13px 'Poppins',sans-serif;cursor:pointer;background:linear-gradient(135deg,#DA7A48,#B85228);opacity:.5;filter:saturate(.35);transition:opacity .3s,filter .3s,box-shadow .3s}
+.nt-guardar.listo{opacity:1;filter:none;animation:ntPulso 2.8s ease-in-out infinite}
+@keyframes ntPulso{0%,100%{box-shadow:0 8px 14px -6px rgba(208,103,58,.4)}50%{box-shadow:0 10px 22px -4px rgba(208,103,58,.75)}}
+.nt-limpiar{border:0;background:none;color:var(--pf-tenue);font:400 12px 'Poppins',sans-serif;cursor:pointer}
+@media(max-width:900px){.nt-grid{grid-template-columns:1fr}.nt-prev{position:static}}
+@media(prefers-reduced-motion:reduce){.nt-guardar.listo,.nt-chip{animation:none}}
 </style>
 </head>
 <body class="en-dash">
@@ -622,46 +705,26 @@ body{transition:background .25s}
 
 <!-- ═══════════════ NUEVO TRABAJO ═══════════════ -->
 <section class="page" id="page-nuevo-trabajo">
-  <div class="page-header"><div class="page-title">Nuevo trabajo</div></div>
-  <div class="section-card">
-    <form id="form-trabajo" onsubmit="guardarTrabajo(event)" autocomplete="off">
-
-      <!-- Cliente + Servicio siempre visibles -->
-      <div class="form-grid" style="margin-bottom:16px">
-        <div class="form-group" style="position:relative">
-          <label>Cliente *</label>
-          <input id="t-cliente-input" placeholder="Buscar cliente..." autocomplete="off"
-            oninput="filtrarClientes(this.value)" onfocus="mostrarDropClientes()">
+<div class="pt">
+  <div class="pa-top pd-in" style="--i:0"><div><h1>Nuevo trabajo</h1><p>Llena lo básico; el saldo se calcula solo.</p></div></div>
+  <form id="form-trabajo" class="nt-grid" onsubmit="guardarTrabajo(event)" oninput="ntPreview()" autocomplete="off">
+    <div class="nt-form">
+      <div class="pd-in" style="--i:1;position:relative;z-index:30">
+        <span class="nt-lbl">Cliente</span>
+        <div class="nt-cli">
+          <div class="nt-box"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="t-cliente-input" placeholder="Busca o crea un cliente…" autocomplete="off"
+            oninput="filtrarClientes(this.value)" onfocus="mostrarDropClientes()" onkeydown="if(event.key==='Escape'){document.getElementById('t-cliente-drop').style.display='none';this.blur()}"></div>
           <input type="hidden" id="t-cliente-id">
           <input type="hidden" id="t-cliente-nombre">
-          <div id="t-cliente-drop" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:200;background:#2E2E2B;border:1px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,.4)"></div>
-        </div>
-        <div class="form-group">
-          <label>Tipo de servicio *</label>
-          <select id="t-servicio" onchange="onServicioChange()">
-            <option value="">— Seleccionar tipo —</option>
-            <optgroup label="Eventos">
-              <option>Fotografía de eventos</option><option>Fotografía corporativa</option>
-              <option>Fotografía de producto</option><option>Fotografía gastronómica</option>
-              <option>Retratos</option><option>Cobertura audiovisual</option><option>Foto + Video</option>
-              <option>Clases</option>
-            </optgroup>
-            <optgroup label="Paquetes mensuales">
-              <option>Marketing digital</option><option>Gestión de redes</option>
-              <option>Community management</option><option>Paquete completo</option>
-            </optgroup>
-            <optgroup label="Edición de video">
-              <option>Edición de video</option><option>Motion graphics</option><option>Reels sueltos</option>
-            </optgroup>
-            <optgroup label="Branding / Identidad">
-              <option>Identidad visual</option><option>Branding</option>
-            </optgroup>
-            <optgroup label="Desarrollo web">
-              <option>Diseño y desarrollo web</option>
-            </optgroup>
-          </select>
+          <div id="t-cliente-drop" class="nt-drop" style="display:none"></div>
         </div>
       </div>
+      <div class="pd-in" style="--i:2">
+        <span class="nt-lbl">Tipo de trabajo</span>
+        <div class="nt-tipos" id="nt-tipos"></div>
+        <input type="hidden" id="t-servicio">
+      </div>
+      <div class="nt-svcs" id="nt-svcs"></div>
 
       <!-- Grupo A: Eventos -->
       <div id="grp-A" style="display:none">
@@ -738,36 +801,31 @@ body{transition:background .25s}
       <div id="t-notas-wrap" style="display:none;margin-top:16px">
         <div class="form-group"><label>Notas</label><textarea id="t-notas" placeholder="Detalles adicionales..."></textarea></div>
       </div>
-
-      <div class="form-actions" style="margin-top:20px">
-        <button type="submit" class="btn btn-primary">Guardar trabajo</button>
-        <button type="button" class="btn btn-ghost" onclick="clearTrabajoForm()">Limpiar</button>
-      </div>
-    </form>
-  </div>
+    </div>
+    <aside class="nt-prev pd-in" style="--i:3">
+      <span class="nt-lbl">Así se verá en Trabajos</span>
+      <div id="nt-card"></div>
+      <div id="nt-filas"></div>
+      <button type="submit" class="nt-guardar" id="nt-guardar">Guardar trabajo</button>
+      <button type="button" class="nt-limpiar" onclick="clearTrabajoForm()">Limpiar formulario</button>
+    </aside>
+  </form>
+</div>
 </section>
 
 <!-- ═══════════════ TRABAJOS ═══════════════ -->
 <section class="page" id="page-trabajos">
-  <div class="page-header"><div class="page-title">Trabajos</div></div>
-  <div class="filters">
-    <select id="fil-mes-t" onchange="loadTrabajos()"><option value="">Todos los meses</option></select>
-    <select id="fil-svc-t" onchange="loadTrabajos()">
-      <option value="">Todos los grupos</option>
-      <option value="A">Eventos</option>
-      <option value="B">Paquetes mensuales</option>
-      <option value="C">Edición de video</option>
-      <option value="D">Branding / Identidad</option>
-      <option value="E">Desarrollo web</option>
-    </select>
-    <select id="fil-estado-t" onchange="loadTrabajos()">
-      <option value="">Todos los estados</option><option value="pendiente">Pendiente</option><option value="pagado">Pagado</option>
-    </select>
+<div class="pt">
+  <div class="pa-top pd-in" style="--i:0">
+    <div><h1>Trabajos</h1><p id="pt-sub">Cargando tus trabajos…</p></div>
+    <span class="sp"></span>
+    <label class="pt-buscar"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="pt-q" placeholder="Buscar cliente o servicio…" oninput="ptPintar()"></label>
+    <button class="pa-b1" onclick="nav('nuevo-trabajo')">＋ Nuevo trabajo</button>
   </div>
-  <div class="table-card">
-    <table><thead><tr><th>Cliente</th><th>Servicio</th><th>Fecha</th><th>Monto</th><th>Pagos / anticipo</th><th>Saldo total</th><th>Estado</th></tr></thead>
-    <tbody id="trabajos-tbody"></tbody></table>
-  </div>
+  <div class="pt-tot pd-in" style="--i:1" id="pt-tot"></div>
+  <div class="pt-fil pd-in" style="--i:2"><div class="pt-seg" id="pt-tipos"></div><div class="pt-seg" id="pt-est"></div></div>
+  <div class="pt-grid pd-in" style="--i:3" id="pt-grid"></div>
+</div>
 </section>
 
 <!-- ═══════════════ TRABAJO DETALLE ═══════════════ -->
@@ -1290,7 +1348,7 @@ function nav(id){
   document.getElementById('page-'+id).classList.add('active');
   // Only the Dashboard follows the premium light/dark theme so far; the other
   // sections keep their original dark background.
-  document.body.classList.toggle('en-dash', ['dashboard','calendario','alertas'].includes(id));
+  document.body.classList.toggle('en-dash', ['dashboard','calendario','alertas','trabajos','nuevo-trabajo'].includes(id));
   document.querySelectorAll('.sb-link').forEach(l=>{ if(l.getAttribute('onclick')?.includes(`'${id}'`)) l.classList.add('active'); });
   closeSb();
   loadSection(id);
@@ -1307,7 +1365,7 @@ function loadSection(id){
   else if(id==='analiticas') loadAnaliticas();
   else if(id==='equipo') loadEquipo();
   else if(id==='usuarios') loadUsuarios();
-  else if(id==='nuevo-trabajo') { if(!allClientes.length) api('/api/clientes').then(cs=>{ allClientes=cs; }); }
+  else if(id==='nuevo-trabajo') { ntPintarTipos(); ntPreview(); if(!allClientes.length) api('/api/clientes').then(cs=>{ allClientes=cs||[]; }); if(!allTrabajos.length) api('/api/trabajos').then(ts=>{ allTrabajos=ts||[]; }); }
   else if(id==='documentos') { fillClientesDatalist2(); initDocForm(); }
   else if(id==='contratos') loadContratos();
 }
@@ -2083,11 +2141,47 @@ const SVC_GRUPO = {
 };
 const GRUPO_NOMBRES = { A:'Eventos', B:'Paquetes mensuales', C:'Edición de video', D:'Branding / Identidad', E:'Desarrollo web' };
 
-function onServicioChange(){
-  const svc = document.getElementById('t-servicio').value;
-  const g = SVC_GRUPO[svc] || '';
-  ['A','B','C','D','E'].forEach(x => document.getElementById('grp-'+x).style.display = x===g ? '' : 'none');
-  document.getElementById('t-notas-wrap').style.display = g ? '' : 'none';
+// Nuevo trabajo: 5 tipos en tarjetas + servicio exacto en pastillas (igual que la app).
+const NT_TIPOS=[['A','Evento o clase','Foto, video, clases','cam'],['B','Mensual','Redes, marketing','cal'],['C','Video','Edición, reels','vid'],['D','Branding','Logo, identidad','sello'],['E','Web','Diseño y desarrollo','web']];
+const NT_SVCS={A:['Fotografía de eventos','Fotografía corporativa','Fotografía de producto','Fotografía gastronómica','Retratos','Cobertura audiovisual','Foto + Video','Clases'],B:['Marketing digital','Gestión de redes','Community management','Paquete completo'],C:['Edición de video','Motion graphics','Reels sueltos'],D:['Identidad visual','Branding'],E:['Diseño y desarrollo web']};
+const NT_IC={cam:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',cal:'<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',vid:'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/>',sello:'<path d="M12 3 4 7v5c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7z"/><path d="m9 12 2 2 4-4"/>',web:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>'};
+let ntTipo='';
+function ntPintarTipos(){
+  const cont=document.getElementById('nt-tipos'); if(!cont) return;
+  cont.innerHTML=NT_TIPOS.map(([g,n,d,ic])=>`<button type="button" class="nt-tipo${ntTipo===g?' on':''}${ntTipo&&ntTipo!==g?' apaga':''}" onclick="ntElegirTipo('${g}')"><svg viewBox="0 0 24 24">${NT_IC[ic]}</svg><b>${n}</b><small>${d}</small></button>`).join('');
+  const svcs=NT_SVCS[ntTipo]||[], sel=document.getElementById('t-servicio').value;
+  document.getElementById('nt-svcs').innerHTML=svcs.length>1?svcs.map((x,i)=>`<button type="button" class="nt-chip${x===sel?' on':''}" style="--i:${i}" onclick="ntElegirSvc('${escJs(x)}')">${esc(x)}</button>`).join(''):'';
+}
+function ntMostrarGrupo(){
+  ['A','B','C','D','E'].forEach(x=>document.getElementById('grp-'+x).style.display=x===ntTipo?'':'none');
+  document.getElementById('t-notas-wrap').style.display=ntTipo?'':'none';
+}
+function ntElegirTipo(g){
+  if(ntTipo===g) return;
+  ntTipo=g; const svcs=NT_SVCS[g]||[];
+  document.getElementById('t-servicio').value=svcs.length===1?svcs[0]:'';
+  ntMostrarGrupo(); ntPintarTipos(); ntPreview();
+}
+function ntElegirSvc(x){ document.getElementById('t-servicio').value=x; ntPintarTipos(); ntPreview(); }
+function onServicioChange(){ ntTipo=SVC_GRUPO[document.getElementById('t-servicio').value]||''; ntMostrarGrupo(); ntPintarTipos(); ntPreview(); }
+function ntNum(id){ const v=parseFloat(document.getElementById(id)?.value); return Number.isFinite(v)?v:0; }
+function ntPreview(){
+  const card=document.getElementById('nt-card'); if(!card) return;
+  const g=ntTipo, svc=document.getElementById('t-servicio').value, cli=(document.getElementById('t-cliente-input').value||'').trim();
+  let monto=0, ant=0, fecha='';
+  if(g==='B'){ monto=ntNum('tB-pago'); fecha=document.getElementById('tB-inicio').value; }
+  else if(g){ monto=ntNum('t'+g+'-monto'); ant=ntNum('t'+g+'-anticipo'); fecha=document.getElementById(g==='A'?'tA-fecha':'t'+g+'-entrega').value; calcSaldoGrp(g); }
+  const saldo=Math.max(0,monto-ant), contrato=g==='B'||svc==='Clases';
+  const ec=g==='B'?document.getElementById('tB-estado-contrato').value:'activo';
+  const col=contrato?(ec==='activo'?'var(--pf-exito)':ec==='pausado'?'var(--pf-aviso)':'var(--pf-error)'):'var(--pf-aviso)';
+  const etq=contrato?ESTADO_CLIENTE_LABEL[ec]:'Pendiente';
+  const det=(svc||'Servicio')+' · '+(contrato?'Mensual':(fecha?ptDia(fecha):'sin fecha'));
+  const de=contrato?'al mes':'anticipo '+pdDinero(ant);
+  const sig=contrato?['Cobro','mensual']:(monto>0&&saldo<=0?['Cobrado','completo ✓']:['Falta cobrar',pdDinero(saldo)]);
+  card.innerHTML=`<div class="foco pt-card" style="--c:${col}" onpointermove="ptFoco(event,this)" onpointerleave="ptFocoFuera(this)"><span class="pt-pill">${etq}</span><div class="n"${cli?'':' style="color:var(--pf-tenue)"'}>${esc(cli||'Cliente')}</div><div class="d">${esc(det)}</div><div class="m"><b${monto>0?'':' style="color:var(--pf-tenue)"'}>${pdDinero(monto)}</b><small>${de}</small></div><div class="s">${sig[0]} · <em>${sig[1]}</em></div></div>`;
+  const filas=g==='B'?[['Pago mensual',pdDinero(monto)],['Día de cobro',document.getElementById('tB-dia-cobro').value?'Día '+document.getElementById('tB-dia-cobro').value:'—'],['Contrato',ESTADO_CLIENTE_LABEL[ec]]]:[['Total',pdDinero(monto)],['Anticipo',pdDinero(ant)],['Falta cobrar',pdDinero(saldo),saldo>0]];
+  document.getElementById('nt-filas').innerHTML=filas.map(([a,b,w])=>`<div class="nt-fila"><span>${a}</span><b${w?' class="w"':''}>${b}</b></div>`).join('');
+  document.getElementById('nt-guardar').classList.toggle('listo',!!(cli&&svc&&monto>0));
 }
 
 function calcSaldoGrp(g){
@@ -2098,35 +2192,36 @@ function calcSaldoGrp(g){
 }
 
 // ── Combobox cliente ──────────────────────────────────────────
+function ntClientes(){
+  const vistos=new Set(), lista=[];
+  for(const c of allClientes||[]){ const n=(c.nombre||'').trim(); if(n&&!vistos.has(n.toLowerCase())){ vistos.add(n.toLowerCase()); lista.push({id:c._id||'',nombre:n,codigo:c.codigo||''}); } }
+  for(const t of allTrabajos||[]){ const n=(t.cliente||'').trim(); if(n&&!vistos.has(n.toLowerCase())){ vistos.add(n.toLowerCase()); lista.push({id:'',nombre:n,codigo:''}); } }
+  return lista;
+}
+const ntNorm=x=>(x||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 function filtrarClientes(q){
-  const drop = document.getElementById('t-cliente-drop');
-  drop.style.display = '';
-  const matches = (allClientes||[]).filter(c => c.nombre.toLowerCase().includes(q.toLowerCase())).slice(0, 8);
-  renderClienteDrop(matches);
+  document.getElementById('t-cliente-id').value=''; document.getElementById('t-cliente-nombre').value='';
+  const drop=document.getElementById('t-cliente-drop'); drop.style.display='';
+  renderClienteDrop(ntClientes().filter(c=>ntNorm(c.nombre).includes(ntNorm(q))).slice(0,6), q);
 }
 function mostrarDropClientes(){
-  const drop = document.getElementById('t-cliente-drop');
-  drop.style.display = '';
-  renderClienteDrop((allClientes||[]).slice(0, 8));
+  const drop=document.getElementById('t-cliente-drop'); drop.style.display='';
+  const q=document.getElementById('t-cliente-input').value;
+  renderClienteDrop(ntClientes().filter(c=>ntNorm(c.nombre).includes(ntNorm(q))).slice(0,6), q);
 }
-function renderClienteDrop(list){
-  const drop = document.getElementById('t-cliente-drop');
-  drop.innerHTML = list.map(c =>
-    `<div onclick="seleccionarCliente('${c._id}','${esc(escJs(c.nombre||''))}')"
-      style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)"
-      onmouseover="this.style.background='var(--sb)'" onmouseout="this.style.background=''">
-      ${esc(c.nombre)} <span style="color:var(--muted);font-size:11px">${esc(c.codigo||'')}</span>
-    </div>`
-  ).join('') +
-  `<div onclick="abrirCrearCliente()"
-    style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--ember);font-weight:500"
-    onmouseover="this.style.background='var(--sb)'" onmouseout="this.style.background=''">＋ Nuevo cliente</div>`;
+function renderClienteDrop(list,q=''){
+  const ini=n=>n.split(/\s+/).slice(0,2).map(p=>p[0]||'').join('').toUpperCase();
+  document.getElementById('t-cliente-drop').innerHTML=
+    (list.length||!q?'':'<div class="nt-vacio">No hay clientes con ese nombre</div>')+
+    list.map(c=>`<div class="nt-op" onclick="seleccionarCliente('${escJs(c.id)}','${esc(escJs(c.nombre))}')"><span class="nt-av">${esc(ini(c.nombre))}</span>${esc(c.nombre)}<small>${esc(c.codigo||'De tus trabajos')}</small></div>`).join('')+
+    `<div class="nt-op nuevo" onclick="abrirCrearCliente()">＋ Nuevo cliente${q?' “'+esc(q)+'”':''}</div>`;
 }
 function seleccionarCliente(id, nombre){
   document.getElementById('t-cliente-input').value = nombre;
   document.getElementById('t-cliente-id').value = id;
   document.getElementById('t-cliente-nombre').value = nombre;
   document.getElementById('t-cliente-drop').style.display = 'none';
+  ntPreview();
 }
 function abrirCrearCliente(){
   document.getElementById('t-cliente-drop').style.display = 'none';
@@ -2158,7 +2253,7 @@ async function guardarTrabajo(e){
   e.preventDefault();
   const svc = document.getElementById('t-servicio').value;
   const g = SVC_GRUPO[svc];
-  if (!g) { toast('Selecciona un tipo de servicio','err'); return; }
+  if (!g) { toast(ntTipo ? 'Elige el servicio' : 'Elige el tipo de trabajo','err'); return; }
   const clienteNombre = document.getElementById('t-cliente-nombre').value || document.getElementById('t-cliente-input').value;
   if (!clienteNombre) { toast('Selecciona un cliente','err'); return; }
   const datos = {
@@ -2216,6 +2311,7 @@ async function guardarTrabajo(e){
     datos.fecha = datos.fechaEntrega || new Date().toISOString().slice(0,10);
     if (!datos.monto) { toast('Completa el monto','err'); return; }
   }
+  if (g !== 'B' && Number(datos.anticipo||0) > Number(datos.monto||0)) { toast('El anticipo no puede ser mayor que el monto','err'); return; }
   const r = await api('/api/trabajos', { method:'POST', body: JSON.stringify(datos) });
   if (r.ok) { clearTrabajoForm(); toast('✓ Trabajo registrado'); nav('trabajos'); }
   else toast(r.error || 'Error al guardar','err');
@@ -2235,30 +2331,79 @@ function clearTrabajoForm(){
     if (a) a.value = '0';
   });
   document.getElementById('t-notas-wrap').style.display = 'none';
+  document.getElementById('t-servicio').value = '';
+  ntTipo = ''; ntPintarTipos(); ntPreview();
 }
 
+// Trabajos (igual que la app): tarjetas con foco que sigue al cursor; Cobrado y
+// Por cobrar salen de pagos reales (quincenas, clases, anticipos) y los
+// clientes pausados o cancelados no deben nada.
+let ptTipo='', ptEst='';
+const ptGrupo=t=>t.grupo||SVC_GRUPO[t.servicio]||'A';
+const ptRel=t=>(allClienteEstados.find(e=>e.nombre===t.cliente)?.estado??t.estadoContrato??'activo').toLowerCase();
+const ptEsContrato=t=>ptGrupo(t)==='B'||t.servicio==='Clases'||(t.sesiones||[]).length>0;
+function ptPeriodoActual(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+function ptCobrado(t){
+  if(ptGrupo(t)==='B') return (t.quincenas||[]).filter(q=>q.estado==='pagado').reduce((a,q)=>a+(Number(q.monto)||0),0);
+  if((t.sesiones||[]).length) return t.sesiones.filter(x=>x.estado==='pagado').reduce((a,x)=>a+(Number(x.monto)||0),0);
+  const m=Number(t.monto)||0;
+  if(t.estado==='pagado') return m;
+  return Math.max(0,m-(t.saldo==null||t.saldo===''?m:Number(t.saldo)||0));
+}
+function ptPorCobrar(t){
+  if(ptEsContrato(t)){
+    if(ptRel(t)!=='activo') return 0;
+    if(ptGrupo(t)==='B'||(t.sesiones||[]).length) return cobrosPendientes(ptPeriodoActual(),[t]).reduce((a,c)=>a+c.monto,0);
+  }
+  return t.estado==='pagado'?0:Math.max(0,Number(t.saldo)||0);
+}
+function ptSituacion(t){ if(ptEsContrato(t)&&ptRel(t)!=='activo') return 'inactivo'; return ptPorCobrar(t)>0?'cobrar':'aldia'; }
+function ptDia(iso){ const d=new Date(String(iso||'').slice(0,10)+'T12:00:00'); return isNaN(d)?fmtFecha(iso):d.toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'}).replace(/[.,]/g,''); }
+function ptFoco(e,el){ const r=el.getBoundingClientRect(); el.style.setProperty('--x',(e.clientX-r.left)+'px'); el.style.setProperty('--y',(e.clientY-r.top)+'px'); }
+function ptFocoFuera(el){ el.style.removeProperty('--x'); el.style.removeProperty('--y'); }
+function ptEstado(t){
+  if(ptGrupo(t)==='B'||t.servicio==='Clases'){ const r=ptRel(t); return [ESTADO_CLIENTE_LABEL[r]||r, r==='activo'?'var(--pf-exito)':r==='pausado'?'var(--pf-aviso)':'var(--pf-error)']; }
+  return t.estado==='pagado'?['Pagado','var(--pf-exito)']:['Pendiente','var(--pf-aviso)'];
+}
+function ptSiguiente(t){
+  const ses=t.sesiones||[], B=ptGrupo(t)==='B', rel=ptRel(t);
+  if((B||ses.length)&&rel!=='activo') return ['Contrato', rel==='pausado'?'en pausa':'cancelado'];
+  if(ses.length){
+    const p=ses.filter(x=>!['pagado','oculta','cancelado'].includes(x.estado)).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''))[0];
+    return p?['Próxima clase', ptDia(p.fecha)+' · '+pdDinero(p.monto)]:['Clases','todas pagadas ✓'];
+  }
+  if(B){ const d=ptPorCobrar(t); return d>0?['Por cobrar este mes',pdDinero(d)]:['Este mes','al día ✓']; }
+  const s=ptPorCobrar(t); if(s<=0) return ['Cobrado','completo ✓'];
+  const f=t.fechaEntrega||t.fecha; return ['Falta cobrar', pdDinero(s)+(f?' · '+ptDia(f):'')];
+}
+function ptTarjeta(t){
+  const ses=t.sesiones||[], B=ptGrupo(t)==='B';
+  const [etq,col]=ptEstado(t), sig=ptSiguiente(t);
+  const det=ses.length?`${t.servicio} · ${ses.length} sesion${ses.length===1?'':'es'}`:B?`${t.servicio} · Mensual`:`${t.servicio} · ${fmtFecha(t.fecha)}`;
+  const de=B?`cobrado · ${pdDinero(t.pagoMensual??t.monto)} al mes`:ses.length?'de '+pdDinero(ses.reduce((a,x)=>a+(Number(x.monto)||0),0)):'de '+pdDinero(t.monto);
+  return `<div class="foco pt-card" style="--c:${col}" onclick="openTrabajo('${escJs(t.id)}')" onpointermove="ptFoco(event,this)" onpointerleave="ptFocoFuera(this)">
+    <span class="pt-pill">${esc(etq)}</span><div class="n">${esc(t.cliente)}</div><div class="d">${esc(det)}</div>
+    <div class="m"><b>${pdDinero(ptCobrado(t))}</b><small>${esc(de)}</small></div><div class="s">${esc(sig[0])} · <em>${esc(sig[1])}</em></div></div>`;
+}
+function ptElegir(tipo,v){ if(tipo==='g') ptTipo=v; else ptEst=v; ptPintar(); }
+function ptPintar(){
+  const q=ntNorm(document.getElementById('pt-q')?.value||'');
+  const fil=allTrabajos.filter(t=>(!ptTipo||ptGrupo(t)===ptTipo)&&(!ptEst||ptSituacion(t)===ptEst)&&(!q||ntNorm(t.cliente).includes(q)||ntNorm(t.servicio).includes(q)));
+  document.getElementById('pt-sub').textContent=`${fil.length} trabajo${fil.length===1?'':'s'}`+(fil.length!==allTrabajos.length?` de ${allTrabajos.length}`:'');
+  const cob=fil.reduce((a,t)=>a+ptCobrado(t),0), por=fil.reduce((a,t)=>a+ptPorCobrar(t),0);
+  const conSaldo=fil.filter(t=>ptSituacion(t)==='cobrar').length, enCurso=fil.filter(t=>ptSituacion(t)!=='inactivo').length;
+  const tot=[['Cobrado',pdDinero(cob),'Lo que ya te pagaron','var(--pf-exito)'],['Por cobrar',pdDinero(por),conSaldo?`${conSaldo} trabajo${conSaldo===1?'':'s'} con pago pendiente`:'Nadie te debe ahora',por>0?'var(--pf-aviso)':'var(--pf-suave)'],['En curso',String(enCurso),enCurso===fil.length?'Todos activos':`${fil.length-enCurso} en pausa o cancelado`,'var(--pf-marca)']];
+  document.getElementById('pt-tot').innerHTML=tot.map(([a,b,c,col])=>`<div class="foco pt-t" style="--c:${col}" onpointermove="ptFoco(event,this)" onpointerleave="ptFocoFuera(this)"><i></i><div><small>${a}</small><b>${b}</b><em>${c}</em></div></div>`).join('');
+  const grupos=['A','B','C','D','E'].map(g=>[g,allTrabajos.filter(t=>ptGrupo(t)===g).length]).filter(([,n])=>n>0);
+  document.getElementById('pt-tipos').innerHTML=[['','Todos']].concat(grupos.map(([g,n])=>[g,`${GRUPO_NOMBRES[g]} ${n}`])).map(([v,l])=>`<button class="${ptTipo===v?'on':''}" onclick="ptElegir('g','${v}')">${l}</button>`).join('');
+  document.getElementById('pt-est').innerHTML=[['','Todos'],['cobrar','Por cobrar'],['aldia','Al día'],['inactivo','Pausados y cancelados']].map(([v,l])=>`<button class="${ptEst===v?'on':''}" onclick="ptElegir('e','${v}')">${l}</button>`).join('');
+  document.getElementById('pt-grid').innerHTML=fil.length?fil.map(ptTarjeta).join(''):`<div class="pt-vacio" style="grid-column:1/-1">${allTrabajos.length?'Nada coincide con los filtros. Prueba con otro filtro o búsqueda.':'Aún no hay trabajos. Cuando registres uno aparecerá aquí.'}</div>`;
+}
 async function loadTrabajos(){
-  allTrabajos = await api('/api/trabajos');
-  allClienteEstados = await api('/api/clientes-estados');
-  initMesFilter('fil-mes-t',allTrabajos,'fecha');
-  const mes=document.getElementById('fil-mes-t').value;
-  const svc=document.getElementById('fil-svc-t').value;
-  const est=document.getElementById('fil-estado-t').value;
-  let fil=allTrabajos;
-  if(mes) fil=fil.filter(t=>{const ma=mesAnioDeFecha(t.fecha);return ma&&(ma.mes+'_'+ma.anio)===mes;});
-  if(svc) fil=fil.filter(t=>(t.grupo||SVC_GRUPO[t.servicio]||'')===svc);
-  if(est) fil=fil.filter(t=>t.estado===est);
-  const tbody=document.getElementById('trabajos-tbody');
-  tbody.innerHTML=fil.length?fil.map(t=>{
-    const g=t.grupo||SVC_GRUPO[t.servicio]||'';
-    const esRecurrente=t.servicio==='Clases';
-    const badge=g?`<span style="font-size:10px;color:var(--muted)"> · ${GRUPO_NOMBRES[g]||g}</span>`:'';
-    const estadoHtml=(g==='B'||esRecurrente)
-      ? (()=>{ const er=estadoClienteDe(t.cliente); return `<span class="pill ${ESTADO_CLIENTE_PILL[er]}">${ESTADO_CLIENTE_LABEL[er]}</span>`; })()
-      : `<span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span>`;
-    return `<tr onclick="openTrabajo('${t.id}')"><td>${esc(t.cliente)}</td><td>${esc(t.servicio)}${badge}</td><td>${fmtFecha(t.fecha)}</td><td>$${parseFloat(t.monto||0).toFixed(2)}</td><td>$${(t.servicio==='Clases'?(t.sesiones||[]).filter(s=>s.estado==='pagado').reduce((a,s)=>a+(Number(s.monto)||0),0):parseFloat(t.anticipo||0)).toFixed(2)}${t.servicio==='Clases'?'<small style="display:block;color:var(--muted)">Pagos de sesiones</small>':''}</td><td style="color:var(--yellow)">$${parseFloat(t.saldo||0).toFixed(2)}</td><td>${estadoHtml}</td></tr>`;
-  }).join(''):
-    '<tr><td colspan="7" class="empty">No hay trabajos</td></tr>';
+  if(allTrabajos.length) ptPintar();
+  [allTrabajos, allClienteEstados] = await Promise.all([api('/api/trabajos'), api('/api/clientes-estados')]);
+  allTrabajos=allTrabajos||[]; allClienteEstados=allClienteEstados||[];
+  ptPintar();
 }
 let _panelTrabajoId = null;
 async function openTrabajo(id){

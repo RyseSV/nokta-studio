@@ -238,11 +238,21 @@ private func frase(_ a: NoktaAlerta) -> String {
         let dias = d.diasRestantes ?? 0
         return "La galería de \(d.nombre ?? "un cliente") vence en \(dias) día\(dias == 1 ? "" : "s")"
     case "evento_proximo":
-        let hora = (d.hora ?? "").isEmpty ? "" : " a las \(d.hora!)"
-        return "\(d.cliente ?? "Tienes un evento") · \(d.tipo ?? "evento") \(diaRelativo(d.fecha))\(hora)"
+        return "\(d.cliente ?? "Tienes un evento") · \(d.tipo ?? "evento") \(diaRelativo(d.fecha))"
     case "descarga": return "\(d.nombre ?? "Un cliente") descargó su galería"
     default: return alertaTipo(a).titulo
     }
+}
+
+/// Second line of the featured card — adds what the title doesn't say
+/// instead of repeating it.
+private func detalleDestacada(_ a: NoktaAlerta) -> String {
+    let d = a.datos
+    if a.tipo == "evento_proximo" {
+        let hora = (d.hora ?? "").isEmpty ? "Todo el día" : "A las \(d.hora!)"
+        return hora + " · " + FechaUtil.fechaCorta(d.fecha)
+    }
+    return descripcion(a)
 }
 
 /// "hoy", "mañana" or a short date for a "YYYY-MM-DD".
@@ -295,7 +305,7 @@ private struct AlertaDestacada: View {
             Text(urgente ? "URGENTE" : "LO MÁS IMPORTANTE").font(NoktaFont.poppins(10, .medium)).tracking(2).foregroundStyle(c)
             Text(frase(alerta)).font(NoktaFont.poppins(compacto ? 20 : 26, .light)).tracking(-0.7).foregroundStyle(NoktaTheme.texto)
                 .fixedSize(horizontal: false, vertical: true)
-            Text(descripcion(alerta) + " · " + haceCuanto(alerta.fecha))
+            Text(detalleDestacada(alerta) + " · " + haceCuanto(alerta.fecha))
                 .font(NoktaFont.poppins(12)).foregroundStyle(NoktaTheme.textoSuave)
         }
         let botones = HStack(spacing: 8) {
@@ -312,12 +322,14 @@ private struct AlertaDestacada: View {
         }
         .padding(compacto ? 20 : 28)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // The glow lives in an overlay of the fill, so it can't grow the card
+        // (it used to stretch the background into a big empty box).
         .background {
-            ZStack(alignment: .topTrailing) {
-                forma.fill(NoktaTheme.superficie)
-                Circle().fill(c.opacity(0.18)).frame(width: 360, height: 360).blur(radius: 90).offset(x: 120, y: -200)
-            }
-            .clipShape(forma)
+            forma.fill(NoktaTheme.superficie)
+                .overlay(alignment: .topTrailing) {
+                    Circle().fill(c.opacity(0.18)).frame(width: 360, height: 360).blur(radius: 90).offset(x: 120, y: -200)
+                }
+                .clipShape(forma)
         }
         .overlay(forma.strokeBorder(c.opacity(encima ? 0.7 : 0.35), lineWidth: 1))
         .shadow(color: c.opacity(encima ? 0.2 : 0), radius: 20, y: 8)

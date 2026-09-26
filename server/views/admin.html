@@ -1973,7 +1973,7 @@ function paFrase(a){
   if(a.tipo==='quincena_vencida') return d.cliente?`${esc(d.cliente)} tiene una quincena sin pagar`:'Hay una quincena sin pagar';
   if(a.tipo==='pago_pendiente') return `${esc(d.cliente||'Un cliente')} te debe ${pdDinero(parseFloat(d.saldo||0))}`;
   if(a.tipo==='link_venciendo') return `La galería de ${esc(d.nombre||'un cliente')} vence en ${d.diasRestantes} día${d.diasRestantes!==1?'s':''}`;
-  if(a.tipo==='evento_proximo') return `${esc(d.cliente||'Tienes un evento')} · ${esc(d.tipo||'evento')} ${paDia(d.fecha)}${d.hora?' a las '+esc(d.hora):''}`;
+  if(a.tipo==='evento_proximo') return `${esc(d.cliente||'Tienes un evento')} · ${esc(d.tipo||'evento')} ${paDia(d.fecha)}`;
   if(a.tipo==='descarga') return `${esc(d.nombre||'Un cliente')} descargó su galería`;
   return esc((PA_TIPO[a.tipo]||{}).t||a.tipo);
 }
@@ -2010,7 +2010,7 @@ function paPintar(){
   const h=orden[0], th=PA_TIPO[h.tipo]||{ic:'campana',c:'var(--pf-suave)',t:h.tipo}, ah=paAccion(h);
   let html=`<div class="pa-hero pd-in" style="--i:1;--c:${th.c}" data-id="${esc(h.id)}">
     <span class="pa-ic"><svg><use href="#i-${th.ic}"/></svg></span>
-    <div class="tx"><small>${paUrgencia(h)<=2?'URGENTE':'LO MÁS IMPORTANTE'}</small><h2>${paFrase(h)}</h2><p>${paDesc(h)} · ${paHace(h.fecha)}</p></div>
+    <div class="tx"><small>${paUrgencia(h)<=2?'URGENTE':'LO MÁS IMPORTANTE'}</small><h2>${paFrase(h)}</h2><p>${h.tipo==='evento_proximo'?`${h.datos?.hora?'A las '+esc(h.datos.hora):'Todo el día'} · ${fmtFecha(h.datos?.fecha)}`:paDesc(h)} · ${paHace(h.fecha)}</p></div>
     <div class="acc">${ah?`<button class="pa-b1" onclick="${ah.on}">${ah.t}</button>`:''}<button class="pa-b2" onclick="leerAlerta('${esc(escJs(h.id))}',this)"><svg><use href="#i-check"/></svg>Listo</button></div>
   </div>`;
   if(orden.length>1){

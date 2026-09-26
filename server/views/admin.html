@@ -2585,20 +2585,72 @@ async function tdEditarQ(trabajoId, periodo, q, monto){
 document.addEventListener('click', e=>{ document.querySelectorAll('.td-mas[open]').forEach(d=>{ if(!d.contains(e.target)) d.open=false; }); });
 
 // Recibo de una clase pagada — mismo diseño que el de quincenas (y que la app).
+// ═══════════════════════════════════════════════════════════
+// PDFs "tarjeta cálida" (2026-09): fondo crema, documento como tarjeta
+// blanca con franja naranja, datos en bloques y total grande. Mismo diseño
+// que PDFTemplates.calida() en la app.
+// ═══════════════════════════════════════════════════════════
+const CALIDA_CSS=`*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#F3EEE6;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:'Poppins',-apple-system,'Helvetica Neue',sans-serif;color:#1C1C1A}
+@page{size:A4;margin:0}
+.hoja{background:#F3EEE6;padding:48px;max-width:794px;margin:0 auto}
+.card{background:#fff;border-radius:22px;padding:44px 44px 40px 54px;position:relative;overflow:hidden;box-shadow:0 14px 40px -18px rgba(60,40,20,.28)}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:9px;background:linear-gradient(#D0673A,#B85228)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.top img{height:44px;width:auto;display:block}
+.chip{font-size:10px;font-weight:600;letter-spacing:.14em;padding:6px 14px;border-radius:99px;background:#F3EEE6;color:#B85228;white-space:nowrap}
+.chip.ok{background:#E4F2EA;color:#2E8B5A}
+h1{margin:40px 0 0;font-size:40px;font-weight:300;letter-spacing:-.04em;line-height:1.05}
+.num{font-size:12px;color:#999;margin-top:8px}
+.blocks{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:32px}
+.blk{background:#FAF7F2;border-radius:14px;padding:16px 18px}
+.blk small{display:block;font-size:9px;letter-spacing:.2em;color:#B85228;font-weight:600;margin-bottom:6px;text-transform:uppercase}
+.blk b{font-size:13.5px;font-weight:500}
+.blk span{display:block;font-size:11.5px;color:#888;margin-top:3px}
+table.lista{width:100%;border-collapse:collapse;margin-top:26px}
+table.lista th{font-size:9px;letter-spacing:.2em;color:#B85228;font-weight:600;text-transform:uppercase;text-align:left;padding:0 0 8px}
+table.lista th:last-child{text-align:right}
+table.lista td{font-size:13px;padding:12px 0;border-bottom:1px dashed #E6DFD4}
+table.lista td:first-child{color:#666}
+table.lista td:last-child{text-align:right;font-weight:500;color:#1C1C1A}
+.total{margin-top:22px;display:flex;justify-content:space-between;align-items:baseline}
+.total span{font-size:13px;color:#888}
+.total b{font-size:46px;font-weight:300;letter-spacing:-.05em}
+.total b i{font-style:normal;color:#B85228}
+.nota{margin-top:26px;padding:14px 16px;background:#FAF7F2;border-radius:12px;font-size:11.5px;color:#555;line-height:1.6;white-space:pre-wrap}
+.nota strong{display:block;font-size:9px;letter-spacing:.2em;color:#B85228;text-transform:uppercase;margin-bottom:4px}
+.gracias{margin-top:28px;font-size:12.5px;color:#666}
+.puntos{position:absolute;right:-14px;bottom:-14px;width:150px;height:150px;background-image:radial-gradient(#B85228 18%,transparent 20%);background-size:16px 16px;opacity:.12;border-radius:50%}
+.pie{text-align:center;font-size:10px;color:#a89f92;margin-top:18px}
+.no-print{margin:28px auto 0;text-align:center}
+.no-print button{padding:11px 28px;background:#B85228;color:#fff;border:0;border-radius:99px;font:500 13px 'Poppins',sans-serif;cursor:pointer}
+@media print{.no-print{display:none}}`;
+const CALIDA_FUENTE='<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">';
+function calidaTotal(v){ const [e,d]=(Number(v)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}).split('.'); return `$${e}<i>.</i>${d}`; }
+function calidaBloque(t,p,sec){ return `<div class="blk"><small>${esc(t)}</small><b>${esc(p||'—')}</b>${sec?`<span>${esc(sec)}</span>`:''}</div>`; }
+function calidaTop(chip, ok, encabezado, numero){
+  const logo=location.origin+'/img/logo/nokta_lockup_color_transparent.png';
+  return `<div class="top"><img src="${esc(logo)}" alt="Nokta Studio" crossorigin="anonymous"><span class="chip${ok?' ok':''}">${esc(chip)}</span></div><h1>${esc(encabezado)}</h1><div class="num">${esc(numero)}</div>`;
+}
+function calidaPagina({titulo, chip, ok=false, encabezado, numero, contenido, pie='Nokta Studio · contacto@noktastudio.com', extraCSS='', cola=''}){
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${esc(titulo)}</title>${CALIDA_FUENTE}<style>${CALIDA_CSS}${extraCSS}</style></head><body>
+  <div class="hoja" id="hoja"><div class="card">${calidaTop(chip,ok,encabezado,numero)}${contenido}<i class="puntos"></i></div><div class="pie">${esc(pie)}</div></div>${cola}</body></html>`;
+}
+const CALIDA_IMPRIMIR='<div class="no-print"><button onclick="window.print()">Imprimir / Guardar PDF</button></div>';
+function calidaFechaLarga(v, conDia=true){ if(!v) return '—'; const day=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v)); const d=day?new Date(+day[1],+day[2]-1,+day[3]):new Date(v); return isNaN(d)?'—':d.toLocaleDateString('es-SV',conDia?{weekday:'long',day:'numeric',month:'long',year:'numeric'}:{day:'numeric',month:'long',year:'numeric'}); }
+
 function generarReciboSesion(trabajoId, sesionId){
   const t=allTrabajos.find(x=>x.id===trabajoId); if(!t) return;
   const vis=tdSesiones(t), s=vis.find(x=>x.id===sesionId); if(!s) return;
   const n=vis.indexOf(s)+1;
   const larga=v=>{ if(!v) return '—'; const day=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v)); const d=day?new Date(+day[1],+day[2]-1,+day[3]):new Date(v); return isNaN(d)?'—':d.toLocaleDateString('es-SV',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); };
-  const logoUrl=location.origin+'/img/logo/nokta_lockup_color_transparent.png';
   const num=String(s.fecha||'').slice(0,10).replace(/-/g,'')+'S'+n;
-  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Recibo · Clase ${n}</title>
-  <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Helvetica Neue',Arial,sans-serif;background:#fff;color:#1C1C1A;padding:60px;max-width:680px;margin:0 auto}.logo{height:58px;width:auto;display:block}.divider{border:0;border-top:2px solid #B85228;margin:28px 0 32px}h2{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#B85228;font-weight:600;margin-bottom:16px}table{width:100%;border-collapse:collapse;margin-bottom:32px}td{padding:10px 0;border-bottom:1px solid #f0ebe5;font-size:14px}td:first-child{color:#888;width:45%}td:last-child{font-weight:600;text-align:right}.total-row td{border-top:2px solid #B85228;border-bottom:none;padding-top:16px;font-size:18px}.total-row td:first-child{color:#1C1C1A;font-weight:700}.total-row td:last-child{color:#B85228}.footer{margin-top:60px;padding-top:24px;border-top:1px solid #e8e4df;font-size:11px;color:#aaa;text-align:center}@media print{body{padding:40px}.no-print{display:none}}</style></head><body>
-  <div style="display:flex;justify-content:space-between;align-items:flex-start"><img class="logo" src="${esc(logoUrl)}" alt="Nokta Studio"><div style="text-align:right"><div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.06em">Recibo de pago</div><div style="font-size:22px;font-weight:800;margin-top:4px">#${esc(num)}</div></div></div>
-  <hr class="divider"><h2>Detalle del servicio</h2>
-  <table><tr><td>Cliente</td><td>${esc(t.cliente)}</td></tr><tr><td>Servicio</td><td>${esc(t.servicio)}</td></tr><tr><td>Clase</td><td>${esc(larga(s.fecha))}</td></tr><tr><td>Sesión</td><td>${n} de ${vis.length}</td></tr><tr><td>Fecha de pago</td><td>${esc(larga(s.fechaPago))}</td></tr><tr class="total-row"><td>Total</td><td>$${(Number(s.monto)||0).toFixed(2)}</td></tr></table>
-  <div class="footer">Nokta Studio · contacto@noktastudio.com<br>Este documento es un comprobante interno de pago.</div>
-  <div class="no-print" style="margin-top:32px;text-align:center"><button onclick="window.print()" style="padding:10px 28px;background:#B85228;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer">Imprimir / Guardar PDF</button></div></body></html>`;
+  const html=calidaPagina({ titulo:`Recibo · Clase ${n}`, chip:'PAGADO', ok:true, encabezado:'Recibo de pago', numero:`#${num} · clase ${n} de ${vis.length}`,
+    contenido:`<div class="blocks">${calidaBloque('Cliente',t.cliente,'Servicio: '+t.servicio)}${calidaBloque('Clase',larga(s.fecha),`Sesión ${n} de ${vis.length}`)}</div>
+      <table class="lista"><tr><td>Fecha de pago</td><td>${esc(calidaFechaLarga(s.fechaPago,false))}</td></tr></table>
+      <div class="total"><span>Total</span><b>${calidaTotal(s.monto)}</b></div><div class="gracias">Gracias por confiar en Nokta. ✦</div>`,
+    cola:CALIDA_IMPRIMIR });
   const win=window.open('','_blank','width=720,height=900');
   if(!win){ toast('Permite las ventanas emergentes para abrir el recibo.','err'); return; }
   win.document.write(html); win.document.close();
@@ -3062,48 +3114,12 @@ function generarFacturaQ(trabajoId, periodo, q){
     const validDay = !day || (date.getFullYear()===Number(day[1]) && date.getMonth()===Number(day[2])-1 && date.getDate()===Number(day[3]));
     if(validDay && !Number.isNaN(date.getTime())) fechaPago = date.toLocaleDateString('es-SV',{day:'numeric',month:'long',year:'numeric'});
   }
-  const logoUrl = location.origin+'/img/logo/nokta_lockup_color_transparent.png';
   const cliente = allClientes.find(c=>c._id===t.clienteId)||{nombre:t.cliente,empresa:t.empresa||''};
-  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Recibo · ${mesNombre} Q${q}</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Helvetica Neue',Arial,sans-serif;background:#fff;color:#1C1C1A;padding:60px;max-width:680px;margin:0 auto}
-    .logo{height:58px;width:auto;display:block}
-    .divider{border:0;border-top:2px solid #B85228;margin:28px 0 32px}
-    h2{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#B85228;font-weight:600;margin-bottom:16px}
-    table{width:100%;border-collapse:collapse;margin-bottom:32px}
-    td{padding:10px 0;border-bottom:1px solid #f0ebe5;font-size:14px}
-    td:first-child{color:#888;width:45%}
-    td:last-child{font-weight:600;text-align:right}
-    .total-row td{border-top:2px solid #B85228;border-bottom:none;padding-top:16px;font-size:18px}
-    .total-row td:first-child{color:#1C1C1A;font-weight:700}
-    .total-row td:last-child{color:#B85228}
-    .footer{margin-top:60px;padding-top:24px;border-top:1px solid #e8e4df;font-size:11px;color:#aaa;text-align:center}
-    @media print{body{padding:40px}.no-print{display:none}}
-  </style></head><body>
-  <div style="display:flex;justify-content:space-between;align-items:flex-start">
-    <img class="logo" src="${esc(logoUrl)}" alt="Nokta Studio">
-    <div style="text-align:right">
-      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.06em">Recibo de pago</div>
-      <div style="font-size:22px;font-weight:800;margin-top:4px">#${yr}${mn}Q${q}</div>
-    </div>
-  </div>
-  <hr class="divider">
-  <h2>Detalle del servicio</h2>
-  <table>
-    <tr><td>Cliente</td><td>${esc(cliente.nombre)}</td></tr>
-    ${cliente.empresa?`<tr><td>Empresa</td><td>${esc(cliente.empresa)}</td></tr>`:''}
-    <tr><td>Servicio</td><td>${esc(t.servicio)}</td></tr>
-    <tr><td>Periodo</td><td>${mesNombre} ${yr} · del ${rango} de ${mesNombre}</td></tr>
-    <tr><td>Quincena</td><td>Q${q} de 2</td></tr>
-    <tr><td>Fecha de pago</td><td>${fechaPago}</td></tr>
-    <tr class="total-row"><td>Total</td><td>$${monto}</td></tr>
-  </table>
-  <div class="footer">Nokta Studio · contacto@noktastudio.com<br>Este documento es un comprobante interno de pago.</div>
-  <div class="no-print" style="margin-top:32px;text-align:center">
-    <button onclick="window.print()" style="padding:10px 28px;background:#B85228;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer">Imprimir / Guardar PDF</button>
-  </div>
-  </body></html>`;
+  const html = calidaPagina({ titulo:`Recibo · ${mesNombre} Q${q}`, chip:'PAGADO', ok:true, encabezado:'Recibo de pago', numero:`#${yr}${mn}Q${q} · ${mesNombre} ${yr}`,
+    contenido:`<div class="blocks">${calidaBloque('Cliente',cliente.nombre,[cliente.empresa,t.servicio].filter(Boolean).join(' · '))}${calidaBloque('Periodo',`${mesNombre} ${yr}`,`del ${rango} · quincena ${q} de 2`)}</div>
+      <table class="lista"><tr><td>Fecha de pago</td><td>${esc(fechaPago)}</td></tr><tr><td>Servicio</td><td>${esc(t.servicio)}</td></tr></table>
+      <div class="total"><span>Total</span><b>${calidaTotal(monto)}</b></div><div class="gracias">Gracias por confiar en Nokta. ✦</div>`,
+    cola:CALIDA_IMPRIMIR });
   const win = window.open('','_blank','width=720,height=900');
   if(!win){ toast('Permite las ventanas emergentes para abrir el recibo.','err'); return; }
   win.document.write(html);
@@ -3154,12 +3170,8 @@ function contratoHTML(d){
   const mora = Number.isFinite(Number(d.mora)) ? Number(d.mora) : 0;
 
   const cuerpo = `
-    <div class="mast">
-      <img src="${esc(logoUrl)}" alt="Nokta Studio" style="height:30px">
-      <div class="tag">Contrato de prestación de servicios</div>
-    </div>
-    <div class="title">Contrato de Prestación de Servicios</div>
-    <p class="subtitle">Nokta Studio — Fotografía · Video · Marketing · Gestión de redes</p>
+    ${calidaTop('CONTRATO', false, 'Contrato de prestación de servicios', `${d.clienteNombre||''} · ${d.ciudad||''}, ${d.fechaContrato||''}`)}
+    <p class="subtitle">Nokta Studio — agencia creativa · Fotografía · Video · Marketing · Gestión de redes</p>
     <p class="intro">En ${esc(d.ciudad)}, El Salvador, el ${esc(d.fechaContrato)}, se celebra el presente
     contrato de prestación de servicios (en adelante, el "Contrato") entre <strong>Nokta Studio</strong>
     (en adelante, el "Prestador de Servicios") y el Cliente identificado a continuación:</p>
@@ -3215,20 +3227,12 @@ function contratoHTML(d){
       <div class="sign-box"><div class="who">Por Nokta Studio</div><div class="line">Nombre: ______________________</div><div class="line">Fecha: ______________________</div></div>
       <div class="sign-box"><div class="who">Por el Cliente</div><div class="line">Nombre: ______________________</div><div class="line">Fecha: ______________________</div></div>
     </div>
-    <div class="foot">Nokta Studio · contacto@noktastudio.com</div>
-    <div class="no-print" style="margin-top:32px;text-align:center">
-      <button onclick="window.print()" style="padding:10px 28px;background:#B85228;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer">Imprimir / Guardar PDF</button>
-    </div>`;
+    `;
 
-  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Contrato · ${esc(d.clienteNombre)}</title>
-  <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,'Helvetica Neue',sans-serif;color:#2A2620;background:#FAF7F2;padding:44px 52px}
-  .sheet{max-width:720px;margin:0 auto}
-  .mast{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-bottom:18px;margin-bottom:6px;border-bottom:1px solid #E6DFD3}
-  .tag{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#8B8378}
-  .title{text-align:center;margin:26px 0 6px;font-size:24px;font-weight:700}
-  .subtitle{text-align:center;color:#8B8378;font-style:italic;font-size:13px;margin:0 0 26px}
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Contrato · ${esc(d.clienteNombre)}</title>${CALIDA_FUENTE}
+  <style>${CALIDA_CSS}
+  .card{color:#2A2620}
+  .subtitle{color:#8B8378;font-size:12px;margin:14px 0 26px}
   .intro{font-size:12.5px;line-height:1.7;margin-bottom:16px}
   table.datos{width:100%;border-collapse:collapse;margin-bottom:22px}
   table.datos td{padding:5px 0;font-size:12px;border-bottom:1px solid #EFE9DE}
@@ -3250,9 +3254,7 @@ function contratoHTML(d){
   .sign-box{border-top:1.5px solid #2A2620;padding-top:8px}
   .sign-box .who{font-weight:700;font-size:12px;margin-bottom:8px}
   .sign-box .line{font-size:11.5px;color:#8B8378;margin-bottom:6px}
-  .foot{margin-top:44px;padding-top:14px;border-top:1px solid #E6DFD3;text-align:center;font-size:10px;color:#8B8378}
-  @media print{.no-print{display:none}}
-  </style></head><body><div class="sheet">${cuerpo}</div></body></html>`;
+  </style></head><body><div class="hoja"><div class="card">${cuerpo}<i class="puntos"></i></div><div class="pie">Nokta Studio · contacto@noktastudio.com</div>${CALIDA_IMPRIMIR}</div></body></html>`;
 }
 
 // Formato largo ("20 de septiembre de 2026"), igual al que usa la app nativa
@@ -3456,91 +3458,30 @@ function buildDocHTML(tipo, numero){
   const total=servicios.reduce((s,sv)=>s+sv.monto,0);
   const titulo=tipo==='cotizacion'?'Cotización':'Recibo de Pago';
   const numLabel=numero||(tipo==='cotizacion'?'NK-COT-###':'NK-REC-###');
-  const logoUrl=location.origin+'/img/logo/nokta_lockup_color_transparent.png';
   const filename=escJs(`${numLabel.replace(/###/,'001')}_${(nombre||'cliente').replace(/\s+/g,'-')}.pdf`);
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${titulo} ${numLabel}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Poppins',sans-serif;color:#1C1C1A;background:#fff;padding:0}
-    #doc-wrap{padding:40px 48px;max-width:794px;margin:0 auto}
-    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
-    .logo img{height:44px;width:auto;max-width:120px}
-    .doc-meta{text-align:right}
-    .doc-tipo{font-size:20px;font-weight:700;color:#1C1C1A;margin-bottom:4px}
-    .doc-num{font-size:12px;color:#B85228;font-weight:600;letter-spacing:1px}
-    .doc-date{font-size:11px;color:#888;margin-top:2px}
-    .divider{border:none;border-top:2px solid #B85228;margin:20px 0}
-    .divider-light{border:none;border-top:1px solid #e8e4df;margin:16px 0}
-    .section-label{font-size:9px;letter-spacing:2px;color:#B85228;font-weight:600;margin-bottom:8px;text-transform:uppercase}
-    .client-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;margin-bottom:6px}
-    .field{font-size:12px;color:#1C1C1A}
-    .field span{color:#888;font-size:10px;display:block;letter-spacing:1px;text-transform:uppercase;margin-bottom:1px}
-    table{width:100%;border-collapse:collapse;margin-top:6px}
-    thead tr{border-bottom:2px solid #B85228}
-    th{font-size:10px;letter-spacing:1px;color:#888;text-transform:uppercase;padding:7px 0;text-align:left;font-weight:500}
-    th:last-child{text-align:right}
-    td{padding:8px 0;font-size:12px;border-bottom:1px solid #f0ebe5}
-    td:last-child{text-align:right}
-    .total-row td{border-top:2px solid #B85228;border-bottom:none;padding-top:12px;font-weight:700;font-size:14px}
-    .total-row td:last-child{color:#B85228;font-size:16px}
-    .notas{margin-top:24px;padding:14px;background:#faf8f5;border-left:3px solid #B85228;font-size:11px;color:#555;line-height:1.6}
-    .notas strong{display:block;font-size:10px;letter-spacing:1px;color:#B85228;text-transform:uppercase;margin-bottom:4px}
-    .footer{margin-top:40px;padding-top:12px;border-top:1px solid #e8e4df;display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#bbb}
-    #loading{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;gap:12px}
-    #loading .spinner{width:36px;height:36px;border:3px solid #f0ebe5;border-top-color:#B85228;border-radius:50%;animation:spin .8s linear infinite}
-    #loading p{font-size:13px;color:#888}
-    @keyframes spin{to{transform:rotate(360deg)}}
-  </style></head><body>
-  <div id="loading"><div class="spinner"></div><p>Generando PDF...</p></div>
-  <div id="doc-wrap">
-  <div class="header">
-    <div class="logo"><img src="${logoUrl}" alt="Nokta Studio" crossorigin="anonymous" onerror="this.outerHTML='<div style=\\'font-size:20px;font-weight:700\\'>nokta<span style=\\'color:#B85228\\'>.</span></div><div style=\\'font-size:9px;letter-spacing:3px;color:#888;margin-top:2px\\'>NOKTA STUDIO</div>'"></div>
-    <div class="doc-meta">
-      <div class="doc-tipo">${titulo}</div>
-      <div class="doc-num">${numLabel}</div>
-      <div class="doc-date">Emisión: ${fechaEm||'—'}${fechaVal?' · Válido hasta: '+fechaVal:''}</div>
-    </div>
-  </div>
-  <hr class="divider">
-  <div class="section-label">Cliente</div>
-  <div class="client-grid">
-    <div class="field"><span>Nombre</span>${esc(nombre||'—')}</div>
-    ${empresa?`<div class="field"><span>Empresa</span>${esc(empresa)}</div>`:''}
-    ${tel?`<div class="field"><span>Teléfono</span>${esc(tel)}</div>`:''}
-    ${email?`<div class="field"><span>Email</span>${esc(email)}</div>`:''}
-  </div>
-  <hr class="divider-light">
-  <div class="section-label">Servicios</div>
-  <table>
-    <thead><tr><th>Descripción</th><th style="text-align:right">Monto</th></tr></thead>
-    <tbody>
-      ${servicios.map(s=>`<tr><td>${esc(s.descripcion||'—')}</td><td>$${s.monto.toFixed(2)}</td></tr>`).join('')}
-      <tr class="total-row"><td>Total</td><td>$${total.toFixed(2)}</td></tr>
-    </tbody>
-  </table>
-  ${notas?`<div class="notas"><strong>Notas y condiciones</strong>${esc(notas)}</div>`:''}
-  <div class="footer">
-    <span>Nokta Studio</span>
-    <span>Generado el ${new Date().toLocaleDateString('es',{day:'2-digit',month:'long',year:'numeric'})}</span>
-  </div>
-  </div>
+  const esCot=tipo==='cotizacion';
+  const contacto=[empresa,email,tel].filter(Boolean);
+  const detalle=fechaVal?`Válida hasta ${fechaVal}`:(contacto.slice(1).join(' · ')||`${servicios.length} concepto${servicios.length===1?'':'s'}`);
+  const contenido=`<div class="blocks">${calidaBloque(esCot?'Para':'Cliente',nombre||'—',contacto[0]||'')}${calidaBloque('Detalles','Emitido '+(fechaEm||'—'),detalle)}</div>
+    <table class="lista"><tr><th>Concepto</th><th>Monto</th></tr>${servicios.map(sv=>`<tr><td>${esc(sv.descripcion||'—')}</td><td>$${sv.monto.toFixed(2)}</td></tr>`).join('')}</table>
+    <div class="total"><span>Total</span><b>${calidaTotal(total)}</b></div>
+    ${notas?`<div class="nota"><strong>Notas y condiciones</strong>${esc(notas)}</div>`:''}
+    <div class="gracias">${esCot?'Gracias por considerar a Nokta. Quedamos atentos. ✦':'Gracias por confiar en Nokta. ✦'}</div>`;
+  const cola=`<div id="loading" style="position:fixed;inset:0;background:#F3EEE6;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;gap:12px"><div style="width:36px;height:36px;border:3px solid #e6dfd4;border-top-color:#B85228;border-radius:50%;animation:spin .8s linear infinite"></div><p style="font-size:13px;color:#888">Generando PDF...</p></div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
   <script>
   window.onload=function(){
-    var el=document.getElementById('doc-wrap');
-    html2pdf().set({
-      margin:[8,10,8,10],
-      filename:'${filename}',
-      image:{type:'jpeg',quality:0.98},
-      html2canvas:{scale:2,useCORS:true,logging:false},
-      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-    }).from(el).save().then(function(){
-      document.getElementById('loading').innerHTML='<p style="color:#27ae60;font-size:14px;font-weight:500">✓ PDF descargado</p><p style="color:#888;font-size:12px;margin-top:4px">Puedes cerrar esta ventana</p>';
+    var el=document.getElementById('hoja');
+    html2pdf().set({ margin:0, filename:'${filename}', image:{type:'jpeg',quality:0.98},
+      html2canvas:{scale:2,useCORS:true,logging:false,backgroundColor:'#F3EEE6'},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'} }).from(el).save().then(function(){
+      document.getElementById('loading').innerHTML='<p style="color:#2E8B5A;font-size:14px;font-weight:500">✓ PDF descargado</p><p style="color:#888;font-size:12px;margin-top:4px">Puedes cerrar esta ventana</p>';
     });
   };
-  <\/script>
-  </body></html>`;
+  <\/script>`;
+  return calidaPagina({ titulo:`${titulo} ${numLabel}`, chip:esCot?'COTIZACIÓN':'PAGADO', ok:!esCot, encabezado:esCot?'Propuesta':'Recibo de pago',
+    numero:`${numLabel} · ${fechaEm||''}`, contenido, cola, extraCSS:'.hoja{min-height:1123px}' });
 }
 
 function previewDoc(){
@@ -4030,49 +3971,23 @@ async function genReporte(tipo){
   const logoUrl=location.origin+'/img/logo/nokta_lockup_color_transparent.png';
   const rptFilename=`Reporte-${tipo}-${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}.pdf`;
   const w=window.open('','_blank','width=900,height=700');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${titulo}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Poppins',sans-serif;color:#1C1C1A;background:#fff;padding:0}
-  #rpt-wrap{padding:40px 48px;max-width:900px;margin:0 auto}
-  .rpt-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
-  .rpt-logo img{height:44px;width:auto;max-width:120px}
-  .rpt-title{font-size:20px;font-weight:700;color:#1C1C1A;margin-bottom:2px}
-  .rpt-sub{font-size:12px;color:#888}
-  h3{font-size:10px;letter-spacing:2px;color:#B85228;font-weight:600;text-transform:uppercase;margin-bottom:10px}
-  table{width:100%;border-collapse:collapse}
-  thead tr{border-bottom:2px solid #B85228}
-  th{font-size:10px;letter-spacing:1px;color:#888;text-transform:uppercase;padding:7px 0;text-align:left;font-weight:500}
-  td{padding:7px 0;font-size:12px;border-bottom:1px solid #f0ebe5}
-  .footer{margin-top:48px;padding-top:14px;border-top:1px solid #e8e4df;font-size:11px;color:#bbb;text-align:center}
-  #loading{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;gap:12px}
-  #loading .spinner{width:36px;height:36px;border:3px solid #f0ebe5;border-top-color:#B85228;border-radius:50%;animation:spin .8s linear infinite}
-  #loading p{font-size:13px;color:#888}
-  @keyframes spin{to{transform:rotate(360deg)}}</style></head><body>
-  <div id="loading"><div class="spinner"></div><p>Generando PDF...</p></div>
-  <div id="rpt-wrap">
-  <div class="rpt-header">
-    <div class="rpt-logo"><img src="${logoUrl}" alt="Nokta Studio" crossorigin="anonymous" onerror="this.outerHTML='<div style=\\'font-size:20px;font-weight:700\\'>nokta<span style=\\'color:#B85228\\'>.</span></div>'"></div>
-    <div style="text-align:right"><div class="rpt-title">${titulo}</div><div class="rpt-sub">${now.toLocaleString('es',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>
-  </div>
-  <hr style="border:none;border-top:2px solid #B85228;margin-bottom:28px">
-  ${cuerpo}
-  <div class="footer">Generado por Nokta Studio · ${now.toLocaleString('es')}</div>
-  </div>
+  const fechaRpt=now.toLocaleString('es',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const colaRpt=`<div id="loading" style="position:fixed;inset:0;background:#F3EEE6;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;gap:12px"><div style="width:36px;height:36px;border:3px solid #e6dfd4;border-top-color:#B85228;border-radius:50%;animation:spin .8s linear infinite"></div><p style="font-size:13px;color:#888">Generando PDF...</p></div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
   <script>
   window.onload=function(){
-    var el=document.getElementById('rpt-wrap');
-    html2pdf().set({
-      margin:[8,10,8,10],
-      filename:'${rptFilename}',
-      image:{type:'jpeg',quality:0.98},
-      html2canvas:{scale:2,useCORS:true,logging:false},
-      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-    }).from(el).save().then(function(){
-      document.getElementById('loading').innerHTML='<p style="color:#27ae60;font-size:14px;font-weight:500">✓ PDF descargado</p><p style="color:#888;font-size:12px;margin-top:4px">Puedes cerrar esta ventana</p>';
+    var el=document.getElementById('hoja');
+    html2pdf().set({ margin:0, filename:'${rptFilename}', image:{type:'jpeg',quality:0.98},
+      html2canvas:{scale:2,useCORS:true,logging:false,backgroundColor:'#F3EEE6'},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}, pagebreak:{mode:['css','legacy']} }).from(el).save().then(function(){
+      document.getElementById('loading').innerHTML='<p style="color:#2E8B5A;font-size:14px;font-weight:500">✓ PDF descargado</p><p style="color:#888;font-size:12px;margin-top:4px">Puedes cerrar esta ventana</p>';
     });
   };
-  <\/script></body></html>`);
+  <\/script>`;
+  w.document.write(calidaPagina({ titulo, chip:'REPORTE', encabezado:titulo, numero:'Generado el '+fechaRpt,
+    contenido:`<div class="cuerpo" style="margin-top:30px">${cuerpo}</div>`, pie:'Generado por Nokta Studio · '+fechaRpt, cola:colaRpt,
+    extraCSS:`.hoja{max-width:900px}.cuerpo h3{font-size:9px!important;letter-spacing:.2em!important;color:#B85228!important;font-weight:600;text-transform:uppercase;margin:26px 0 10px!important}.cuerpo td{border-bottom:1px dashed #E6DFD4}` }));
   w.document.close();
 }
 

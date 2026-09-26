@@ -86,245 +86,181 @@ enum PDFTemplates {
     <div style="font-size:9px;letter-spacing:3px;color:#888;margin-top:2px">NOKTA STUDIO</div>
     """
 
-    static func documento(_ d: DocumentoParaPDF) -> String {
-        let titulo = d.tipo == "cotizacion" ? "Cotización" : "Recibo de Pago"
+    // MARK: - Estilo "tarjeta cálida" (2026-09): fondo crema, documento como
+    // tarjeta blanca con franja naranja, datos en bloques y total grande.
+    // Mismo diseño que los PDFs del panel web.
 
-        let filas = d.servicios.map { s in
-            "<tr><td>\(esc(s.descripcion.isEmpty ? "—" : s.descripcion))</td><td>$\(fmt(s.monto))</td></tr>"
+    /// Poppins incrustada (el proceso de WebKit no ve las fuentes registradas
+    /// por la app), para que el PDF se vea igual en cualquier equipo.
+    private static let fuentesCSS: String = {
+        let pesos: [(String, Int)] = [("Poppins-Light", 300), ("Poppins-Regular", 400), ("Poppins-Medium", 500), ("Poppins-SemiBold", 600)]
+        return pesos.compactMap { nombre, peso in
+            guard let url = Bundle.main.url(forResource: nombre, withExtension: "ttf"),
+                  let data = try? Data(contentsOf: url) else { return nil }
+            return "@font-face{font-family:'Poppins';font-weight:\(peso);src:url(data:font/ttf;base64,\(data.base64EncodedString())) format('truetype')}"
         }.joined()
+    }()
 
-        let clientGrid = """
-        <div class="field"><span>Nombre</span>\(esc(d.clienteNombre))</div>
-        \(field("Empresa", d.empresa)) \(field("Teléfono", d.telefono)) \(field("Email", d.email))
+    static let calidaCSS = """
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{background:#F3EEE6;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body{font-family:'Poppins',-apple-system,'Helvetica Neue',sans-serif;color:#1C1C1A;padding:48px}
+    .card{background:#fff;border-radius:22px;padding:44px 44px 40px 54px;position:relative;overflow:hidden;box-shadow:0 14px 40px -18px rgba(60,40,20,.28)}
+    .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:9px;background:linear-gradient(#D0673A,#B85228)}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:16px}
+    .chip{font-size:10px;font-weight:600;letter-spacing:.14em;padding:6px 14px;border-radius:99px;background:#F3EEE6;color:#B85228;white-space:nowrap}
+    .chip.ok{background:#E4F2EA;color:#2E8B5A}
+    h1{margin:40px 0 0;font-size:40px;font-weight:300;letter-spacing:-.04em;line-height:1.05}
+    .num{font-size:12px;color:#999;margin-top:8px}
+    .blocks{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:32px}
+    .blk{background:#FAF7F2;border-radius:14px;padding:16px 18px}
+    .blk small{display:block;font-size:9px;letter-spacing:.2em;color:#B85228;font-weight:600;margin-bottom:6px;text-transform:uppercase}
+    .blk b{font-size:13.5px;font-weight:500}
+    .blk span{display:block;font-size:11.5px;color:#888;margin-top:3px}
+    table.lista{width:100%;border-collapse:collapse;margin-top:26px}
+    table.lista th{font-size:9px;letter-spacing:.2em;color:#B85228;font-weight:600;text-transform:uppercase;text-align:left;padding:0 0 8px}
+    table.lista th:last-child{text-align:right}
+    table.lista td{font-size:13px;padding:12px 0;border-bottom:1px dashed #E6DFD4}
+    table.lista td:first-child{color:#666}
+    table.lista td:last-child{text-align:right;font-weight:500;color:#1C1C1A}
+    .total{margin-top:22px;display:flex;justify-content:space-between;align-items:baseline}
+    .total span{font-size:13px;color:#888}
+    .total b{font-size:46px;font-weight:300;letter-spacing:-.05em}
+    .total b i{font-style:normal;color:#B85228}
+    .nota{margin-top:26px;padding:14px 16px;background:#FAF7F2;border-radius:12px;font-size:11.5px;color:#555;line-height:1.6;white-space:pre-wrap}
+    .nota strong{display:block;font-size:9px;letter-spacing:.2em;color:#B85228;text-transform:uppercase;margin-bottom:4px}
+    .gracias{margin-top:28px;font-size:12.5px;color:#666}
+    .puntos{position:absolute;right:-14px;bottom:-14px;width:150px;height:150px;background-image:radial-gradient(#B85228 18%,transparent 20%);background-size:16px 16px;opacity:.12;border-radius:50%}
+    .pie{text-align:center;font-size:10px;color:#a89f92;margin-top:18px}
+    """
+
+    /// "$1,250.50" con el punto decimal en naranja.
+    private static func totalGrande(_ v: Double) -> String {
+        let n = NumberFormatter(); n.locale = Locale(identifier: "en_US"); n.numberStyle = .decimal
+        n.minimumFractionDigits = 2; n.maximumFractionDigits = 2
+        let txt = n.string(from: NSNumber(value: v)) ?? fmt(v)
+        let partes = txt.split(separator: ".", maxSplits: 1)
+        return "$\(partes.first ?? "0")<i>.</i>\(partes.count > 1 ? partes[1] : "00")"
+    }
+
+    private static func bloque(_ titulo: String, _ principal: String, _ secundario: String? = nil) -> String {
+        "<div class=\"blk\"><small>\(esc(titulo))</small><b>\(esc(principal.isEmpty ? "—" : principal))</b>\(secundario.flatMap { $0.isEmpty ? nil : "<span>\(esc($0))</span>" } ?? "")</div>"
+    }
+
+    /// Página completa: fondo crema + tarjeta. `extraCSS` para documentos largos.
+    static func calida(titulo: String, chip: String, chipOK: Bool = false, encabezado: String, numero: String,
+                       contenido: String, extraCSS: String = "", pie: String = "Nokta Studio · contacto@noktastudio.com") -> String {
         """
-
-        let notas = (d.notas?.isEmpty == false)
-            ? "<div class=\"notas\"><strong>Notas y condiciones</strong>\(esc(d.notas!))</div>" : ""
-
-        let body = """
-        <div class="header">
-          <div>\(logoTag(height: 40))</div>
-          <div style="text-align:right">
-            <div class="doc-tipo">\(titulo)</div>
-            <div class="doc-num">\(esc(d.numero))</div>
-            <div class="doc-date">Emisión: \(d.fechaEmision)</div>
-          </div>
+        <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>\(esc(titulo))</title>
+        <style>\(fuentesCSS)\(calidaCSS)\(extraCSS)</style></head><body>
+        <div class="card">
+          <div class="top">\(logoTag(height: 44))<span class="chip\(chipOK ? " ok" : "")">\(esc(chip))</span></div>
+          <h1>\(esc(encabezado))</h1><div class="num">\(esc(numero))</div>
+          \(contenido)
+          <i class="puntos"></i>
         </div>
-        <hr class="divider">
-        <div class="section-label">Cliente</div>
-        <div class="client-grid">\(clientGrid)</div>
-        <hr class="divider-light">
-        <div class="section-label">Servicios</div>
-        <table>
-          <thead><tr><th>Descripción</th><th style="text-align:right">Monto</th></tr></thead>
-          <tbody>\(filas)<tr class="total-row"><td>Total</td><td>$\(fmt(d.total))</td></tr></tbody>
-        </table>
-        \(notas)
-        <div class="footer"><span>Nokta Studio</span><span>Generado el \(fechaHoyLarga())</span></div>
-        """
-
-        return """
-        <!DOCTYPE html><html><head><meta charset="UTF-8"><title>\(titulo) \(d.numero)</title>
-        <style>
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:-apple-system,'Helvetica Neue',sans-serif;color:#1C1C1A;background:#fff}
-        #wrap{padding:40px 48px;max-width:794px;margin:0 auto}
-        .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
-        .doc-tipo{font-size:20px;font-weight:700;color:#1C1C1A;margin-bottom:4px}
-        .doc-num{font-size:12px;color:#B85228;font-weight:600;letter-spacing:1px}
-        .doc-date{font-size:11px;color:#888;margin-top:2px}
-        .divider{border:none;border-top:2px solid #B85228;margin:20px 0}
-        .divider-light{border:none;border-top:1px solid #e8e4df;margin:16px 0}
-        .section-label{font-size:9px;letter-spacing:2px;color:#B85228;font-weight:600;margin-bottom:8px;text-transform:uppercase}
-        .client-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;margin-bottom:6px}
-        .field{font-size:12px;color:#1C1C1A}
-        .field span{color:#888;font-size:10px;display:block;letter-spacing:1px;text-transform:uppercase;margin-bottom:1px}
-        table{width:100%;border-collapse:collapse;margin-top:6px}
-        thead tr{border-bottom:2px solid #B85228}
-        th{font-size:10px;letter-spacing:1px;color:#888;text-transform:uppercase;padding:7px 0;text-align:left;font-weight:500}
-        th:last-child{text-align:right}
-        td{padding:8px 0;font-size:12px;border-bottom:1px solid #f0ebe5}
-        td:last-child{text-align:right}
-        .total-row td{border-top:2px solid #B85228;border-bottom:none;padding-top:12px;font-weight:700;font-size:14px}
-        .total-row td:last-child{color:#B85228;font-size:16px}
-        .notas{margin-top:24px;padding:14px;background:#faf8f5;border-left:3px solid #B85228;font-size:11px;color:#555;line-height:1.6}
-        .notas strong{display:block;font-size:10px;letter-spacing:1px;color:#B85228;text-transform:uppercase;margin-bottom:4px}
-        .footer{margin-top:40px;padding-top:12px;border-top:1px solid #e8e4df;display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#bbb}
-        </style></head><body>
-        <div id="wrap">\(body)</div>
+        <div class="pie">\(esc(pie))</div>
         </body></html>
         """
     }
 
-    /// Recibo de una quincena individual (grupo B) — mismo layout que
-    /// `generarFacturaQ` en admin.html, para que el PDF nativo se vea igual
-    /// al que se genera desde el panel web.
+    /// Fecha ISO ("2026-09-12" o instante) → "sábado 12 de septiembre de 2026".
+    private static func fechaLegible(_ iso: String?, conDia: Bool = true) -> String? {
+        guard let iso, !iso.isEmpty else { return nil }
+        let day = DateFormatter()
+        day.locale = Locale(identifier: "en_US_POSIX")
+        day.calendar = Calendar(identifier: .gregorian)
+        day.dateFormat = "yyyy-MM-dd"
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let date = iso.count == 10
+            ? day.date(from: iso)
+            : (fractional.date(from: iso) ?? ISO8601DateFormatter().date(from: iso) ?? day.date(from: String(iso.prefix(10))))
+        guard let date else { return nil }
+        let f = DateFormatter(); f.locale = Locale(identifier: "es_MX")
+        f.calendar = Calendar(identifier: .gregorian)
+        f.dateFormat = conDia ? "EEEE d 'de' MMMM 'de' yyyy" : "d 'de' MMMM 'de' yyyy"
+        return f.string(from: date)
+    }
+
+    /// Cotización o recibo creado en Documentos o por el Asistente.
+    static func documento(_ d: DocumentoParaPDF) -> String {
+        let esCot = d.tipo == "cotizacion"
+        let filas = d.servicios.map { s in
+            "<tr><td>\(esc(s.descripcion.isEmpty ? "—" : s.descripcion))</td><td>$\(fmt(s.monto))</td></tr>"
+        }.joined()
+        let contacto = [d.empresa, d.email, d.telefono].compactMap { $0 }.filter { !$0.isEmpty }
+        let contenido = """
+        <div class="blocks">
+          \(bloque(esCot ? "Para" : "Cliente", d.clienteNombre, contacto.first))
+          \(bloque("Detalles", "Emitido \(d.fechaEmision)", contacto.dropFirst().joined(separator: " · ").isEmpty ? "\(d.servicios.count) concepto\(d.servicios.count == 1 ? "" : "s")" : contacto.dropFirst().joined(separator: " · ")))
+        </div>
+        <table class="lista"><tr><th>Concepto</th><th>Monto</th></tr>\(filas)</table>
+        <div class="total"><span>Total</span><b>\(totalGrande(d.total))</b></div>
+        \((d.notas?.isEmpty == false) ? "<div class=\"nota\"><strong>Notas y condiciones</strong>\(esc(d.notas!))</div>" : "")
+        <div class="gracias">\(esCot ? "Gracias por considerar a Nokta. Quedamos atentos. ✦" : "Gracias por confiar en Nokta. ✦")</div>
+        """
+        return calida(titulo: "\(esCot ? "Cotización" : "Recibo") \(d.numero)", chip: esCot ? "COTIZACIÓN" : "PAGADO", chipOK: !esCot,
+                      encabezado: esCot ? "Propuesta" : "Recibo de pago", numero: "\(d.numero) · \(d.fechaEmision)", contenido: contenido)
+    }
+
+    /// Recibo de una quincena pagada (mensuales).
     static func facturaQuincena(cliente: String, empresa: String?, servicio: String, periodo: String, q: Int, monto: Double, fechaPago: String?) -> String {
         let parts = periodo.split(separator: "-")
         let anio = String(parts.first ?? "")
         let mes = String(parts.count > 1 ? parts[1] : "01")
-        let mesIdx = (Int(mes) ?? 1) - 1
-        let mesNombre = FechaUtil.mesesCompletos[max(0, min(11, mesIdx))]
+        let mesNombre = FechaUtil.mesesCompletos[max(0, min(11, (Int(mes) ?? 1) - 1))]
         let calendario = Calendar(identifier: .gregorian)
         let inicioMes = calendario.date(from: DateComponents(year: Int(anio) ?? 2000, month: Int(mes) ?? 1, day: 1))
         let ultimoDia = inicioMes.flatMap { calendario.range(of: .day, in: .month, for: $0)?.count } ?? 30
-        let rango = q == 1 ? "1 al 15" : "16 al \(ultimoDia)"
-        let fechaPagoLabel = fechaPago.flatMap { iso -> String? in
-            let day = DateFormatter()
-            day.locale = Locale(identifier: "en_US_POSIX")
-            day.calendar = Calendar(identifier: .gregorian)
-            day.dateFormat = "yyyy-MM-dd"
-            day.isLenient = false
-            let fractional = ISO8601DateFormatter()
-            fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            // Web payments store a calendar day; native payments store an instant.
-            let date = iso.count == 10
-                ? day.date(from: iso)
-                : (fractional.date(from: iso) ?? ISO8601DateFormatter().date(from: iso))
-            guard let date else { return nil }
-            let f = DateFormatter(); f.locale = Locale(identifier: "es_MX")
-            f.calendar = Calendar(identifier: .gregorian)
-            f.dateFormat = "d 'de' MMMM 'de' yyyy"
-            return f.string(from: date)
-        } ?? "—"
-
-        let empresaRow = empresa.flatMap { $0.isEmpty ? nil : $0 }.map { "<tr><td>Empresa</td><td>\(esc($0))</td></tr>" } ?? ""
-
-        return """
-        <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Recibo · \(mesNombre) Q\(q)</title>
-        <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:-apple-system,'Helvetica Neue',sans-serif;background:#fff;color:#1C1C1A;padding:60px;max-width:680px;margin:0 auto}
-        .doc-tipo{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.06em}
-        .doc-num{font-size:22px;font-weight:800;margin-top:4px;color:#1C1C1A}
-        .divider{border:none;border-top:2px solid #B85228;margin:28px 0 32px}
-        h2{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#B85228;font-weight:600;margin-bottom:16px}
-        table{width:100%;border-collapse:collapse;margin-bottom:8px}
-        td{padding:10px 0;border-bottom:1px solid #f0ebe5;font-size:14px}
-        td:first-child{color:#888;width:45%}
-        td:last-child{font-weight:600;text-align:right}
-        .total-row td{border-top:2px solid #B85228;border-bottom:none;padding-top:16px;font-size:18px}
-        .total-row td:first-child{color:#1C1C1A;font-weight:700}
-        .total-row td:last-child{color:#B85228;font-size:20px}
-        .footer{margin-top:60px;padding-top:24px;border-top:1px solid #e8e4df;font-size:11px;color:#bbb;text-align:center}
-        </style></head><body>
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-          \(logoTag(height: 40))
-          <div style="text-align:right">
-            <div class="doc-tipo">Recibo de pago</div>
-            <div class="doc-num">#\(anio)\(mes)Q\(q)</div>
-          </div>
+        let rango = q == 1 ? "del 1 al 15" : "del 16 al \(ultimoDia)"
+        let pago = fechaLegible(fechaPago, conDia: false) ?? "—"
+        let contenido = """
+        <div class="blocks">
+          \(bloque("Cliente", cliente, [empresa ?? "", servicio].filter { !$0.isEmpty }.joined(separator: " · ")))
+          \(bloque("Periodo", "\(mesNombre) \(anio)", "\(rango) · quincena \(q) de 2"))
         </div>
-        <hr class="divider">
-        <h2>Detalle del servicio</h2>
-        <table>
-          <tr><td>Cliente</td><td>\(esc(cliente))</td></tr>
-          \(empresaRow)
-          <tr><td>Servicio</td><td>\(esc(servicio))</td></tr>
-          <tr><td>Periodo</td><td>\(mesNombre) \(anio) · del \(rango) de \(mesNombre)</td></tr>
-          <tr><td>Quincena</td><td>Q\(q) de 2</td></tr>
-          <tr><td>Fecha de pago</td><td>\(fechaPagoLabel)</td></tr>
-          <tr class="total-row"><td>Total</td><td>$\(fmt(monto))</td></tr>
-        </table>
-        <div class="footer">Nokta Studio · contacto@noktastudio.com<br>Este documento es un comprobante interno de pago.</div>
-        </body></html>
+        <table class="lista"><tr><td>Fecha de pago</td><td>\(esc(pago))</td></tr><tr><td>Servicio</td><td>\(esc(servicio))</td></tr></table>
+        <div class="total"><span>Total</span><b>\(totalGrande(monto))</b></div>
+        <div class="gracias">Gracias por confiar en Nokta. ✦</div>
         """
+        return calida(titulo: "Recibo · \(mesNombre) Q\(q)", chip: "PAGADO", chipOK: true, encabezado: "Recibo de pago",
+                      numero: "#\(anio)\(mes)Q\(q) · \(mesNombre) \(anio)", contenido: contenido)
     }
 
-    /// Recibo de una clase/sesión pagada — mismo diseño que el de quincenas.
+    /// Recibo de una clase/sesión pagada.
     static func reciboSesion(cliente: String, servicio: String, fecha: String, numero: Int, total: Int, monto: Double, fechaPago: String?) -> String {
-        func legible(_ iso: String?) -> String? {
-            guard let iso else { return nil }
-            let day = DateFormatter()
-            day.locale = Locale(identifier: "en_US_POSIX")
-            day.calendar = Calendar(identifier: .gregorian)
-            day.dateFormat = "yyyy-MM-dd"
-            let fractional = ISO8601DateFormatter()
-            fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            let date = iso.count == 10
-                ? day.date(from: iso)
-                : (fractional.date(from: iso) ?? ISO8601DateFormatter().date(from: iso) ?? day.date(from: String(iso.prefix(10))))
-            guard let date else { return nil }
-            let f = DateFormatter(); f.locale = Locale(identifier: "es_MX")
-            f.calendar = Calendar(identifier: .gregorian)
-            f.dateFormat = "EEEE d 'de' MMMM 'de' yyyy"
-            return f.string(from: date)
-        }
-        let clase = legible(fecha) ?? fecha
-        let pago = legible(fechaPago) ?? "—"
+        let clase = fechaLegible(fecha) ?? fecha
+        let pago = fechaLegible(fechaPago, conDia: false) ?? "—"
         let num = fecha.prefix(10).replacingOccurrences(of: "-", with: "") + "S\(numero)"
-        return """
-        <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Recibo · Clase \(numero)</title>
-        <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:-apple-system,'Helvetica Neue',sans-serif;background:#fff;color:#1C1C1A;padding:60px;max-width:680px;margin:0 auto}
-        .doc-tipo{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.06em}
-        .doc-num{font-size:22px;font-weight:800;margin-top:4px;color:#1C1C1A}
-        .divider{border:none;border-top:2px solid #B85228;margin:28px 0 32px}
-        h2{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#B85228;font-weight:600;margin-bottom:16px}
-        table{width:100%;border-collapse:collapse;margin-bottom:8px}
-        td{padding:10px 0;border-bottom:1px solid #f0ebe5;font-size:14px}
-        td:first-child{color:#888;width:45%}
-        td:last-child{font-weight:600;text-align:right}
-        .total-row td{border-top:2px solid #B85228;border-bottom:none;padding-top:16px;font-size:18px}
-        .total-row td:first-child{color:#1C1C1A;font-weight:700}
-        .total-row td:last-child{color:#B85228;font-size:20px}
-        .footer{margin-top:60px;padding-top:24px;border-top:1px solid #e8e4df;font-size:11px;color:#bbb;text-align:center}
-        </style></head><body>
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-          \(logoTag(height: 40))
-          <div style="text-align:right">
-            <div class="doc-tipo">Recibo de pago</div>
-            <div class="doc-num">#\(num)</div>
-          </div>
+        let contenido = """
+        <div class="blocks">
+          \(bloque("Cliente", cliente, "Servicio: \(servicio)"))
+          \(bloque("Clase", clase, "Sesión \(numero) de \(total)"))
         </div>
-        <hr class="divider">
-        <h2>Detalle del servicio</h2>
-        <table>
-          <tr><td>Cliente</td><td>\(esc(cliente))</td></tr>
-          <tr><td>Servicio</td><td>\(esc(servicio))</td></tr>
-          <tr><td>Clase</td><td>\(esc(clase))</td></tr>
-          <tr><td>Sesión</td><td>\(numero) de \(total)</td></tr>
-          <tr><td>Fecha de pago</td><td>\(esc(pago))</td></tr>
-          <tr class="total-row"><td>Total</td><td>$\(fmt(monto))</td></tr>
-        </table>
-        <div class="footer">Nokta Studio · contacto@noktastudio.com<br>Este documento es un comprobante interno de pago.</div>
-        </body></html>
+        <table class="lista"><tr><td>Fecha de pago</td><td>\(esc(pago))</td></tr></table>
+        <div class="total"><span>Total</span><b>\(totalGrande(monto))</b></div>
+        <div class="gracias">Gracias por confiar en Nokta. ✦</div>
         """
+        return calida(titulo: "Recibo · Clase \(numero)", chip: "PAGADO", chipOK: true, encabezado: "Recibo de pago",
+                      numero: "#\(num) · clase \(numero) de \(total)", contenido: contenido)
     }
 
-    /// Reportes (mensual/clientes/galerías) — mismo layout que `genReporte`
-    /// en admin.html, con el cuerpo ya armado en HTML por el llamador.
+    /// Reportes (mensual/clientes/galerías), con el cuerpo ya armado en HTML
+    /// por el llamador (usa h3 + table como antes).
     static func reporte(titulo: String, cuerpoHTML: String) -> String {
         let f = DateFormatter(); f.dateFormat = "d 'de' MMMM 'de' yyyy, HH:mm"; f.locale = Locale(identifier: "es_MX")
         let fecha = f.string(from: Date())
-        return """
-        <!DOCTYPE html><html><head><meta charset="UTF-8"><title>\(titulo)</title>
-        <style>
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:-apple-system,'Helvetica Neue',sans-serif;color:#1C1C1A;background:#fff}
-        #wrap{padding:40px 48px;max-width:900px;margin:0 auto}
-        .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
-        .title{font-size:20px;font-weight:700;color:#1C1C1A;margin-bottom:2px}
-        .sub{font-size:12px;color:#888}
-        h3{font-size:10px;letter-spacing:2px;color:#B85228;font-weight:600;text-transform:uppercase;margin-bottom:10px}
-        table{width:100%;border-collapse:collapse}
-        thead tr{border-bottom:2px solid #B85228}
-        th{font-size:10px;letter-spacing:1px;color:#888;text-transform:uppercase;padding:7px 0;text-align:left;font-weight:500}
-        td{padding:7px 0;font-size:12px;border-bottom:1px solid #f0ebe5}
-        .footer{margin-top:48px;padding-top:14px;border-top:1px solid #e8e4df;font-size:11px;color:#bbb;text-align:center}
-        </style></head><body>
-        <div id="wrap">
-          <div class="header">
-            \(logoTag(height: 36))
-            <div style="text-align:right"><div class="title">\(esc(titulo))</div><div class="sub">\(fecha)</div></div>
-          </div>
-          <hr style="border:none;border-top:2px solid #B85228;margin-bottom:28px">
-          \(cuerpoHTML)
-          <div class="footer">Generado por Nokta Studio · \(fecha)</div>
-        </div>
-        </body></html>
+        let extra = """
+        .cuerpo{margin-top:30px}
+        .cuerpo h3{font-size:9px;letter-spacing:.2em;color:#B85228;font-weight:600;text-transform:uppercase;margin:26px 0 10px}
+        .cuerpo table{width:100%;border-collapse:collapse}
+        .cuerpo th{font-size:9px;letter-spacing:.14em;color:#999;text-transform:uppercase;padding:8px 0;text-align:left;font-weight:500;border-bottom:1px solid #E6DFD4}
+        .cuerpo td{padding:9px 0;font-size:12px;border-bottom:1px dashed #E6DFD4}
         """
+        return calida(titulo: titulo, chip: "REPORTE", encabezado: titulo, numero: "Generado el \(fecha)",
+                      contenido: "<div class=\"cuerpo\">\(cuerpoHTML)</div>", extraCSS: extra,
+                      pie: "Generado por Nokta Studio · \(fecha)")
     }
 
     /// Contrato de prestación de servicios generado desde un trabajo real —
@@ -345,12 +281,10 @@ enum PDFTemplates {
         }
 
         let cuerpo = """
-        <div class="mast">
-          \(logoTag(height: 30))
-          <div class="tag">Contrato de prestación de servicios</div>
-        </div>
-        <div class="title">Contrato de Prestación de Servicios</div>
-        <p class="subtitle">Nokta Studio — Fotografía · Video · Marketing · Gestión de redes</p>
+        <div class="top">\(logoTag(height: 44))<span class="chip">CONTRATO</span></div>
+        <h1>Contrato de prestación de servicios</h1>
+        <div class="num">\(esc(d.clienteNombre)) · \(esc(d.ciudad)), \(esc(d.fechaContrato))</div>
+        <p class="subtitle">Nokta Studio — agencia creativa · Fotografía · Video · Marketing · Gestión de redes</p>
 
         <p class="intro">En \(esc(d.ciudad)), El Salvador, el \(esc(d.fechaContrato)), se celebra el presente
         contrato de prestación de servicios (en adelante, el "Contrato") entre <strong>Nokta Studio</strong>
@@ -435,19 +369,14 @@ enum PDFTemplates {
           <div class="sign-box"><div class="who">Por Nokta Studio</div><div class="line">Nombre: ______________________</div><div class="line">Fecha: ______________________</div></div>
           <div class="sign-box"><div class="who">Por el Cliente</div><div class="line">Nombre: ______________________</div><div class="line">Fecha: ______________________</div></div>
         </div>
-        <div class="foot">Nokta Studio · contacto@noktastudio.com</div>
         """
 
         return """
         <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Contrato · \(esc(d.clienteNombre))</title>
         <style>
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:-apple-system,'Helvetica Neue',sans-serif;color:#2A2620;background:#FAF7F2;padding:44px 52px}
-        .sheet{max-width:720px;margin:0 auto}
-        .mast{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-bottom:18px;margin-bottom:6px;border-bottom:1px solid #E6DFD3}
-        .tag{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#8B8378}
-        .title{text-align:center;margin:26px 0 6px;font-size:24px;font-weight:700}
-        .subtitle{text-align:center;color:#8B8378;font-style:italic;font-size:13px;margin:0 0 26px}
+        \(fuentesCSS)\(calidaCSS)
+        .card{color:#2A2620}
+        .subtitle{color:#8B8378;font-size:12px;margin:14px 0 26px}
         .intro{font-size:12.5px;line-height:1.7;margin-bottom:16px}
         table.datos{width:100%;border-collapse:collapse;margin-bottom:22px}
         table.datos td{padding:5px 0;font-size:12px;border-bottom:1px solid #EFE9DE}
@@ -470,7 +399,7 @@ enum PDFTemplates {
         .sign-box .who{font-weight:700;font-size:12px;margin-bottom:8px}
         .sign-box .line{font-size:11.5px;color:#8B8378;margin-bottom:6px}
         .foot{margin-top:44px;padding-top:14px;border-top:1px solid #E6DFD3;text-align:center;font-size:10px;color:#8B8378}
-        </style></head><body><div class="sheet">\(cuerpo)</div></body></html>
+        </style></head><body><div class="card">\(cuerpo)<i class="puntos"></i></div><div class="pie">Nokta Studio · contacto@noktastudio.com</div></body></html>
         """
     }
 

@@ -93,6 +93,58 @@ private struct NoktaFoco: ViewModifier {
     }
 }
 
+extension View {
+    /// Tarjeta con "borde de luz" (como la pantalla de entrada): al pasar el
+    /// cursor, una luz del color dado recorre el contorno y la tarjeta se eleva.
+    /// En reposo queda un contorno fino y quieto.
+    func noktaBordeLuz(_ color: Color, radio: CGFloat = 20) -> some View { modifier(NoktaBordeLuz(color: color, radio: radio)) }
+}
+
+private struct NoktaBordeLuz: ViewModifier {
+    var color: Color
+    var radio: CGFloat
+    @State private var encima = false
+    @State private var inicio = Date()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        let forma = RoundedRectangle(cornerRadius: radio, style: .continuous)
+        content
+            .background(forma.fill(NoktaTheme.superficie))
+            .overlay(forma.strokeBorder(NoktaTheme.borde, lineWidth: 1))
+            .overlay {
+                TimelineView(.animation(paused: !encima || reduceMotion)) { ctx in
+                    let vueltas = ctx.date.timeIntervalSince(inicio) * 0.45
+                    forma.strokeBorder(
+                        AngularGradient(
+                            stops: [
+                                .init(color: .clear, location: 0),
+                                .init(color: .clear, location: 0.62),
+                                .init(color: color.opacity(0.9), location: 0.82),
+                                .init(color: .white.opacity(0.95), location: 0.86),
+                                .init(color: color.opacity(0.9), location: 0.9),
+                                .init(color: .clear, location: 1),
+                            ],
+                            center: .center,
+                            angle: .degrees(vueltas * 360)
+                        ),
+                        lineWidth: 1.6
+                    )
+                    .shadow(color: color.opacity(0.5), radius: 6)
+                }
+                .opacity(encima ? 1 : 0)
+                .allowsHitTesting(false)
+            }
+            .shadow(color: .black.opacity(encima ? 0.22 : 0.08), radius: encima ? 18 : 8, y: encima ? 10 : 3)
+            .offset(y: encima ? -3 : 0)
+            .contentShape(forma)
+            .onHover { h in
+                if h { inicio = Date() }
+                withAnimation(.spring(duration: 0.4, bounce: 0.25)) { encima = h }
+            }
+    }
+}
+
 private struct NoktaEntrada: ViewModifier {
     var visible: Bool
     var orden: Int

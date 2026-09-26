@@ -934,49 +934,89 @@ struct ContratoSheet: View {
         _saldoMonto = State(initialValue: total - anticipo)
     }
 
+    private func etiqueta(_ label: String) -> some View {
+        Text(label.uppercased()).font(NoktaFont.poppins(10, .medium)).tracking(1.2).foregroundStyle(NoktaTheme.textoTenue)
+    }
+
+    private func caja<C: View>(@ViewBuilder _ c: () -> C) -> some View {
+        c()
+            .textFieldStyle(.plain)
+            .font(NoktaFont.poppins(13))
+            .foregroundStyle(NoktaTheme.texto)
+            .padding(.horizontal, 12).padding(.vertical, 10)
+            .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
+            .background(NoktaTheme.superficie, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).strokeBorder(NoktaTheme.borde))
+    }
+
     private func row(_ label: String, _ text: Binding<String>) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label).font(.system(size: 11)).foregroundStyle(NoktaPalette.muted)
-            TextField(label, text: text).textFieldStyle(.roundedBorder)
+        VStack(alignment: .leading, spacing: 7) {
+            etiqueta(label)
+            caja { TextField("", text: text) }
         }
     }
 
     private func moneyRow(_ label: String, _ value: Binding<Double>) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label).font(.system(size: 11)).foregroundStyle(NoktaPalette.muted)
-            TextField(label, value: value, format: .number).textFieldStyle(.roundedBorder)
+        VStack(alignment: .leading, spacing: 7) {
+            etiqueta(label)
+            caja {
+                HStack(spacing: 4) {
+                    Text("$").foregroundStyle(NoktaTheme.textoSuave)
+                    TextField("", value: value, format: .number)
+                }
+            }
         }
+    }
+
+    private func fechaRow(_ label: String, _ fecha: Binding<Date>) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            etiqueta(label)
+            caja {
+                DatePicker("", selection: fecha, displayedComponents: .date)
+                    .labelsHidden().datePickerStyle(.compact)
+                    .environment(\.locale, Locale(identifier: "es"))
+            }
+        }
+    }
+
+    private func seccion(_ titulo: String) -> some View {
+        Text(titulo).font(NoktaFont.poppins(13, .medium)).foregroundStyle(NoktaTheme.marca).padding(.top, 8)
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                Text("Generar contrato").font(.system(size: 17, weight: .semibold)).foregroundStyle(NoktaPalette.cream)
-                Text("Se llena con los datos del cliente; ajusta lo que haga falta antes de generar el PDF.")
-                    .font(.system(size: 12)).foregroundStyle(NoktaPalette.muted)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Generar contrato").font(NoktaFont.poppins(22, .light)).foregroundStyle(NoktaTheme.texto)
+                    Text("Ya viene lleno con los datos del trabajo; ajusta lo que haga falta antes de generar el PDF.")
+                        .font(NoktaFont.poppins(12)).foregroundStyle(NoktaTheme.textoSuave)
+                }
 
-                row("Ciudad del contrato", $ciudad)
-                DatePicker("Fecha del contrato", selection: $fechaContrato, displayedComponents: .date)
+                HStack(spacing: 10) { row("Ciudad del contrato", $ciudad); fechaRow("Fecha del contrato", $fechaContrato) }
 
+                seccion("Cliente")
                 row("Nombre del cliente *", $clienteNombre)
                 HStack(spacing: 10) { row("DUI *", $clienteDui); row("Teléfono", $clienteTelefono) }
                 if let validationError {
-                    Text(validationError).font(.system(size: 12)).foregroundStyle(NoktaPalette.red)
+                    Label(validationError, systemImage: "exclamationmark.circle")
+                        .font(NoktaFont.poppins(12)).foregroundStyle(NoktaTheme.error)
                 }
                 row("Correo electrónico", $clienteEmail)
                 row("Dirección", $clienteDireccion)
 
+                seccion("Servicio")
                 row("Servicio contratado", $servicioTipo)
                 HStack(spacing: 10) { row("Fecha del servicio", $servicioFecha); row("Lugar", $servicioLugar) }
                 row("Entregables", $entregables)
 
+                seccion("Pago y condiciones")
                 HStack(spacing: 10) {
-                    moneyRow("Anticipo (USD)", $anticipoMonto)
-                    DatePicker("Fecha límite anticipo", selection: $anticipoFecha, displayedComponents: .date)
+                    moneyRow("Anticipo", $anticipoMonto)
+                    fechaRow("Fecha límite del anticipo", $anticipoFecha)
                 }
                 HStack(spacing: 10) {
-                    moneyRow("Saldo (USD)", $saldoMonto)
-                    DatePicker("Fecha límite saldo", selection: $saldoFecha, displayedComponents: .date)
+                    moneyRow("Saldo", $saldoMonto)
+                    fechaRow("Fecha límite del saldo", $saldoFecha)
                 }
                 HStack(spacing: 10) {
                     row("Plazo de entrega (días hábiles)", $plazoDias)
@@ -985,8 +1025,10 @@ struct ContratoSheet: View {
 
                 HStack {
                     Button("Cancelar") { dismiss() }
+                        .buttonStyle(NoktaBotonSecundario())
+                        .keyboardShortcut(.cancelAction)
                     Spacer()
-                    Button("📜 Generar PDF") {
+                    Button {
                         guard !clienteNombre.trimmingCharacters(in: .whitespaces).isEmpty,
                               !clienteDui.trimmingCharacters(in: .whitespaces).isEmpty else {
                             validationError = "Escribe el nombre y el DUI del cliente antes de generar el contrato"
@@ -1007,12 +1049,18 @@ struct ContratoSheet: View {
                             anticipoFecha: f.string(from: anticipoFecha), saldoMonto: saldoMonto,
                             saldoFecha: f.string(from: saldoFecha), plazoDias: plazoDias, mora: mora
                         ))
-                    }.buttonStyle(.glassProminent).tint(NoktaPalette.ember)
+                    } label: {
+                        Label("Generar PDF", systemImage: "doc.text")
+                    }
+                    .buttonStyle(NoktaBotonPrimario())
+                    .keyboardShortcut(.defaultAction)
                 }
+                .padding(.top, 8)
             }
-            .padding(24)
+            .padding(26)
         }
-        .frame(maxWidth: 460, maxHeight: 640)
+        .frame(minWidth: 460, maxWidth: 560, maxHeight: 700)
+        .background(NoktaTheme.fondo)
     }
 }
 

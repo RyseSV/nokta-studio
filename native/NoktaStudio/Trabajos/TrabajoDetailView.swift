@@ -206,6 +206,8 @@ struct TrabajoDetailView: View {
     @State private var eliminarSesionConfirm: String?
     @State private var contratoSheetShown = false
     @State private var contratoErrorMessage: String?
+    @State private var aparecio = false
+    @State private var ancho: CGFloat = 1000
 
     init(trabajoId: String, onBack: @escaping () -> Void = {}) {
         self.trabajoId = trabajoId
@@ -215,33 +217,40 @@ struct TrabajoDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                header
+            VStack(alignment: .leading, spacing: 24) {
+                header.noktaEntrada(aparecio, 0)
 
                 if let t = vm.trabajo {
-                    // Mac has the room for the info card and the periodic-payments
-                    // panel side by side; on iPhone's ~390-430pt width that leaves
-                    // almost nothing after the card's own 300pt, so it stacks instead.
-                    #if os(iOS)
-                    VStack(alignment: .leading, spacing: 20) {
-                        infoCard(t)
+                    let ancha = ancho >= 900
+                    let layout = ancha
+                        ? AnyLayout(HStackLayout(alignment: .top, spacing: 20))
+                        : AnyLayout(VStackLayout(alignment: .leading, spacing: 20))
+                    layout {
+                        VStack(spacing: 20) {
+                            resumenCobro(t).noktaEntrada(aparecio, 1)
+                            datosCard(t).noktaEntrada(aparecio, 2)
+                        }
+                        .frame(width: ancha ? 380 : nil)
+                        .frame(maxWidth: ancha ? 380 : .infinity)
                         periodoPanel(t)
+                            .frame(maxWidth: .infinity)
+                            .noktaEntrada(aparecio, 3)
                     }
-                    #else
-                    HStack(alignment: .top, spacing: 20) {
-                        infoCard(t)
-                        periodoPanel(t)
-                    }
-                    #endif
                 } else if let error = vm.errorMessage {
-                    Text(error).foregroundStyle(NoktaPalette.red)
+                    NoktaVacio(icono: "exclamationmark.triangle", titulo: "No se pudo abrir el trabajo", detalle: error)
+                        .noktaCard()
                 } else {
-                    ProgressView().tint(NoktaPalette.ember)
+                    ProgressView().tint(NoktaTheme.marca).frame(maxWidth: .infinity, minHeight: 200)
                 }
             }
-            .padding(32)
+            .padding(.horizontal, ancho < 600 ? 20 : 44)
+            .padding(.vertical, ancho < 600 ? 16 : 36)
+            .frame(maxWidth: 1240, alignment: .leading)
+            .frame(maxWidth: .infinity)
         }
-        .background(NoktaPalette.bg)
+        .background(NoktaTheme.fondo)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { ancho = $0 }
+        .onAppear { withAnimation(.spring(duration: 0.6, bounce: 0.12)) { aparecio = true } }
         .task { await vm.load() }
         .onChange(of: vm.didDelete) { _, deleted in if deleted { onBack() } }
         .sheet(item: Binding(get: {
@@ -316,6 +325,20 @@ struct TrabajoDetailView: View {
         }
     }
 
+    private func generarReciboSesion(_ s: NoktaSesion, en sesiones: [NoktaSesion]) async {
+        guard let t = vm.trabajo else { return }
+        let visibles = sesiones.filter { $0.estado != "oculta" && $0.estado != "cancelado" }
+        let numero = (visibles.firstIndex { $0.id == s.id } ?? 0) + 1
+        let html = PDFTemplates.reciboSesion(cliente: t.cliente, servicio: t.servicio, fecha: s.fecha,
+                                             numero: numero, total: visibles.count, monto: s.monto ?? 0, fechaPago: s.fechaPago)
+        do {
+            let url = try await PDFRenderer().renderToPDF(html: html, suggestedName: "Recibo_Clase_\(s.fecha.prefix(10))_\(t.cliente)")
+            facturaPreview = FacturaPreviewItem(url: url, title: "Recibo · Clase \(numero)")
+        } catch {
+            facturaErrorMessage = error.localizedDescription
+        }
+    }
+
     private func generarFacturaQ(periodo: String, q: Int, rec: NoktaQuincena, montoQ: Double) async {
         guard let t = vm.trabajo else { return }
         let html = PDFTemplates.facturaQuincena(
@@ -330,25 +353,282 @@ struct TrabajoDetailView: View {
         }
     }
 
+    // MARK: - Encabezado
+
+    /// Color y texto del estado, misma regla que la lista de Trabajos.
+    private func estado(_ t: NoktaTrabajo) -> (texto: String, color: Color) {
+        if vm.grupo == "B" || vm.esRecurrente {
+            let er = vm.estadoRelacion
+            let color = er == "activo" ? NoktaTheme.exito : er == "pausado" ? NoktaTheme.aviso : NoktaTheme.error
+            return (ESTADO_CLIENTE_LABEL[er] ?? er.capitalized, color)
+        }
+        return t.estado == "pagado" ? ("Pagado", NoktaTheme.exito) : ("Pendiente", NoktaTheme.aviso)
+    }
+
     private var header: some View {
-        HStack {
-            Button("← Volver", action: onBack).buttonStyle(.glass)
-            Text(vm.trabajo?.cliente ?? "Trabajo").font(NoktaFont.pageTitle).foregroundStyle(NoktaPalette.cream)
-            Spacer()
-            if vm.grupo != "B", !vm.esRecurrente, vm.trabajo?.estado != "pagado" {
-                Button("✓ Marcar pagado") { Task { await vm.marcarPagado() } }
-                    .buttonStyle(.glassProminent).tint(NoktaPalette.green)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Button(action: onBack) { Label("Trabajos", systemImage: "chevron.left") }
+                    .buttonStyle(NoktaBotonSecundario())
+                Spacer()
+                if vm.trabajo != nil {
+                    Button { contratoSheetShown = true } label: { Label("Contrato", systemImage: "doc.text") }
+                        .buttonStyle(NoktaBotonSecundario())
+                }
+                Button { eliminarTrabajoConfirm = true } label: {
+                    Label("Eliminar", systemImage: "trash").foregroundStyle(NoktaTheme.error)
+                }
+                .buttonStyle(NoktaBotonSecundario())
             }
-            if vm.trabajo != nil {
-                Button("📜 Contrato") { contratoSheetShown = true }
-                    .buttonStyle(.glass)
+            if let t = vm.trabajo {
+                let e = estado(t)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(t.cliente)
+                        .font(NoktaFont.poppins(ancho < 600 ? 28 : 34, .light)).tracking(-1)
+                        .foregroundStyle(NoktaTheme.texto)
+                    HStack(spacing: 10) {
+                        NoktaEstado(texto: e.texto, color: e.color, tamano: 11)
+                            .padding(.horizontal, 10).padding(.vertical, 4)
+                            .background(e.color.opacity(0.12), in: Capsule())
+                        Text(subtitulo(t))
+                            .font(NoktaFont.poppins(13)).foregroundStyle(NoktaTheme.textoSuave)
+                            .lineLimit(1)
+                    }
+                }
             }
-            Button("🗑 Eliminar", role: .destructive) { eliminarTrabajoConfirm = true }
-                .buttonStyle(.glass)
         }
     }
 
-    // MARK: - Periodic-payments panel (quincenas / sesiones / placeholder)
+    private func subtitulo(_ t: NoktaTrabajo) -> String {
+        if vm.esRecurrente, let precio = (t.sesiones ?? []).first?.monto {
+            return "\(t.servicio) · \(NoktaFormato.dinero(precio)) por sesión"
+        }
+        if vm.grupo == "B" { return "\(t.servicio) · \(NoktaFormato.dinero(t.pagoMensual ?? t.monto ?? 0)) al mes" }
+        return "\(t.servicio) · \(FechaUtil.fechaCorta(t.fechaEntrega ?? t.fecha))"
+    }
+
+    // MARK: - Resumen de cobro (tarjeta grande)
+
+    private enum Tramo { case pagado, sigue, retrasado, falta }
+
+    private var sesionesVisibles: [NoktaSesion] {
+        (vm.trabajo?.sesiones ?? []).filter { $0.estado != "oculta" && $0.estado != "cancelado" }.sorted { $0.fecha < $1.fecha }
+    }
+    private var proximaSesion: NoktaSesion? { sesionesVisibles.first { $0.estado != "pagado" } }
+
+    private var quincenasVisibles: [(periodo: String, q: Int, rec: NoktaQuincena)] {
+        vm.periodos.flatMap { p in [1, 2].map { (p, $0, vm.quincena(periodo: p, q: $0)) } }.filter { $0.rec.estado != "oculta" }
+    }
+    private var proximaQuincena: (periodo: String, q: Int, rec: NoktaQuincena)? {
+        quincenasVisibles.first { $0.rec.estado != "pagado" }
+    }
+
+    private func datosResumen(_ t: NoktaTrabajo, activo: Bool, cobrado: Double) -> ([Tramo], String, String) {
+        var tramos: [Tramo] = []
+        var total = ""
+        var avance = ""
+        if vm.esRecurrente {
+            let ses = sesionesVisibles
+            let prox = proximaSesion?.id
+            tramos = ses.map { $0.estado == "pagado" ? .pagado : ($0.id == prox && activo ? .sigue : .falta) }
+            total = "de " + NoktaFormato.dinero(ses.reduce(0) { $0 + ($1.monto ?? 0) })
+            avance = "\(ses.filter { $0.estado == "pagado" }.count) de \(ses.count) clases pagadas"
+        } else if vm.grupo == "B" {
+            let qs = quincenasVisibles
+            let prox = proximaQuincena.map { "\($0.periodo)-\($0.q)" }
+            tramos = qs.map { x in
+                x.rec.estado == "pagado" ? .pagado : x.rec.estado == "retrasado" ? .retrasado : ("\(x.periodo)-\(x.q)" == prox && activo ? .sigue : .falta)
+            }
+            total = "cobrado · " + NoktaFormato.dinero(t.pagoMensual ?? t.monto ?? 0) + " al mes"
+            avance = "\(qs.filter { $0.rec.estado == "pagado" }.count) de \(qs.count) quincenas pagadas"
+        } else {
+            tramos = []
+            total = "de " + NoktaFormato.dinero(t.monto ?? 0)
+            let pct = (t.monto ?? 0) > 0 ? Int((cobrado / (t.monto ?? 1) * 100).rounded()) : 0
+            avance = "\(pct)% cobrado"
+        }
+
+        return (tramos, total, avance)
+    }
+
+    @ViewBuilder
+    private func resumenCobro(_ t: NoktaTrabajo) -> some View {
+        let e = estado(t)
+        let activo = !(vm.grupo == "B" || vm.esRecurrente) || vm.estadoRelacion == "activo"
+        let cobrado = IngresosCalculator.cobrado(t)
+        let (tramos, total, avance) = datosResumen(t, activo: activo, cobrado: cobrado)
+
+        VStack(alignment: .leading, spacing: 0) {
+            Text("COBRADO").font(NoktaFont.poppins(10, .medium)).tracking(1.4).foregroundStyle(NoktaTheme.textoTenue)
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(NoktaFormato.dinero(cobrado))
+                    .font(NoktaFont.poppins(ancho < 600 ? 44 : 56, .light)).tracking(-2.4)
+                    .foregroundStyle(NoktaTheme.texto)
+                    .contentTransition(.numericText(value: cobrado))
+                Text(total).font(NoktaFont.poppins(13)).foregroundStyle(NoktaTheme.textoTenue).lineLimit(1)
+            }
+            .padding(.top, 4)
+
+            Group {
+                if tramos.isEmpty {
+                    let monto = t.monto ?? 0
+                    GeometryReader { g in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(NoktaTheme.texto.opacity(0.08))
+                            Capsule().fill(e.color)
+                                .frame(width: g.size.width * (monto > 0 ? min(1, cobrado / monto) : 0))
+                                .shadow(color: e.color.opacity(0.5), radius: 6)
+                        }
+                    }
+                    .frame(height: 8)
+                } else {
+                    HStack(spacing: tramos.count > 12 ? 3 : 6) {
+                        ForEach(Array(tramos.enumerated()), id: \.offset) { _, tr in
+                            let c: Color = switch tr {
+                            case .pagado: NoktaTheme.exito
+                            case .sigue: NoktaTheme.aviso
+                            case .retrasado: NoktaTheme.error
+                            case .falta: NoktaTheme.texto.opacity(0.1)
+                            }
+                            Capsule().fill(c).frame(height: 8)
+                                .shadow(color: tr == .falta ? .clear : c.opacity(0.5), radius: 5)
+                        }
+                    }
+                }
+            }
+            .padding(.top, 18)
+            .animation(.spring(duration: 0.5), value: cobrado)
+
+            Text(avance).font(NoktaFont.poppins(11)).foregroundStyle(NoktaTheme.textoTenue).padding(.top, 8)
+
+            accionPrincipal(t, activo: activo).padding(.top, 20)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .noktaFoco(e.color, radio: 22)
+    }
+
+    @ViewBuilder
+    private func accionPrincipal(_ t: NoktaTrabajo, activo: Bool) -> some View {
+        if !activo {
+            linea("Contrato", vm.estadoRelacion == "pausado" ? "en pausa" : "cancelado", color: estado(t).color)
+        } else if vm.esRecurrente {
+            if let p = proximaSesion {
+                VStack(alignment: .leading, spacing: 14) {
+                    linea("Próxima clase", diaLargo(p.fecha) + " · " + NoktaFormato.dinero(p.monto ?? 0), color: NoktaTheme.aviso)
+                    botonGrande("Marcar la clase del \(diaCorto(p.fecha)) como pagada") {
+                        Task { await vm.marcarSesionPagada(p.id) }
+                    }
+                }
+            } else {
+                linea("Clases", "todas pagadas ✓", color: NoktaTheme.exito)
+            }
+        } else if vm.grupo == "B" {
+            if let x = proximaQuincena {
+                VStack(alignment: .leading, spacing: 14) {
+                    linea(x.rec.estado == "retrasado" ? "Quincena retrasada" : "Próxima quincena",
+                          etiquetaQuincena(x.periodo, x.q) + " · " + NoktaFormato.dinero(x.rec.monto ?? (t.pagoMensual ?? 0) / 2),
+                          color: x.rec.estado == "retrasado" ? NoktaTheme.error : NoktaTheme.aviso)
+                    botonGrande("Registrar pago de esta quincena") { pagoQuincenaCtx = (x.periodo, x.q) }
+                }
+            } else {
+                linea("Quincenas", "al día ✓", color: NoktaTheme.exito)
+            }
+        } else if t.estado != "pagado" {
+            VStack(alignment: .leading, spacing: 14) {
+                linea("Falta cobrar", NoktaFormato.dinero(max(0, t.saldo ?? 0)) + (t.fechaEntrega ?? t.fecha).map { " · " + diaLargo($0) }.orEmpty, color: NoktaTheme.aviso)
+                botonGrande("Marcar como pagado completo") { Task { await vm.marcarPagado() } }
+            }
+        } else {
+            linea("Cobrado", "completo ✓", color: NoktaTheme.exito)
+        }
+    }
+
+    private func linea(_ a: String, _ b: String, color: Color) -> some View {
+        (Text(a + " · ").foregroundStyle(NoktaTheme.textoSuave) + Text(b).foregroundStyle(color).fontWeight(.medium))
+            .font(NoktaFont.poppins(13))
+    }
+
+    private func botonGrande(_ titulo: String, accion: @escaping () -> Void) -> some View {
+        Button(action: accion) {
+            Text(titulo)
+                .font(NoktaFont.poppins(12.5, .medium))
+                .foregroundStyle(.white)
+                .lineLimit(1).minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity).frame(height: 42)
+                .background(
+                    LinearGradient(colors: [Color(red: 0.855, green: 0.478, blue: 0.282), Color(red: 0.72, green: 0.32, blue: 0.157)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing),
+                    in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                )
+                .shadow(color: NoktaTheme.marca.opacity(0.35), radius: 10, y: 6)
+                .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Datos del trabajo
+
+    private func datosCard(_ t: NoktaTrabajo) -> some View {
+        var filas: [(String, String)] = [("Servicio", t.servicio + (t.grupoNombre.map { " · \($0)" } ?? ""))]
+        if vm.esRecurrente {
+            let ses = sesionesVisibles
+            if let precio = ses.first?.monto { filas.append(("Precio por clase", NoktaFormato.dinero(precio))) }
+            filas.append(("Total programado", NoktaFormato.dinero(ses.reduce(0) { $0 + ($1.monto ?? 0) }) + " (\(ses.count) clases)"))
+            filas.append(("Sin pagar (todas)", NoktaFormato.dinero(ses.filter { $0.estado != "pagado" }.reduce(0) { $0 + ($1.monto ?? 0) })))
+        } else {
+            switch vm.grupo {
+            case "A":
+                filas.append(("Fecha", FechaUtil.fechaCorta(t.fecha)))
+                if let hi = t.horaInicio, !hi.isEmpty { filas.append(("Horario", hi + (t.horaFin.flatMap { $0.isEmpty ? nil : " – \($0)" } ?? ""))) }
+                if let l = t.lugar, !l.isEmpty { filas.append(("Lugar", l)) }
+                filas.append(("Monto total", NoktaFormato.dinero(t.monto ?? 0)))
+                filas.append(("Anticipo", NoktaFormato.dinero(t.anticipo ?? 0)))
+                filas.append(("Saldo pendiente", NoktaFormato.dinero(t.estado == "pagado" ? 0 : (t.saldo ?? 0))))
+            case "B":
+                if let e = t.empresa, !e.isEmpty { filas.append(("Empresa", e)) }
+                filas.append(("Pago mensual", NoktaFormato.dinero(t.pagoMensual ?? 0)))
+                filas.append(("Inicio del contrato", FechaUtil.fechaCorta(t.fechaInicio)))
+                if let d = t.diaCobro, !d.isEmpty { filas.append(("Día de cobro", "Día \(d)")) }
+                filas.append(("Contrato", ESTADO_CLIENTE_LABEL[vm.estadoRelacion] ?? vm.estadoRelacion))
+            case "C":
+                if let cp = t.cantPiezas, !cp.isEmpty { filas.append(("Piezas", cp)) }
+                if let f = t.formato, !f.isEmpty { filas.append(("Formato", f.capitalized)) }
+                filas.append(("Entrega estimada", FechaUtil.fechaCorta(t.fechaEntrega)))
+                filas.append(("Monto total", NoktaFormato.dinero(t.monto ?? 0)))
+                filas.append(("Saldo", NoktaFormato.dinero(t.estado == "pagado" ? 0 : (t.saldo ?? 0))))
+            default:
+                if let e = t.empresa, !e.isEmpty { filas.append(("Empresa", e)) }
+                filas.append(("Entrega estimada", FechaUtil.fechaCorta(t.fechaEntrega)))
+                if let a = t.alcance, !a.isEmpty { filas.append(("Alcance", a)) }
+                filas.append(("Monto total", NoktaFormato.dinero(t.monto ?? 0)))
+                filas.append(("Saldo", NoktaFormato.dinero(t.estado == "pagado" ? 0 : (t.saldo ?? 0))))
+            }
+        }
+        if let n = t.notas, !n.isEmpty { filas.append(("Notas", n)) }
+
+        return VStack(alignment: .leading, spacing: 0) {
+            Text("DATOS DEL TRABAJO").font(NoktaFont.poppins(10, .medium)).tracking(1.4).foregroundStyle(NoktaTheme.textoTenue)
+                .padding(.bottom, 8)
+            ForEach(Array(filas.enumerated()), id: \.offset) { i, f in
+                HStack(alignment: .firstTextBaseline, spacing: 16) {
+                    Text(f.0).foregroundStyle(NoktaTheme.textoSuave)
+                    Spacer(minLength: 12)
+                    Text(f.1).foregroundStyle(NoktaTheme.texto).fontWeight(.medium)
+                        .multilineTextAlignment(.trailing)
+                        .textSelection(.enabled)
+                }
+                .font(NoktaFont.poppins(12.5))
+                .padding(.vertical, 11)
+                .overlay(alignment: .top) { if i > 0 { Rectangle().fill(NoktaTheme.borde).frame(height: 1) } }
+            }
+        }
+        .padding(22)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .noktaFoco(NoktaTheme.marca, radio: 22)
+    }
+
+    // MARK: - Pagos (sesiones / quincenas / trabajo suelto)
 
     @ViewBuilder
     private func periodoPanel(_ t: NoktaTrabajo) -> some View {
@@ -357,240 +637,177 @@ struct TrabajoDetailView: View {
         } else if vm.esRecurrente {
             sesionesPanel(t)
         } else {
-            Text("Sin pagos periódicos para este tipo de servicio.")
-                .font(.system(size: 14)).foregroundStyle(NoktaPalette.muted)
-                .frame(maxWidth: .infinity, minHeight: 120)
-                .glassEffect(.regular.tint(NoktaPalette.card), in: RoundedRectangle(cornerRadius: NoktaRadius.card))
+            pagosSueltos(t)
         }
     }
 
-    // MARK: - Info card
+    private func tituloPanel(_ texto: String, _ detalle: String) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(texto).font(NoktaFont.poppins(10, .medium)).tracking(1.4).foregroundStyle(NoktaTheme.textoTenue)
+            Spacer()
+            Text(detalle).font(NoktaFont.poppins(11)).foregroundStyle(NoktaTheme.textoTenue)
+        }
+        .padding(.horizontal, 4)
+    }
 
-    private func infoCard(_ t: NoktaTrabajo) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            pf("SERVICIO", t.servicio + (t.grupoNombre.map { " · \($0)" } ?? ""))
-            if vm.esRecurrente || !(t.sesiones ?? []).isEmpty {
-                let sesiones = (t.sesiones ?? []).filter { $0.estado != "oculta" && $0.estado != "cancelado" }
-                let pagadas = sesiones.filter { $0.estado == "pagado" }
-                let sinPagar = sesiones.filter { $0.estado != "pagado" }
-                bigNumber("TOTAL DE SESIONES PROGRAMADAS", sesiones.reduce(0) { $0 + ($1.monto ?? 0) }, NoktaPalette.cream)
-                bigNumber("PAGOS DE SESIONES", pagadas.reduce(0) { $0 + ($1.monto ?? 0) }, NoktaPalette.green, size: 18)
-                bigNumber("SESIONES SIN PAGAR (TOTAL)", sinPagar.reduce(0) { $0 + ($1.monto ?? 0) }, NoktaPalette.yellow, size: 18)
-                Text("Incluye todas las sesiones futuras sin pagar.")
-                    .font(.system(size: 11)).foregroundStyle(NoktaPalette.muted)
-                    .padding(.vertical, 8)
-                if let proxima = sinPagar.min(by: { $0.fecha < $1.fecha }) {
-                    pf("PRÓXIMA SESIÓN SIN PAGAR · \(FechaUtil.fechaCorta(proxima.fecha))", "$" + String(format: "%.2f", proxima.monto ?? 0))
+    /// Una fila de pago: punto de estado, fecha/concepto, pastilla y acciones.
+    private func filaPago<Acciones: View>(titulo: String, detalle: String, estado: (String, Color), resaltar: Bool,
+                                          @ViewBuilder acciones: () -> Acciones) -> some View {
+        let (txt, c) = estado
+        let info = HStack(spacing: 14) {
+            Circle().fill(c).frame(width: 9, height: 9).shadow(color: c.opacity(0.6), radius: 4)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(titulo).font(NoktaFont.poppins(14, .medium)).foregroundStyle(NoktaTheme.texto)
+                Text(detalle).font(NoktaFont.poppins(11)).foregroundStyle(resaltar ? NoktaTheme.aviso : NoktaTheme.textoTenue)
+            }
+            Spacer(minLength: 8)
+            NoktaEstado(texto: txt, color: c, tamano: 11)
+                .padding(.horizontal, 9).padding(.vertical, 3)
+                .background(c.opacity(0.12), in: Capsule())
+        }
+        let botones = HStack(spacing: 8) { acciones() }
+        return Group {
+            if ancho < 700 {
+                VStack(alignment: .leading, spacing: 10) {
+                    info
+                    ScrollView(.horizontal, showsIndicators: false) { botones }
                 }
             } else {
-                switch vm.grupo {
-                case "A":
-                    pf("FECHA", FechaUtil.fechaCorta(t.fecha))
-                    if let hi = t.horaInicio, !hi.isEmpty { pf("HORARIO", hi + (t.horaFin.map { " → \($0)" } ?? "")) }
-                    if let l = t.lugar, !l.isEmpty { pf("LUGAR", l) }
-                    bigNumber("MONTO TOTAL", t.monto ?? 0, NoktaPalette.cream)
-                    pf("ANTICIPO", "$" + String(format: "%.2f", t.anticipo ?? 0))
-                    bigNumber("SALDO PENDIENTE", t.saldo ?? 0, NoktaPalette.yellow, size: 18)
-                case "B":
-                    if let e = t.empresa, !e.isEmpty { pf("EMPRESA", e) }
-                    bigNumber("PAGO MENSUAL", t.pagoMensual ?? 0, NoktaPalette.cream)
-                    pf("INICIO CONTRATO", FechaUtil.fechaCorta(t.fechaInicio))
-                    pf("ESTADO CONTRATO", ESTADO_CLIENTE_LABEL[vm.estadoRelacion] ?? vm.estadoRelacion)
-                case "C":
-                    if let cp = t.cantPiezas, !cp.isEmpty { pf("PIEZAS", cp) }
-                    if let f = t.formato { pf("FORMATO", f) }
-                    pf("ENTREGA ESTIMADA", FechaUtil.fechaCorta(t.fechaEntrega))
-                    bigNumber("MONTO TOTAL", t.monto ?? 0, NoktaPalette.cream)
-                    bigNumber("SALDO", t.saldo ?? 0, NoktaPalette.yellow, size: 18)
-                default:
-                    if let e = t.empresa, !e.isEmpty { pf("EMPRESA", e) }
-                    pf("ENTREGA ESTIMADA", FechaUtil.fechaCorta(t.fechaEntrega))
-                    if let a = t.alcance, !a.isEmpty { pf("ALCANCE", a) }
-                    bigNumber("MONTO TOTAL", t.monto ?? 0, NoktaPalette.cream)
-                    bigNumber("SALDO", t.saldo ?? 0, NoktaPalette.yellow, size: 18)
+                HStack(spacing: 14) { info; botones }
+            }
+        }
+        .padding(.horizontal, 18).padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .modifier(FondoFila(resaltar: resaltar))
+    }
+
+    private func masAcciones(editar: @escaping () -> Void, borrarTitulo: String, borrar: @escaping () -> Void) -> some View {
+        Menu {
+            Button(action: editar) { Label("Editar monto", systemImage: "pencil") }
+            Button(role: .destructive, action: borrar) { Label(borrarTitulo, systemImage: "trash") }
+        } label: {
+            Image(systemName: "ellipsis").font(.system(size: 13, weight: .medium))
+                .foregroundStyle(NoktaTheme.textoSuave)
+                .frame(width: 34, height: 34)
+                .background(NoktaTheme.superficie2, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+        .help("Más acciones")
+    }
+
+    private func sesionesPanel(_ t: NoktaTrabajo) -> some View {
+        let sesiones = (t.sesiones ?? []).sorted { $0.fecha < $1.fecha }
+        let prox = proximaSesion?.id
+        let activo = vm.estadoRelacion == "activo"
+        return VStack(alignment: .leading, spacing: 10) {
+            tituloPanel("SESIONES", "\(sesiones.filter { $0.estado == "pagado" }.count) de \(sesiones.count) pagadas")
+            if sesiones.isEmpty {
+                NoktaVacio(icono: "calendar", titulo: "Sin sesiones registradas", detalle: "Agrega la primera clase abajo.").noktaCard()
+            }
+            ForEach(sesiones, id: \.id) { s in
+                let pagado = s.estado == "pagado"
+                let esProx = s.id == prox && activo
+                filaPago(titulo: diaLargo(s.fecha),
+                         detalle: NoktaFormato.dinero(s.monto ?? 0) + (esProx ? " · la que sigue" : ""),
+                         estado: pagado ? ("Pagada", NoktaTheme.exito) : esProx ? ("Por cobrar", NoktaTheme.aviso) : ("Programada", NoktaTheme.textoSuave),
+                         resaltar: esProx) {
+                    if pagado {
+                        Button { Task { await generarReciboSesion(s, en: sesiones) } } label: {
+                            Label("Recibo", systemImage: "doc.richtext")
+                        }
+                        .buttonStyle(NoktaBotonSecundario())
+                        Button("Revertir") { Task { await vm.revertirSesion(s.id) } }.buttonStyle(NoktaBotonSecundario())
+                    } else {
+                        Button("Marcar pagada") { Task { await vm.marcarSesionPagada(s.id) } }.buttonStyle(NoktaBotonPrimario())
+                    }
+                    masAcciones(editar: { editarSesionCtx = s.id }, borrarTitulo: "Eliminar sesión") { eliminarSesionConfirm = s.id }
                 }
             }
-
-            if vm.grupo == "B" || vm.esRecurrente {
-                let er = vm.estadoRelacion
-                estadoPillRow(ESTADO_CLIENTE_LABEL[er] ?? er, color: er == "activo" ? NoktaPalette.green : er == "pausado" ? NoktaPalette.yellow : NoktaPalette.red)
-            } else {
-                estadoPillRow(t.estado == "pagado" ? "Pagado" : "Pendiente", color: t.estado == "pagado" ? NoktaPalette.green : NoktaPalette.yellow)
-            }
-            if let notas = t.notas, !notas.isEmpty { pf("NOTAS", notas) }
+            Button { agregarSesionShown = true } label: { Label("Agregar sesión", systemImage: "plus") }
+                .buttonStyle(NoktaBotonSecundario())
+                .padding(.top, 4)
         }
-        .padding(20)
-        #if os(iOS)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        #else
-        .frame(width: 300, alignment: .leading)
-        #endif
-        .glassEffect(.regular.tint(NoktaPalette.card), in: RoundedRectangle(cornerRadius: NoktaRadius.card))
     }
-
-    private func pf(_ label: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label).font(NoktaFont.cardLabel).foregroundStyle(NoktaPalette.muted)
-            Text(value).font(.system(size: 14)).foregroundStyle(NoktaPalette.cream)
-        }
-        .padding(.vertical, 10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .bottom) { Rectangle().fill(NoktaPalette.border).frame(height: 1) }
-    }
-
-    private func bigNumber(_ label: String, _ value: Double, _ color: Color, size: CGFloat = 22) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label).font(NoktaFont.cardLabel).foregroundStyle(NoktaPalette.muted)
-            Text("$" + String(format: "%.2f", value)).font(.system(size: size, weight: .bold)).foregroundStyle(color)
-        }
-        .padding(.vertical, 10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .bottom) { Rectangle().fill(NoktaPalette.border).frame(height: 1) }
-    }
-
-    private func estadoPillRow(_ label: String, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("ESTADO").font(NoktaFont.cardLabel).foregroundStyle(NoktaPalette.muted)
-            Text(label).font(NoktaFont.pill).foregroundStyle(color)
-                .padding(.horizontal, 10).padding(.vertical, 3)
-                .background(color.opacity(0.15), in: Capsule())
-        }
-        .padding(.vertical, 10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .bottom) { Rectangle().fill(NoktaPalette.border).frame(height: 1) }
-    }
-
-    // MARK: - Quincenas
 
     private func quincenasPanel(_ t: NoktaTrabajo) -> some View {
         let montoQ = (t.pagoMensual ?? 0) / 2
-        let mesesL = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
-        return VStack(alignment: .leading, spacing: 0) {
-            Text("QUINCENAS").font(NoktaFont.cardLabel).foregroundStyle(NoktaPalette.muted).padding(16)
-            ForEach(vm.periodos, id: \.self) { periodo in
-                ForEach([1, 2], id: \.self) { q in
-                    let rec = vm.quincena(periodo: periodo, q: q)
-                    if rec.estado != "oculta" {
-                        quincenaRow(periodo: periodo, q: q, rec: rec, mesesL: mesesL, montoQ: montoQ)
-                        Divider().overlay(NoktaPalette.border)
+        let qs = quincenasVisibles
+        let prox = proximaQuincena.map { "\($0.periodo)-\($0.q)" }
+        let activo = vm.estadoRelacion == "activo"
+        return VStack(alignment: .leading, spacing: 10) {
+            tituloPanel("QUINCENAS", "\(qs.filter { $0.rec.estado == "pagado" }.count) de \(qs.count) pagadas")
+            if qs.isEmpty {
+                NoktaVacio(icono: "calendar", titulo: "Sin quincenas", detalle: "Aparecerán desde el inicio del contrato.").noktaCard()
+            }
+            ForEach(Array(qs.enumerated()), id: \.offset) { _, x in
+                let rec = x.rec
+                let esProx = "\(x.periodo)-\(x.q)" == prox && activo
+                let est: (String, Color) = rec.estado == "pagado" ? ("Pagada", NoktaTheme.exito)
+                    : rec.estado == "retrasado" ? ("Retrasada", NoktaTheme.error)
+                    : esProx ? ("Por cobrar", NoktaTheme.aviso) : ("Pendiente", NoktaTheme.textoSuave)
+                filaPago(titulo: etiquetaQuincena(x.periodo, x.q),
+                         detalle: NoktaFormato.dinero(rec.monto ?? montoQ) + (rec.fechaPago.map { " · pagada " + FechaUtil.fechaCorta($0) } ?? (esProx ? " · la que sigue" : "")),
+                         estado: est, resaltar: esProx) {
+                    if rec.estado == "pagado" {
+                        Button { Task { await generarFacturaQ(periodo: x.periodo, q: x.q, rec: rec, montoQ: montoQ) } } label: {
+                            Label("Recibo", systemImage: "doc.richtext")
+                        }
+                        .buttonStyle(NoktaBotonSecundario())
+                    } else {
+                        Button("Pagada") { pagoQuincenaCtx = (x.periodo, x.q) }.buttonStyle(NoktaBotonPrimario())
+                        if rec.estado != "retrasado" {
+                            Button("Retrasada") { Task { await vm.marcarQuincenaRetrasada(periodo: x.periodo, q: x.q) } }
+                                .buttonStyle(NoktaBotonSecundario())
+                        }
+                    }
+                    masAcciones(editar: { editarQuincenaCtx = (x.periodo, x.q) }, borrarTitulo: "Ocultar quincena") {
+                        Task { await vm.ocultarQuincena(periodo: x.periodo, q: x.q) }
                     }
                 }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .glassEffect(.regular.tint(NoktaPalette.card), in: RoundedRectangle(cornerRadius: NoktaRadius.card))
     }
 
-    private func quincenaRow(periodo: String, q: Int, rec: NoktaQuincena, mesesL: [String], montoQ: Double) -> some View {
-        let parts = periodo.split(separator: "-")
-        let mesIdx = (Int(parts.count > 1 ? parts[1] : "1") ?? 1) - 1
-        let mesLabel = "\(mesesL[max(0, min(11, mesIdx))]) \(parts.first ?? "")"
-        let color: Color = rec.estado == "pagado" ? NoktaPalette.green : rec.estado == "retrasado" ? NoktaPalette.overdue : NoktaPalette.yellow
-        let info = HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(mesLabel).font(.system(size: 14, weight: .semibold)).foregroundStyle(NoktaPalette.cream)
-                Text(QuincenaEngine.labelDeQ(q)).font(.system(size: 11)).foregroundStyle(NoktaPalette.muted)
-            }.frame(maxWidth: .infinity, alignment: .leading)
-            Text("$" + String(format: "%.2f", rec.monto ?? montoQ)).frame(maxWidth: .infinity, alignment: .leading)
-            Text(rec.estado == "pagado" ? "Pagado" : rec.estado == "retrasado" ? "Retrasado" : "Pendiente")
-                .font(.system(size: 12, weight: .medium)).foregroundStyle(color)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        let buttons = HStack {
-            if rec.estado != "pagado" {
-                Button("Pagado") { pagoQuincenaCtx = (periodo, q) }
-                    .buttonStyle(.glass).tint(NoktaPalette.green)
-                if rec.estado != "retrasado" {
-                    Button("Retrasado") { Task { await vm.marcarQuincenaRetrasada(periodo: periodo, q: q) } }
-                        .buttonStyle(.glass)
+    /// Trabajos sueltos: anticipo y saldo como dos pagos.
+    private func pagosSueltos(_ t: NoktaTrabajo) -> some View {
+        let pagado = t.estado == "pagado"
+        let anticipo = t.anticipo ?? 0
+        let saldo = pagado ? 0 : max(0, t.saldo ?? max(0, (t.monto ?? 0) - anticipo))
+        return VStack(alignment: .leading, spacing: 10) {
+            tituloPanel("PAGOS", pagado ? "cobrado completo" : "falta " + NoktaFormato.dinero(saldo))
+            filaPago(titulo: "Anticipo", detalle: NoktaFormato.dinero(anticipo),
+                     estado: anticipo > 0 || pagado ? ("Recibido", NoktaTheme.exito) : ("Sin anticipo", NoktaTheme.textoSuave),
+                     resaltar: false) { EmptyView() }
+            filaPago(titulo: "Saldo", detalle: pagado ? "Pagado completo" : NoktaFormato.dinero(saldo) + (t.fechaEntrega ?? t.fecha).map { " · " + diaLargo($0) }.orEmpty,
+                     estado: pagado ? ("Pagado", NoktaTheme.exito) : ("Por cobrar", NoktaTheme.aviso),
+                     resaltar: !pagado) {
+                if !pagado {
+                    Button("Marcar pagado") { Task { await vm.marcarPagado() } }.buttonStyle(NoktaBotonPrimario())
                 }
             }
-            if rec.estado == "pagado" {
-                Button("📄 Factura") { Task { await generarFacturaQ(periodo: periodo, q: q, rec: rec, montoQ: montoQ) } }
-                    .buttonStyle(.glass)
-            }
-            Button("✎ Editar") { editarQuincenaCtx = (periodo, q) }
-                .buttonStyle(.glass)
-            Button(role: .destructive) { Task { await vm.ocultarQuincena(periodo: periodo, q: q) } } label: {
-                Image(systemName: "trash")
-            }.buttonStyle(.glass)
         }
-        // Mac's window is wide enough for info + all four action buttons in one
-        // row; on iPhone that same row would overflow, so the buttons move to
-        // their own horizontally-scrollable row instead of getting clipped.
-        #if os(iOS)
-        return VStack(alignment: .leading, spacing: 8) {
-            info
-            ScrollView(.horizontal, showsIndicators: false) { buttons }
-        }
-        .padding(.horizontal, 16).padding(.vertical, 10)
-        #else
-        return HStack { info; buttons }
-            .padding(.horizontal, 16).padding(.vertical, 10)
-        #endif
     }
 
-    // MARK: - Sesiones
+    // MARK: - Fechas
 
-    private func sesionesPanel(_ t: NoktaTrabajo) -> some View {
-        let sesiones = (t.sesiones ?? []).sorted { $0.fecha < $1.fecha }
-        return VStack(alignment: .leading, spacing: 0) {
-            Text("SESIONES").font(NoktaFont.cardLabel).foregroundStyle(NoktaPalette.muted).padding(16)
-            if sesiones.isEmpty {
-                Text("Sin sesiones registradas").font(.system(size: 13)).foregroundStyle(NoktaPalette.muted)
-                    .frame(maxWidth: .infinity, alignment: .center).padding(24)
-            }
-            ForEach(sesiones, id: \.id) { s in
-                sesionRow(s)
-                Divider().overlay(NoktaPalette.border)
-            }
-            Button("＋ Agregar sesión") { agregarSesionShown = true }
-                .buttonStyle(.glass)
-                .padding(16)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .glassEffect(.regular.tint(NoktaPalette.card), in: RoundedRectangle(cornerRadius: NoktaRadius.card))
+    private static let isoParser: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX"); return f
+    }()
+    private func fechaDe(_ iso: String) -> Date? { Self.isoParser.date(from: String(iso.prefix(10))) }
+    private func formatear(_ iso: String, _ formato: String) -> String {
+        guard let d = fechaDe(iso) else { return FechaUtil.fechaCorta(iso) }
+        let f = DateFormatter(); f.locale = Locale(identifier: "es"); f.dateFormat = formato
+        return f.string(from: d).replacingOccurrences(of: ".", with: "")
     }
-
-    private func sesionRow(_ s: NoktaSesion) -> some View {
-        let pagado = s.estado == "pagado"
-        let info = HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(FechaUtil.fechaCorta(s.fecha)).font(.system(size: 14, weight: .semibold)).foregroundStyle(NoktaPalette.cream)
-                Text("$" + String(format: "%.2f", s.monto ?? 0)).font(.system(size: 12)).foregroundStyle(NoktaPalette.muted)
-            }
-            Spacer()
-            Text(pagado ? "Pagado" : "Pendiente")
-                .font(NoktaFont.pill).foregroundStyle(pagado ? NoktaPalette.green : NoktaPalette.yellow)
-                .padding(.horizontal, 10).padding(.vertical, 3)
-                .background((pagado ? NoktaPalette.green : NoktaPalette.yellow).opacity(0.15), in: Capsule())
-        }
-        let buttons = HStack {
-            if !pagado {
-                Button("Pagado") { Task { await vm.marcarSesionPagada(s.id) } }
-                    .buttonStyle(.glass).tint(NoktaPalette.green)
-            } else {
-                Button("Revertir") { Task { await vm.revertirSesion(s.id) } }
-                    .buttonStyle(.glass)
-            }
-            Button("✎ Editar") { editarSesionCtx = s.id }
-                .buttonStyle(.glass)
-            Button(role: .destructive) { eliminarSesionConfirm = s.id } label: {
-                Image(systemName: "trash")
-            }.buttonStyle(.glass)
-        }
-        // Same overflow concern as quincenaRow: Mac fits info + buttons on one
-        // line, iPhone needs the buttons on their own scrollable row.
-        #if os(iOS)
-        return VStack(alignment: .leading, spacing: 8) {
-            info
-            ScrollView(.horizontal, showsIndicators: false) { buttons }
-        }
-        .padding(.horizontal, 16).padding(.vertical, 10)
-        #else
-        return HStack { info; buttons }
-            .padding(.horizontal, 16).padding(.vertical, 10)
-        #endif
+    /// "sáb 26 sep 2026"
+    private func diaLargo(_ iso: String) -> String { formatear(iso, "EEE d MMM yyyy") }
+    /// "26 sep"
+    private func diaCorto(_ iso: String) -> String { formatear(iso, "d MMM") }
+    private func etiquetaQuincena(_ periodo: String, _ q: Int) -> String {
+        let p = periodo.split(separator: "-")
+        let mes = (Int(p.count > 1 ? p[1] : "1") ?? 1) - 1
+        return "\(FechaUtil.mesesCompletos[max(0, min(11, mes))]) \(p.first ?? "") · \(QuincenaEngine.labelDeQ(q))"
     }
 }
 
@@ -797,4 +1014,23 @@ struct ContratoSheet: View {
         }
         .frame(maxWidth: 460, maxHeight: 640)
     }
+}
+
+/// Fondo de cada fila de pago: la que sigue lleva el foco en amarillo.
+private struct FondoFila: ViewModifier {
+    let resaltar: Bool
+    func body(content: Content) -> some View {
+        if resaltar {
+            content.noktaFoco(NoktaTheme.aviso, radio: 16)
+        } else {
+            content
+                .background(NoktaTheme.superficie, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(NoktaTheme.borde))
+                .noktaHover(radio: 16)
+        }
+    }
+}
+
+private extension Optional where Wrapped == String {
+    var orEmpty: String { self ?? "" }
 }

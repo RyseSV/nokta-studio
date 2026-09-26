@@ -231,6 +231,68 @@ enum PDFTemplates {
         """
     }
 
+    /// Recibo de una clase/sesión pagada — mismo diseño que el de quincenas.
+    static func reciboSesion(cliente: String, servicio: String, fecha: String, numero: Int, total: Int, monto: Double, fechaPago: String?) -> String {
+        func legible(_ iso: String?) -> String? {
+            guard let iso else { return nil }
+            let day = DateFormatter()
+            day.locale = Locale(identifier: "en_US_POSIX")
+            day.calendar = Calendar(identifier: .gregorian)
+            day.dateFormat = "yyyy-MM-dd"
+            let fractional = ISO8601DateFormatter()
+            fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            let date = iso.count == 10
+                ? day.date(from: iso)
+                : (fractional.date(from: iso) ?? ISO8601DateFormatter().date(from: iso) ?? day.date(from: String(iso.prefix(10))))
+            guard let date else { return nil }
+            let f = DateFormatter(); f.locale = Locale(identifier: "es_MX")
+            f.calendar = Calendar(identifier: .gregorian)
+            f.dateFormat = "EEEE d 'de' MMMM 'de' yyyy"
+            return f.string(from: date)
+        }
+        let clase = legible(fecha) ?? fecha
+        let pago = legible(fechaPago) ?? "—"
+        let num = fecha.prefix(10).replacingOccurrences(of: "-", with: "") + "S\(numero)"
+        return """
+        <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Recibo · Clase \(numero)</title>
+        <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,'Helvetica Neue',sans-serif;background:#fff;color:#1C1C1A;padding:60px;max-width:680px;margin:0 auto}
+        .doc-tipo{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.06em}
+        .doc-num{font-size:22px;font-weight:800;margin-top:4px;color:#1C1C1A}
+        .divider{border:none;border-top:2px solid #B85228;margin:28px 0 32px}
+        h2{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#B85228;font-weight:600;margin-bottom:16px}
+        table{width:100%;border-collapse:collapse;margin-bottom:8px}
+        td{padding:10px 0;border-bottom:1px solid #f0ebe5;font-size:14px}
+        td:first-child{color:#888;width:45%}
+        td:last-child{font-weight:600;text-align:right}
+        .total-row td{border-top:2px solid #B85228;border-bottom:none;padding-top:16px;font-size:18px}
+        .total-row td:first-child{color:#1C1C1A;font-weight:700}
+        .total-row td:last-child{color:#B85228;font-size:20px}
+        .footer{margin-top:60px;padding-top:24px;border-top:1px solid #e8e4df;font-size:11px;color:#bbb;text-align:center}
+        </style></head><body>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          \(logoTag(height: 40))
+          <div style="text-align:right">
+            <div class="doc-tipo">Recibo de pago</div>
+            <div class="doc-num">#\(num)</div>
+          </div>
+        </div>
+        <hr class="divider">
+        <h2>Detalle del servicio</h2>
+        <table>
+          <tr><td>Cliente</td><td>\(esc(cliente))</td></tr>
+          <tr><td>Servicio</td><td>\(esc(servicio))</td></tr>
+          <tr><td>Clase</td><td>\(esc(clase))</td></tr>
+          <tr><td>Sesión</td><td>\(numero) de \(total)</td></tr>
+          <tr><td>Fecha de pago</td><td>\(esc(pago))</td></tr>
+          <tr class="total-row"><td>Total</td><td>$\(fmt(monto))</td></tr>
+        </table>
+        <div class="footer">Nokta Studio · contacto@noktastudio.com<br>Este documento es un comprobante interno de pago.</div>
+        </body></html>
+        """
+    }
+
     /// Reportes (mensual/clientes/galerías) — mismo layout que `genReporte`
     /// en admin.html, con el cuerpo ya armado en HTML por el llamador.
     static func reporte(titulo: String, cuerpoHTML: String) -> String {

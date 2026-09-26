@@ -34,7 +34,14 @@ const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];
 for(const [,script] of scripts) if(script.trim()) new vm.Script(script);
 console.log('PASS: browser financial calculations, session advance, paused/future contracts, month revenue, zero amounts and script syntax');
 // Exercise actual report integration, not just the reusable calculation.
-const report=html.slice(html.indexOf('async function genReporte'),html.indexOf('// HELPERS',html.indexOf('async function genReporte')));
+const tramo=(a,b)=>{ const i=html.indexOf(a); return html.slice(i,html.indexOf(b,i)); };
+const report=[
+ tramo('const CALIDA_CSS','const CALIDA_IMPRIMIR'),
+ tramo('const PX_MESES','const pxLuego'),
+ tramo('const ptGrupo','const ptEsContrato')+tramo('const ptEsContrato','function ptPeriodoActual'),
+ "const ESTADO_CLIENTE_LABEL={activo:'Activo',pausado:'Pausado',cancelado:'Cancelado'};",
+ tramo('const RP_TIPOS','// HELPERS'),
+].join('\n');
 let output='';
 ctx.Date=class extends Date { constructor(...args){ super(...(args.length?args:['2026-09-19T12:00:00-06:00'])); } };
 ctx.location={origin:'https://example.test'};
@@ -45,6 +52,6 @@ vm.runInContext(report,ctx);
 (async()=>{
  jobs[0].sesiones[1].estado='pendiente';jobs[0].sesiones[2].estado='pendiente';
  await ctx.genReporte('mensual');assert.match(output,/\$120\.00/);
- await ctx.genReporte('clientes');assert.match(output,/Fátima[\s\S]*?\$20\.00/);assert.match(output,/Cobro del mes \/ próxima sesión/);
+ await ctx.genReporte('clientes');assert.match(output,/Fátima[\s\S]*?\$20\.00/);assert.match(output,/Por cobrar/);assert.match(output,/Reporte de clientes — Septiembre 2026/);
  console.log('PASS: monthly/client report integration');
 })().catch(e=>{console.error(e);process.exitCode=1;});

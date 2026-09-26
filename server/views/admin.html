@@ -526,6 +526,60 @@ html:not([data-tema="claro"]) .nt-form input[type=date],html:not([data-tema="cla
 .nt-limpiar{border:0;background:none;color:var(--pf-tenue);font:400 12px 'Poppins',sans-serif;cursor:pointer}
 @media(max-width:900px){.nt-grid{grid-template-columns:1fr}.nt-prev{position:static}}
 @media(prefers-reduced-motion:reduce){.nt-guardar.listo,.nt-chip{animation:none}}
+
+/* ═══ Detalle de trabajo premium ═══ */
+#page-trabajo-detalle{color:var(--pf-texto)}
+.td-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.td-top .sp{flex:1}
+.td-b2{height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--pf-borde);background:var(--pf-sup);color:var(--pf-texto);font:500 12px 'Poppins',sans-serif;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:transform .12s}
+.td-b2:active{transform:scale(.97)}.td-b2.rojo{color:var(--pf-error)}
+.td-b1{height:36px;padding:0 14px;border-radius:10px;border:0;background:var(--pf-texto);color:var(--pf-fondo);font:500 12px 'Poppins',sans-serif;cursor:pointer;white-space:nowrap}
+.td-tit h1{font-weight:300;font-size:34px;letter-spacing:-.03em;line-height:1.15;margin-top:6px}
+.td-tit .l{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:13px;color:var(--pf-suave);flex-wrap:wrap}
+.td-grid{display:grid;grid-template-columns:380px minmax(0,1fr);gap:20px;align-items:start}
+.td-col{display:grid;gap:20px}
+.td-res{padding:24px;border-radius:22px}
+.td-k{font-size:10px;font-weight:500;letter-spacing:.14em;color:var(--pf-tenue);text-transform:uppercase}
+.td-big{display:flex;align-items:baseline;gap:8px;margin-top:4px}
+.td-big b{font-size:56px;font-weight:300;letter-spacing:-.05em;line-height:1.05}
+.td-big small{font-size:13px;color:var(--pf-tenue)}
+.td-tramos{display:flex;gap:6px;margin-top:18px}
+.td-tramos i{flex:1;height:8px;border-radius:99px;background:color-mix(in srgb,var(--pf-texto) 10%,transparent);animation:pdIn .5s both;animation-delay:calc(.2s + var(--d)*60ms)}
+.td-tramos i.p{background:var(--pf-exito);box-shadow:0 0 8px color-mix(in srgb,var(--pf-exito) 60%,transparent)}
+.td-tramos i.s{background:var(--pf-aviso);box-shadow:0 0 8px color-mix(in srgb,var(--pf-aviso) 60%,transparent)}
+.td-tramos i.r{background:var(--pf-error);box-shadow:0 0 8px color-mix(in srgb,var(--pf-error) 60%,transparent)}
+.td-barra{height:8px;border-radius:99px;background:color-mix(in srgb,var(--pf-texto) 8%,transparent);margin-top:18px;overflow:hidden}
+.td-barra u{display:block;height:100%;border-radius:99px;background:var(--c);box-shadow:0 0 8px var(--c);animation:tdLlena 1s .2s cubic-bezier(.2,.9,.25,1) both}
+@keyframes tdLlena{from{width:0!important}}
+.td-av{font-size:11px;color:var(--pf-tenue);margin-top:8px}
+.td-linea{font-size:13px;color:var(--pf-suave);margin-top:20px}.td-linea b{font-weight:500;color:var(--c2)}
+.td-accion{margin-top:14px;width:100%;height:42px;border:0;border-radius:12px;color:#fff;font:500 12.5px 'Poppins',sans-serif;cursor:pointer;background:linear-gradient(135deg,#DA7A48,#B85228);box-shadow:0 6px 14px -4px rgba(208,103,58,.45);transition:transform .15s}
+.td-accion:active{transform:scale(.98)}
+.td-datos{padding:22px;border-radius:22px}
+.td-fila{display:flex;justify-content:space-between;gap:16px;font-size:12.5px;padding:11px 0;border-top:1px solid var(--pf-borde)}
+.td-fila:first-of-type{border-top:0}
+.td-fila span{color:var(--pf-suave)}.td-fila b{font-weight:500;text-align:right}
+.td-panel{display:grid;gap:10px}
+.td-ph{display:flex;justify-content:space-between;align-items:baseline;padding:0 4px}
+.td-ph small{font-size:11px;color:var(--pf-tenue)}
+.td-pago{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:16px;background:var(--pf-sup);border:1px solid var(--pf-borde);transition:background .2s}
+.td-pago:hover{background:color-mix(in srgb,var(--pf-texto) 3%,var(--pf-sup))}
+.td-pago.foco{border:0;border-radius:16px}
+.td-pago .pt{display:none}
+.td-dot{width:9px;height:9px;border-radius:50%;background:var(--c);box-shadow:0 0 6px var(--c);flex:none}
+.td-pago .tx{flex:1;min-width:0}
+.td-pago .tx b{display:block;font-size:14px;font-weight:500}
+.td-pago .tx small{font-size:11px;color:var(--pf-tenue)}
+.td-pago.foco .tx small{color:var(--pf-aviso)}
+.td-pago .acc{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.td-mas{position:relative}
+.td-mas summary{list-style:none;width:34px;height:34px;border-radius:10px;background:var(--pf-sup2);display:grid;place-items:center;cursor:pointer;color:var(--pf-suave);font-size:16px;line-height:1}
+.td-mas summary::-webkit-details-marker{display:none}
+.td-menu{position:absolute;right:0;top:40px;z-index:40;min-width:170px;padding:6px;border-radius:12px;background:var(--pf-sup2);border:1px solid var(--pf-borde);box-shadow:0 12px 30px rgba(0,0,0,.35);display:grid;animation:pdIn .2s both}
+.td-menu button{text-align:left;border:0;background:none;color:var(--pf-texto);font:400 12px 'Poppins',sans-serif;padding:8px 10px;border-radius:8px;cursor:pointer}
+.td-menu button:hover{background:color-mix(in srgb,var(--pf-texto) 7%,transparent)}
+.td-menu button.rojo{color:var(--pf-error)}
+@media(max-width:1000px){.td-grid{grid-template-columns:1fr}.td-big b{font-size:44px}.td-pago{flex-wrap:wrap}.td-pago .acc{width:100%;justify-content:flex-start}}
 </style>
 </head>
 <body class="en-dash">
@@ -830,12 +884,7 @@ html:not([data-tema="claro"]) .nt-form input[type=date],html:not([data-tema="cla
 
 <!-- ═══════════════ TRABAJO DETALLE ═══════════════ -->
 <section class="page" id="page-trabajo-detalle">
-  <div class="page-header" style="display:flex;align-items:center;gap:16px">
-    <button class="btn btn-ghost btn-sm" onclick="nav('trabajos')" style="padding:6px 14px;font-size:13px">← Volver</button>
-    <div class="page-title" id="td-title">Trabajo</div>
-    <div style="margin-left:auto;display:flex;gap:8px" id="td-actions"></div>
-  </div>
-  <div id="td-body" style="display:grid;grid-template-columns:320px 1fr;gap:24px;align-items:start"></div>
+<div class="pt" id="td-wrap"></div>
 </section>
 
 <!-- ═══════════════ CLIENTE DETALLE ═══════════════ -->
@@ -2422,88 +2471,137 @@ async function openTrabajo(id){
     await _autoGenerarSesiones(t);
   }
 
-  document.getElementById('td-title').textContent = t.cliente;
-  document.getElementById('td-actions').innerHTML = `
-    ${g!=='B'&&!esRecurrente&&t.estado!=='pagado'?`<button class="btn btn-primary btn-sm" onclick="marcarPagado('${t.id}')">✓ Marcar pagado</button>`:''}
-    <button class="btn btn-ghost btn-sm" onclick="abrirContrato('${t.id}')">📜 Contrato</button>
-    ${currentUser?.role==='admin'?`<button class="btn btn-danger btn-sm" onclick="eliminarTrabajo('${t.id}')">🗑 Eliminar</button>`:''}`;
-
-  const pf = (label, val) => val ? `
-    <div style="padding:14px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">${label}</div>
-      <div style="font-size:14px">${esc(val)}</div>
-    </div>` : '';
-
-  let infoFields = `
-    <div style="padding:14px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">SERVICIO</div>
-      <div style="font-size:14px;font-weight:600">${esc(t.servicio)} <span style="font-size:11px;color:var(--muted);font-weight:400">${GRUPO_NOMBRES[g]||''}</span></div>
-    </div>`;
-
-  if(esRecurrente){
-    const sesiones=t.sesiones||[];
-    const suma=items=>items.reduce((total,s)=>total+(Number(s.monto)||0),0);
-    const pagadas=sesiones.filter(s=>s.estado==='pagado');
-    const pendientes=sesiones.filter(s=>!['pagado','oculta','cancelado'].includes(s.estado));
-    const siguiente=[...pendientes].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''))[0];
-    infoFields+=pf('TOTAL DE SESIONES PROGRAMADAS','$'+suma([...pagadas,...pendientes]).toFixed(2));
-    infoFields+=pf('PAGOS DE SESIONES','$'+suma(pagadas).toFixed(2));
-    infoFields+=pf('SESIONES SIN PAGAR (TOTAL)','$'+suma(pendientes).toFixed(2));
-    infoFields+=pf('PRÓXIMA SESIÓN SIN PAGAR',siguiente?`${fmtFecha(siguiente.fecha)} · $${Number(siguiente.monto||0).toFixed(2)}`:'Ninguna');
-    infoFields+='<p style="font-size:12px;color:var(--muted);padding-top:12px">Los pagos corresponden a sesiones marcadas como pagadas. El total sin pagar incluye clases futuras; no es un anticipo ni un cobro inmediato por todas.</p>';
-  } else if(g==='A'){
-    infoFields += pf('FECHA', fmtFecha(t.fecha)) + pf('HORARIO', t.horaInicio?(t.horaInicio+(t.horaFin?' → '+t.horaFin:'')):'') + pf('LUGAR', t.lugar);
-    infoFields += `
-      <div style="padding:14px 0;border-bottom:1px solid var(--border)">
-        <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">MONTO TOTAL</div>
-        <div style="font-size:22px;font-weight:700">$${parseFloat(t.monto||0).toFixed(2)}</div>
-      </div>
-      ${pf('ANTICIPO', '$'+parseFloat(t.anticipo||0).toFixed(2))}
-      <div style="padding:14px 0;border-bottom:1px solid var(--border)">
-        <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">SALDO PENDIENTE</div>
-        <div style="font-size:18px;font-weight:600;color:var(--yellow)">$${parseFloat(t.saldo||0).toFixed(2)}</div>
-      </div>`;
-  } else if(g==='B'){
-    const pm = parseFloat(t.pagoMensual)||0;
-    infoFields += pf('EMPRESA', t.empresa);
-    infoFields += `
-      <div style="padding:14px 0;border-bottom:1px solid var(--border)">
-        <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">PAGO MENSUAL</div>
-        <div style="font-size:22px;font-weight:700">$${pm.toFixed(2)}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">$${(pm/2).toFixed(2)} por quincena</div>
-      </div>`;
-    infoFields += pf('INICIO CONTRATO', fmtFecha(t.fechaInicio)) + pf('ESTADO CONTRATO', ESTADO_CLIENTE_LABEL[estadoClienteDe(t.cliente)]);
-  } else if(g==='C'){
-    infoFields += pf('PIEZAS', t.cantPiezas) + pf('FORMATO', t.formato) + pf('ENTREGA ESTIMADA', fmtFecha(t.fechaEntrega));
-    infoFields += `<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">MONTO TOTAL</div><div style="font-size:22px;font-weight:700">$${parseFloat(t.monto||0).toFixed(2)}</div></div>${pf('SALDO', '$'+parseFloat(t.saldo||0).toFixed(2))}`;
-  } else {
-    infoFields += pf('EMPRESA', t.empresa) + pf('ENTREGA ESTIMADA', fmtFecha(t.fechaEntrega)) + pf('ALCANCE', t.alcance);
-    infoFields += `<div style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">MONTO TOTAL</div><div style="font-size:22px;font-weight:700">$${parseFloat(t.monto||0).toFixed(2)}</div></div>${pf('SALDO', '$'+parseFloat(t.saldo||0).toFixed(2))}`;
-  }
-
-  // Para clientes recurrentes (paquete mensual o clases), "ESTADO" refleja si
-  // la relación con el cliente sigue activa — no si ya se pagó todo, eso ya
-  // se ve en el saldo/quincenas/sesiones. Un cliente pausado no debería
-  // seguir marcado "Pendiente" solo porque queda un saldo por cobrar.
-  const estadoPillHtml = (g==='B' || esRecurrente)
-    ? (() => { const er = estadoClienteDe(t.cliente); return `<span class="pill ${ESTADO_CLIENTE_PILL[er]}">${ESTADO_CLIENTE_LABEL[er]}</span>`; })()
-    : `<span class="pill ${t.estado==='pagado'?'pill-green':'pill-yellow'}">${t.estado==='pagado'?'Pagado':'Pendiente'}</span>`;
-  infoFields += `
-    <div style="padding:14px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">ESTADO</div>
-      ${estadoPillHtml}
-    </div>
-    ${t.notas?pf('NOTAS', t.notas):''}`;
-
-  document.getElementById('td-body').innerHTML = `
-    <div class="section-card">${infoFields}</div>
-    <div>${g==='B' ? renderQuincenasTabla(t) : esRecurrente ? renderSesionesPanel(t) : '<div class="section-card" style="color:var(--muted);font-size:14px;padding:32px;text-align:center">Sin pagos por quincena para este tipo de servicio.</div>'}</div>`;
-
-  animateStatNums();
-
-  // Mostrar página sin tocar sidebar
+  document.getElementById('td-wrap').innerHTML = tdRender(t, g, esRecurrente);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-trabajo-detalle').classList.add('active');
+  document.body.classList.add('en-dash');
+}
+
+// ── Detalle de trabajo (igual que la app) ─────────────────────
+function tdDiaLargo(iso){ const d=new Date(String(iso||'').slice(0,10)+'T12:00:00'); return isNaN(d)?fmtFecha(iso):d.toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short',year:'numeric'}).replace(/[.,]/g,''); }
+function tdDiaCorto(iso){ const d=new Date(String(iso||'').slice(0,10)+'T12:00:00'); return isNaN(d)?fmtFecha(iso):d.toLocaleDateString('es',{day:'numeric',month:'short'}).replace(/[.,]/g,''); }
+const TD_MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+function tdEtqQ(p,q){ const [y,m]=p.split('-'); return `${TD_MESES[parseInt(m)-1]} ${y} · ${q===1?'1 al 15':'15 al 30'}`; }
+function tdQuincenas(t){
+  const montoQ=(parseFloat(t.pagoMensual)||0)/2, out=[];
+  _generarPeriodos(t).forEach(p=>[1,2].forEach(q=>{ const rec=(t.quincenas||[]).find(r=>r.periodo===p&&r.q===q)||{periodo:p,q,monto:montoQ,estado:'pendiente',fechaPago:null}; if(rec.estado!=='oculta') out.push(rec); }));
+  return out;
+}
+function tdSesiones(t){ return [...(t.sesiones||[])].filter(x=>!['oculta','cancelado'].includes(x.estado)).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')); }
+function tdMas(editar, borrarTxt, borrar){
+  return `<details class="td-mas"><summary title="Más acciones">···</summary><div class="td-menu"><button onclick="this.closest('details').open=false;${editar}">Editar monto</button><button class="rojo" onclick="this.closest('details').open=false;${borrar}">${borrarTxt}</button></div></details>`;
+}
+function tdPago(titulo, detalle, [txt,col], resaltar, acciones){
+  return `<div class="td-pago${resaltar?' foco':''}" style="--c:${col}"${resaltar?' onpointermove="ptFoco(event,this)" onpointerleave="ptFocoFuera(this)"':''}>
+    <span class="td-dot"></span><div class="tx"><b>${esc(titulo)}</b><small>${esc(detalle)}</small></div>
+    <span class="pt-pill">${esc(txt)}</span><div class="acc">${acciones||''}</div></div>`;
+}
+function tdRender(t, g, esRec){
+  const id=escJs(t.id), rel=estadoClienteDe(t.cliente), activo=!(g==='B'||esRec)||rel==='activo';
+  const [etq,col]=ptEstado(t), cob=ptCobrado(t);
+  const OK='var(--pf-exito)', AV='var(--pf-aviso)', ER='var(--pf-error)', TN='var(--pf-suave)';
+  let tramos=[], total='', avance='', linea='', boton='', panel='';
+  if(esRec){
+    const ses=tdSesiones(t), prox=ses.find(x=>x.estado!=='pagado');
+    tramos=ses.map(x=>x.estado==='pagado'?'p':(prox&&x.id===prox.id&&activo?'s':''));
+    total='de '+pdDinero(ses.reduce((a,x)=>a+(Number(x.monto)||0),0));
+    avance=`${ses.filter(x=>x.estado==='pagado').length} de ${ses.length} clases pagadas`;
+    if(!activo) linea=['Contrato',rel==='pausado'?'en pausa':'cancelado',col];
+    else if(prox){ linea=['Próxima clase',tdDiaLargo(prox.fecha)+' · '+pdDinero(prox.monto),AV]; boton=`<button class="td-accion" onclick="marcarSesionPagada('${id}','${escJs(prox.id)}')">Marcar la clase del ${esc(tdDiaCorto(prox.fecha))} como pagada</button>`; }
+    else linea=['Clases','todas pagadas ✓',OK];
+    const todas=[...(t.sesiones||[])].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+    panel=`<div class="td-ph"><span class="td-k">Sesiones</span><small>${todas.filter(x=>x.estado==='pagado').length} de ${todas.length} pagadas</small></div>`+
+      (todas.length?todas.map(x=>{ const pag=x.estado==='pagado', sig=prox&&x.id===prox.id&&activo, sid=escJs(x.id);
+        return tdPago(tdDiaLargo(x.fecha), pdDinero(x.monto)+(sig?' · la que sigue':''), pag?['Pagada',OK]:sig?['Por cobrar',AV]:['Programada',TN], sig,
+          (pag?`<button class="td-b2" onclick="generarReciboSesion('${id}','${sid}')">📄 Recibo</button><button class="td-b2" onclick="revertirSesionPagada('${id}','${sid}')">Revertir</button>`:`<button class="td-b1" onclick="marcarSesionPagada('${id}','${sid}')">Marcar pagada</button>`)
+          + tdMas(`editarMontoSesion('${id}','${sid}')`,'Eliminar sesión',`eliminarSesion('${id}','${sid}')`)); }).join('')
+       :`<div class="pt-vacio">Sin sesiones registradas. Agrega la primera clase abajo.</div>`)+
+      `<div><button class="td-b2" onclick="abrirAgregarSesion('${id}')">＋ Agregar sesión</button></div>`;
+  } else if(g==='B'){
+    const qs=tdQuincenas(t), prox=qs.find(r=>r.estado!=='pagado'), montoQ=(parseFloat(t.pagoMensual)||0)/2;
+    tramos=qs.map(r=>r.estado==='pagado'?'p':r.estado==='retrasado'?'r':(prox&&r===prox&&activo?'s':''));
+    total='cobrado · '+pdDinero(t.pagoMensual??t.monto)+' al mes';
+    avance=`${qs.filter(r=>r.estado==='pagado').length} de ${qs.length} quincenas pagadas`;
+    if(!activo) linea=['Contrato',rel==='pausado'?'en pausa':'cancelado',col];
+    else if(prox){ linea=[prox.estado==='retrasado'?'Quincena retrasada':'Próxima quincena',tdEtqQ(prox.periodo,prox.q)+' · '+pdDinero(prox.monto??montoQ),prox.estado==='retrasado'?ER:AV]; boton=`<button class="td-accion" onclick="abrirPagoQuincena('${id}','${prox.periodo}',${prox.q},${parseFloat(prox.monto??montoQ)})">Registrar pago de esta quincena</button>`; }
+    else linea=['Quincenas','al día ✓',OK];
+    panel=`<div class="td-ph"><span class="td-k">Quincenas</span><small>${qs.filter(r=>r.estado==='pagado').length} de ${qs.length} pagadas</small></div>`+
+      (qs.length?qs.map(r=>{ const sig=prox&&r===prox&&activo, m=parseFloat(r.monto??montoQ);
+        const est=r.estado==='pagado'?['Pagada',OK]:r.estado==='retrasado'?['Retrasada',ER]:sig?['Por cobrar',AV]:['Pendiente',TN];
+        const acc=r.estado==='pagado'?`<button class="td-b2" onclick="generarFacturaQ('${id}','${r.periodo}',${r.q})">📄 Recibo</button>`
+          :`<button class="td-b1" onclick="abrirPagoQuincena('${id}','${r.periodo}',${r.q},${m})">Pagada</button>`+(r.estado!=='retrasado'?`<button class="td-b2" onclick="marcarRetrasadoQ('${id}','${r.periodo}',${r.q})">Retrasada</button>`:'');
+        const editar=r.estado==='pagado'?`editarPagadoQ('${id}','${r.periodo}',${r.q},${m})`:`tdEditarQ('${id}','${r.periodo}',${r.q},${m})`;
+        return tdPago(tdEtqQ(r.periodo,r.q), pdDinero(m)+(r.fechaPago?' · pagada '+fmtFecha(r.fechaPago):sig?' · la que sigue':''), est, sig, acc+tdMas(editar,'Ocultar quincena',`eliminarPagoQ('${id}','${r.periodo}',${r.q})`)); }).join('')
+       :`<div class="pt-vacio">Sin quincenas. Aparecerán desde el inicio del contrato.</div>`);
+  } else {
+    const pag=t.estado==='pagado', ant=Number(t.anticipo)||0, saldo=pag?0:Math.max(0,Number(t.saldo)||0), f=t.fechaEntrega||t.fecha;
+    total='de '+pdDinero(t.monto); const m=Number(t.monto)||0;
+    avance=`${m>0?Math.round(cob/m*100):0}% cobrado`;
+    if(pag) linea=['Cobrado','completo ✓',OK];
+    else { linea=['Falta cobrar',pdDinero(saldo)+(f?' · '+tdDiaLargo(f):''),AV]; boton=`<button class="td-accion" onclick="marcarPagado('${id}')">Marcar como pagado completo</button>`; }
+    panel=`<div class="td-ph"><span class="td-k">Pagos</span><small>${pag?'cobrado completo':'falta '+pdDinero(saldo)}</small></div>`+
+      tdPago('Anticipo',pdDinero(ant),ant>0||pag?['Recibido',OK]:['Sin anticipo',TN],false,'')+
+      tdPago('Saldo',pag?'Pagado completo':pdDinero(saldo)+(f?' · '+tdDiaLargo(f):''),pag?['Pagado',OK]:['Por cobrar',AV],!pag,pag?'':`<button class="td-b1" onclick="marcarPagado('${id}')">Marcar pagado</button>`);
+  }
+  const barra=tramos.length?`<div class="td-tramos">${tramos.map((c,i)=>`<i class="${c}" style="--d:${i}"></i>`).join('')}</div>`
+    :`<div class="td-barra" style="--c:${col}"><u style="width:${(Number(t.monto)||0)>0?Math.min(100,cob/Number(t.monto)*100):0}%"></u></div>`;
+  // datos
+  const F=[['Servicio',t.servicio+(GRUPO_NOMBRES[g]?' · '+GRUPO_NOMBRES[g]:'')]];
+  if(esRec){ const ses=tdSesiones(t); if(ses[0]) F.push(['Precio por clase',pdDinero(ses[0].monto)]); F.push(['Total programado',pdDinero(ses.reduce((a,x)=>a+(Number(x.monto)||0),0))+` (${ses.length} clases)`]); F.push(['Sin pagar (todas)',pdDinero(ses.filter(x=>x.estado!=='pagado').reduce((a,x)=>a+(Number(x.monto)||0),0))]); }
+  else if(g==='A'){ F.push(['Fecha',fmtFecha(t.fecha)]); if(t.horaInicio) F.push(['Horario',t.horaInicio+(t.horaFin?' – '+t.horaFin:'')]); if(t.lugar) F.push(['Lugar',t.lugar]); F.push(['Monto total',pdDinero(t.monto)],['Anticipo',pdDinero(t.anticipo)],['Saldo pendiente',pdDinero(t.estado==='pagado'?0:t.saldo)]); }
+  else if(g==='B'){ if(t.empresa) F.push(['Empresa',t.empresa]); F.push(['Pago mensual',pdDinero(t.pagoMensual)],['Inicio del contrato',fmtFecha(t.fechaInicio)]); if(t.diaCobro) F.push(['Día de cobro','Día '+t.diaCobro]); F.push(['Contrato',ESTADO_CLIENTE_LABEL[rel]||rel]); }
+  else if(g==='C'){ if(t.cantPiezas) F.push(['Piezas',String(t.cantPiezas)]); if(t.formato) F.push(['Formato',t.formato]); F.push(['Entrega estimada',fmtFecha(t.fechaEntrega)],['Monto total',pdDinero(t.monto)],['Saldo',pdDinero(t.estado==='pagado'?0:t.saldo)]); }
+  else { if(t.empresa) F.push(['Empresa',t.empresa]); F.push(['Entrega estimada',fmtFecha(t.fechaEntrega)]); if(t.alcance) F.push(['Alcance',t.alcance]); F.push(['Monto total',pdDinero(t.monto)],['Saldo',pdDinero(t.estado==='pagado'?0:t.saldo)]); }
+  if(t.notas) F.push(['Notas',t.notas]);
+  const precio=esRec&&(t.sesiones||[])[0]?pdDinero(t.sesiones[0].monto)+' por sesión':g==='B'?pdDinero(t.pagoMensual??t.monto)+' al mes':fmtFecha(t.fechaEntrega||t.fecha);
+  return `
+  <div class="td-top pd-in" style="--i:0">
+    <button class="td-b2" onclick="nav('trabajos')">‹ Trabajos</button><span class="sp"></span>
+    <button class="td-b2" onclick="abrirContrato('${id}')">📜 Contrato</button>
+    ${currentUser?.role==='admin'?`<button class="td-b2 rojo" onclick="eliminarTrabajo('${id}')">Eliminar</button>`:''}
+  </div>
+  <div class="td-tit pd-in" style="--i:1"><h1>${esc(t.cliente)}</h1><div class="l"><span class="pt-pill" style="--c:${col}">${esc(etq)}</span>${esc(t.servicio)} · ${esc(precio)}</div></div>
+  <div class="td-grid">
+    <div class="td-col">
+      <div class="foco td-res pd-in" style="--i:2;--c:${col}" onpointermove="ptFoco(event,this)" onpointerleave="ptFocoFuera(this)">
+        <span class="td-k">Cobrado</span>
+        <div class="td-big"><b>${pdDinero(cob)}</b><small>${esc(total)}</small></div>
+        ${barra}<div class="td-av">${esc(avance)}</div>
+        <div class="td-linea" style="--c2:${linea[2]}">${esc(linea[0])} · <b>${esc(linea[1])}</b></div>
+        ${boton}
+      </div>
+      <div class="foco td-datos pd-in" style="--i:3" onpointermove="ptFoco(event,this)" onpointerleave="ptFocoFuera(this)">
+        <span class="td-k">Datos del trabajo</span><div style="margin-top:8px">${F.map(([a,b])=>`<div class="td-fila"><span>${esc(a)}</span><b>${esc(b)}</b></div>`).join('')}</div>
+      </div>
+    </div>
+    <div class="td-panel pd-in" style="--i:4">${panel}</div>
+  </div>`;
+}
+async function tdEditarQ(trabajoId, periodo, q, monto){
+  const v=prompt('Monto de la quincena ($)', Number(monto).toFixed(2)); if(v===null) return;
+  const n=Number(v.trim()); if(!Number.isFinite(n)||n<=0){ toast('Ingresa un monto mayor que cero','err'); return; }
+  await cambiarMontoQ(trabajoId, periodo, q, n); openTrabajo(trabajoId);
+}
+document.addEventListener('click', e=>{ document.querySelectorAll('.td-mas[open]').forEach(d=>{ if(!d.contains(e.target)) d.open=false; }); });
+
+// Recibo de una clase pagada — mismo diseño que el de quincenas (y que la app).
+function generarReciboSesion(trabajoId, sesionId){
+  const t=allTrabajos.find(x=>x.id===trabajoId); if(!t) return;
+  const vis=tdSesiones(t), s=vis.find(x=>x.id===sesionId); if(!s) return;
+  const n=vis.indexOf(s)+1;
+  const larga=v=>{ if(!v) return '—'; const day=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v)); const d=day?new Date(+day[1],+day[2]-1,+day[3]):new Date(v); return isNaN(d)?'—':d.toLocaleDateString('es-SV',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); };
+  const logoUrl=location.origin+'/img/logo/nokta_lockup_color_transparent.png';
+  const num=String(s.fecha||'').slice(0,10).replace(/-/g,'')+'S'+n;
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Recibo · Clase ${n}</title>
+  <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Helvetica Neue',Arial,sans-serif;background:#fff;color:#1C1C1A;padding:60px;max-width:680px;margin:0 auto}.logo{height:58px;width:auto;display:block}.divider{border:0;border-top:2px solid #B85228;margin:28px 0 32px}h2{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#B85228;font-weight:600;margin-bottom:16px}table{width:100%;border-collapse:collapse;margin-bottom:32px}td{padding:10px 0;border-bottom:1px solid #f0ebe5;font-size:14px}td:first-child{color:#888;width:45%}td:last-child{font-weight:600;text-align:right}.total-row td{border-top:2px solid #B85228;border-bottom:none;padding-top:16px;font-size:18px}.total-row td:first-child{color:#1C1C1A;font-weight:700}.total-row td:last-child{color:#B85228}.footer{margin-top:60px;padding-top:24px;border-top:1px solid #e8e4df;font-size:11px;color:#aaa;text-align:center}@media print{body{padding:40px}.no-print{display:none}}</style></head><body>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start"><img class="logo" src="${esc(logoUrl)}" alt="Nokta Studio"><div style="text-align:right"><div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.06em">Recibo de pago</div><div style="font-size:22px;font-weight:800;margin-top:4px">#${esc(num)}</div></div></div>
+  <hr class="divider"><h2>Detalle del servicio</h2>
+  <table><tr><td>Cliente</td><td>${esc(t.cliente)}</td></tr><tr><td>Servicio</td><td>${esc(t.servicio)}</td></tr><tr><td>Clase</td><td>${esc(larga(s.fecha))}</td></tr><tr><td>Sesión</td><td>${n} de ${vis.length}</td></tr><tr><td>Fecha de pago</td><td>${esc(larga(s.fechaPago))}</td></tr><tr class="total-row"><td>Total</td><td>$${(Number(s.monto)||0).toFixed(2)}</td></tr></table>
+  <div class="footer">Nokta Studio · contacto@noktastudio.com<br>Este documento es un comprobante interno de pago.</div>
+  <div class="no-print" style="margin-top:32px;text-align:center"><button onclick="window.print()" style="padding:10px 28px;background:#B85228;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer">Imprimir / Guardar PDF</button></div></body></html>`;
+  const win=window.open('','_blank','width=720,height=900');
+  if(!win){ toast('Permite las ventanas emergentes para abrir el recibo.','err'); return; }
+  win.document.write(html); win.document.close();
 }
 
 function _generarPeriodos(t){
@@ -3267,11 +3365,14 @@ function elegirTrabajoParaContrato(trabajoId){
 
 async function marcarPagado(id){
   await api('/api/trabajos/'+id,{method:'PUT',body:JSON.stringify({estado:'pagado',anticipo:allTrabajos.find(t=>t.id===id)?.monto,saldo:0})});
+  const enDetalle=document.getElementById('page-trabajo-detalle').classList.contains('active');
   closePanel(); await loadTrabajos(); await loadDashboard();
+  if(enDetalle) await openTrabajo(id);
 }
 async function eliminarTrabajo(id){
   if(!confirm('¿Eliminar este trabajo?')) return;
-  await api('/api/trabajos/'+id,{method:'DELETE'}); closePanel(); await loadTrabajos();
+  await api('/api/trabajos/'+id,{method:'DELETE'}); closePanel();
+  if(document.getElementById('page-trabajo-detalle').classList.contains('active')) nav('trabajos'); else await loadTrabajos();
 }
 
 // ═══════════════════════════════════════════════════════════

@@ -391,6 +391,57 @@ body{transition:background .25s}
   .pc-ag{display:block}
 }
 @media(prefers-reduced-motion:reduce){.pc-b,.pc-hrs{animation:none}}
+
+/* ═══ Alertas premium (lo urgente primero) ═══ */
+#page-alertas{color:var(--pf-texto)}
+.pa{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;max-width:1100px;margin:0 auto;padding:0 12px 12px}
+.pa *{box-sizing:border-box}
+.pa-top{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.pa-top h1{font-weight:300;font-size:34px;letter-spacing:-.03em;line-height:1.15}
+.pa-top p{font-size:14px;color:var(--pf-suave);margin-top:4px}
+.pa-top .sp{flex:1}
+.pa-b2{height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--pf-borde);background:var(--pf-sup);color:var(--pf-texto);font:500 12px 'Poppins',sans-serif;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:transform .12s}
+.pa-b2:active{transform:scale(.97)}.pa-b2:disabled{opacity:.5;cursor:default}
+.pa-b1{height:36px;padding:0 14px;border-radius:10px;border:0;background:var(--pf-texto);color:var(--pf-fondo);font:500 12px 'Poppins',sans-serif;cursor:pointer;white-space:nowrap}
+.pa-b2 svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+.pa-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:22px;padding:28px;border-radius:22px;background:var(--pf-sup);border:1px solid color-mix(in srgb,var(--c) 35%,transparent);transition:border-color .2s,box-shadow .2s}
+.pa-hero:hover{border-color:color-mix(in srgb,var(--c) 70%,transparent);box-shadow:0 10px 30px -10px color-mix(in srgb,var(--c) 40%,transparent)}
+.pa-hero::after{content:"";position:absolute;right:-120px;top:-200px;width:360px;height:360px;border-radius:50%;background:color-mix(in srgb,var(--c) 22%,transparent);filter:blur(90px);pointer-events:none}
+.pa-ic{position:relative;flex:none;width:58px;height:58px;border-radius:16px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c)}
+.pa-ic svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.pa-ic::before{content:"";position:absolute;inset:0;border-radius:16px;border:2px solid var(--c);animation:paPulso 2s ease-out infinite}
+@keyframes paPulso{0%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:scale(1.6)}}
+.pa-hero .tx{flex:1;min-width:0;position:relative;z-index:1}
+.pa-hero small{font-size:10px;font-weight:500;letter-spacing:2px;color:var(--c)}
+.pa-hero h2{font-weight:300;font-size:26px;letter-spacing:-.03em;margin-top:4px;line-height:1.2}
+.pa-hero p{font-size:12px;color:var(--pf-suave);margin-top:4px}
+.pa-hero .acc{display:flex;gap:8px;position:relative;z-index:1}
+.pa-tl{position:relative;background:var(--pf-sup);border:1px solid var(--pf-borde);border-radius:20px;padding:10px 20px 10px 42px;box-shadow:var(--pf-sombra)}
+.pa-tl::before{content:"";position:absolute;left:27px;top:24px;bottom:24px;width:1px;background:var(--pf-borde)}
+.pa-it{position:relative;display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--pf-borde);transition:opacity .35s,transform .35s,max-height .35s,padding .35s;max-height:120px;overflow:hidden}
+.pa-it:last-child{border-bottom:0}
+.pa-it::before{content:"";position:absolute;left:-20px;top:50%;width:11px;height:11px;margin-top:-5.5px;border-radius:50%;background:var(--pf-sup);border:2px solid var(--c)}
+.pa-it .i2{flex:none;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 12%,transparent);color:var(--c)}
+.pa-it .i2 svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.pa-it .tx{flex:1;min-width:0}
+.pa-it b{display:block;font-size:13px;font-weight:500;transition:color .15s}
+.pa-it:hover b{color:var(--c)}
+.pa-it .tx small{display:block;font-size:11px;color:var(--pf-suave);overflow:hidden;text-overflow:ellipsis}
+.pa-it .acc{display:flex;gap:6px;opacity:0;transition:opacity .15s}
+.pa-it:hover .acc,.pa-it:focus-within .acc{opacity:1}
+.pa-it .t{width:70px;text-align:right;font-size:11px;color:var(--pf-tenue);flex:none}
+.pa-fuera{opacity:0!important;transform:translateX(40px);max-height:0!important;padding-top:0!important;padding-bottom:0!important;border-bottom-width:0!important}
+.pa-vacio{text-align:center;padding:48px 16px;background:var(--pf-sup);border:1px solid var(--pf-borde);border-radius:20px}
+.pa-vacio span{width:56px;height:56px;border-radius:50%;background:var(--pf-sup2);display:inline-grid;place-items:center;color:var(--pf-exito)}
+.pa-vacio span svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
+.pa-vacio b{display:block;margin-top:10px;font-size:14px;font-weight:500}
+.pa-vacio small{display:block;margin-top:4px;font-size:12px;color:var(--pf-suave)}
+@media(max-width:900px){
+  .pa{padding:0}.pa-top h1{font-size:28px}
+  .pa-hero{flex-direction:column;align-items:flex-start;padding:20px}.pa-hero h2{font-size:20px}
+  .pa-it .acc{opacity:1}.pa-it{flex-wrap:wrap}
+}
+@media(prefers-reduced-motion:reduce){.pa-ic::before{animation:none}.pa-it{transition:none}}
 @media print{.sb,.page-header .btn,.sb-toggle{display:none!important}.main{margin-left:0}}
 </style>
 </head>
@@ -424,6 +475,10 @@ body{transition:background .25s}
   <symbol id="i-sol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
   <symbol id="i-luna" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></symbol>
   <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-billete" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/><path d="M6 10v5M18 10v5"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="i-bajar" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5 10 17 19 7"/></symbol>
   <symbol id="i-apagar" viewBox="0 0 24 24"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/></symbol>
 </svg>
 <nav class="sb" id="sidebar">
@@ -555,11 +610,14 @@ body{transition:background .25s}
 
 <!-- ═══════════════ ALERTAS ═══════════════ -->
 <section class="page" id="page-alertas">
-  <div class="page-header">
-    <div class="page-title">Alertas</div>
-    <button class="btn btn-ghost btn-sm" onclick="marcarTodasLeidas(this)">✓ Marcar todas leídas</button>
+<div class="pa">
+  <div class="pa-top pd-in" style="--i:0">
+    <div><h1>Alertas</h1><p id="pa-sub">Revisando…</p></div>
+    <span class="sp"></span>
+    <button class="pa-b2" id="pa-todas" onclick="marcarTodasLeidas(this)"><svg><use href="#i-check"/></svg>Marcar todo como leído</button>
   </div>
-  <div id="alertas-list"></div>
+  <div id="alertas-list" style="display:grid;gap:24px"></div>
+</div>
 </section>
 
 <!-- ═══════════════ NUEVO TRABAJO ═══════════════ -->
@@ -1232,7 +1290,7 @@ function nav(id){
   document.getElementById('page-'+id).classList.add('active');
   // Only the Dashboard follows the premium light/dark theme so far; the other
   // sections keep their original dark background.
-  document.body.classList.toggle('en-dash', id==='dashboard'||id==='calendario');
+  document.body.classList.toggle('en-dash', ['dashboard','calendario','alertas'].includes(id));
   document.querySelectorAll('.sb-link').forEach(l=>{ if(l.getAttribute('onclick')?.includes(`'${id}'`)) l.classList.add('active'); });
   closeSb();
   loadSection(id);
@@ -1504,6 +1562,7 @@ async function loadDashboard(){
     [allTrabajos, allGastos, allClienteEstados, allAlertas] = await Promise.all([
       api('/api/trabajos'), api('/api/gastos'), api('/api/clientes-estados'), api('/api/alertas'),
     ]);
+    allAlertas=(allAlertas||[]).filter(a=>!a.leida);
     document.getElementById('pd-err').style.display='none';
   } catch(e) {
     const el=document.getElementById('pd-err'); el.textContent='No se pudieron cargar los datos: '+(e.message||e); el.style.display='block';
@@ -1892,54 +1951,94 @@ async function eliminarEvento(id){
 // ═══════════════════════════════════════════════════════════
 const alertIcons={descarga:'📥',link_venciendo:'⏰',pago_pendiente:'💰',evento_proximo:'📅',quincena_vencida:'🔔'};
 const alertLabels={descarga:'Descarga de galería',link_venciendo:'Link próximo a vencer',pago_pendiente:'Pago pendiente',evento_proximo:'Evento próximo',quincena_vencida:'Quincena sin pagar'};
+const PA_TIPO={
+  quincena_vencida:{ic:'reloj',c:'var(--pf-error)',t:'Quincena sin pagar'},
+  pago_pendiente:{ic:'billete',c:'var(--pf-aviso)',t:'Pago pendiente'},
+  link_venciendo:{ic:'link',c:'var(--pf-aviso)',t:'Link por vencer'},
+  evento_proximo:{ic:'calendario',c:'var(--pf-marca)',t:'Evento próximo'},
+  descarga:{ic:'bajar',c:'#7FA7F0',t:'Descargaron una galería'},
+};
+// Lower = more urgent: money owed, links about to expire, upcoming events, rest.
+function paUrgencia(a){ return {quincena_vencida:0,pago_pendiente:1,evento_proximo:3}[a.tipo] ?? (a.tipo==='link_venciendo'?((a.datos?.diasRestantes??99)<=2?2:4):5); }
+function paDesc(a){
+  const d=a.datos||{};
+  if(a.tipo==='descarga') return `${esc(d.nombre)} descargó ${d.tipo==='todo'?'toda la galería':'sus favoritas'}`;
+  if(a.tipo==='link_venciendo') return `${esc(d.nombre)} · ${esc(d.codigo)} · vence en ${d.diasRestantes} día${d.diasRestantes!==1?'s':''}`;
+  if(a.tipo==='pago_pendiente') return `${esc(d.cliente)} · ${esc(d.servicio)} · saldo ${pdDinero(parseFloat(d.saldo||0))}`;
+  if(a.tipo==='evento_proximo') return `${esc(d.cliente)} · ${esc(d.tipo)} · ${fmtFecha(d.fecha)} ${esc(d.hora||'')}`;
+  return esc(d.mensaje||'');
+}
+function paFrase(a){
+  const d=a.datos||{};
+  if(a.tipo==='quincena_vencida') return d.cliente?`${esc(d.cliente)} tiene una quincena sin pagar`:'Hay una quincena sin pagar';
+  if(a.tipo==='pago_pendiente') return `${esc(d.cliente||'Un cliente')} te debe ${pdDinero(parseFloat(d.saldo||0))}`;
+  if(a.tipo==='link_venciendo') return `La galería de ${esc(d.nombre||'un cliente')} vence en ${d.diasRestantes} día${d.diasRestantes!==1?'s':''}`;
+  if(a.tipo==='evento_proximo') return `${esc(d.cliente||'Tienes un evento')} · ${esc(d.tipo||'evento')} ${fmtFecha(d.fecha)}`;
+  if(a.tipo==='descarga') return `${esc(d.nombre||'Un cliente')} descargó su galería`;
+  return esc((PA_TIPO[a.tipo]||{}).t||a.tipo);
+}
+function paHace(iso){
+  const s=(Date.now()-new Date(iso).getTime())/1000; if(!isFinite(s)) return '';
+  if(s<3600) return `hace ${Math.max(1,Math.floor(s/60))} min`; if(s<86400) return `hace ${Math.floor(s/3600)} h`;
+  if(s<172800) return 'ayer'; if(s<604800) return `hace ${Math.floor(s/86400)} días`;
+  return new Date(iso).toLocaleDateString('es',{day:'numeric',month:'short'});
+}
+// Same actions the panel already had.
+function paAccion(a){
+  const d=a.datos||{}, id=esc(escJs(d.id||'')), cod=esc(escJs(d.codigo||''));
+  if(a.tipo==='descarga') return {t:'Ver galería',on:`nav('galerias')`};
+  if(a.tipo==='link_venciendo') return {t:'Reactivar',on:`openReactivar('${cod}')`};
+  if(a.tipo==='pago_pendiente') return {t:'Ver trabajo',on:`openTrabajo('${id}')`};
+  if(a.tipo==='evento_proximo') return {t:'Ver evento',on:`openEvento('${id}')`};
+  if(a.tipo==='quincena_vencida') return {t:'Ver quincenas',on:`openTrabajo('${id}')`};
+  return null;
+}
+function paPintar(){
+  const list=document.getElementById('alertas-list');
+  const orden=allAlertas.slice().sort((x,y)=>paUrgencia(x)-paUrgencia(y)||String(y.fecha).localeCompare(String(x.fecha)));
+  const urg=orden.filter(a=>paUrgencia(a)<=2).length;
+  document.getElementById('pa-sub').textContent=!orden.length?'Todo al día':`${orden.length} sin leer`+(urg?` · ${urg} urgente${urg!==1?'s':''}`:'');
+  document.getElementById('pa-todas').disabled=!orden.length;
+  if(!orden.length){ list.innerHTML=`<div class="pa-vacio pd-in"><span><svg><use href="#i-check"/></svg></span><b>Todo al día</b><small>No tienes alertas pendientes.</small></div>`; return; }
+  const h=orden[0], th=PA_TIPO[h.tipo]||{ic:'campana',c:'var(--pf-suave)',t:h.tipo}, ah=paAccion(h);
+  let html=`<div class="pa-hero pd-in" style="--i:1;--c:${th.c}" data-id="${esc(h.id)}">
+    <span class="pa-ic"><svg><use href="#i-${th.ic}"/></svg></span>
+    <div class="tx"><small>${paUrgencia(h)<=2?'URGENTE':'LO MÁS IMPORTANTE'}</small><h2>${paFrase(h)}</h2><p>${paDesc(h)} · ${paHace(h.fecha)}</p></div>
+    <div class="acc">${ah?`<button class="pa-b1" onclick="${ah.on}">${ah.t}</button>`:''}<button class="pa-b2" onclick="leerAlerta('${esc(escJs(h.id))}',this)"><svg><use href="#i-check"/></svg>Listo</button></div>
+  </div>`;
+  if(orden.length>1){
+    html+=`<div class="pa-tl pd-in" style="--i:2">`+orden.slice(1).map(a=>{
+      const t=PA_TIPO[a.tipo]||{ic:'campana',c:'var(--pf-suave)',t:a.tipo}, ac=paAccion(a);
+      return `<div class="pa-it" style="--c:${t.c}" data-id="${esc(a.id)}"><span class="i2"><svg><use href="#i-${t.ic}"/></svg></span>
+        <span class="tx"><b>${esc(t.t)}</b><small>${paDesc(a)}</small></span>
+        <span class="acc">${ac?`<button class="pa-b2" onclick="${ac.on}">${ac.t}</button>`:''}<button class="pa-b2" title="Marcar como leída" aria-label="Marcar como leída" onclick="leerAlerta('${esc(escJs(a.id))}',this)"><svg><use href="#i-check"/></svg></button></span>
+        <span class="t">${paHace(a.fecha)}</span></div>`;
+    }).join('')+`</div>`;
+  }
+  list.innerHTML=html;
+}
 async function loadAlertas(){
   try {
-  const alertas = await api('/api/alertas');
-  if(!Array.isArray(alertas)) throw new Error(alertas?.error || 'Respuesta inválida');
-  allAlertas = alertas.filter(a=>!a.leida);
-  updateBadge(allAlertas);
-  const list=document.getElementById('alertas-list');
-  if(!allAlertas.length){ list.innerHTML='<div class="empty">No hay alertas</div>'; return; }
-  list.innerHTML=allAlertas.map(a=>{
-    const d=a.datos||{};
-    let desc='';
-    if(a.tipo==='descarga') desc=`${esc(d.nombre)} descargó su galería (${d.tipo==='todo'?'todo':'favoritas'}) — ${fmtDateTime(d.fecha)}`;
-    else if(a.tipo==='link_venciendo') desc=`${esc(d.nombre)} (${esc(d.codigo)}) — ${d.diasRestantes} día${d.diasRestantes!==1?'s':''} restante${d.diasRestantes!==1?'s':''}`;
-    else if(a.tipo==='pago_pendiente') desc=`${esc(d.cliente)} — ${esc(d.servicio)} — Saldo: $${parseFloat(d.saldo||0).toFixed(2)}`;
-    else if(a.tipo==='evento_proximo') desc=`${esc(d.cliente)} — ${esc(d.tipo)} — ${fmtFecha(d.fecha)} ${esc(d.hora||'')}`;
-    else if(a.tipo==='quincena_vencida') desc=esc(d.mensaje||'');
-    let btn='';
-    if(a.tipo==='descarga') btn=`<button class="btn btn-ghost btn-sm" onclick="nav('galerias')">Ver galería</button>`;
-    else if(a.tipo==='link_venciendo') btn=`<button class="btn btn-outline btn-sm" onclick="openReactivar('${d.codigo}')">Reactivar</button>`;
-    else if(a.tipo==='pago_pendiente') btn=`<button class="btn btn-ghost btn-sm" onclick="openTrabajo('${d.id}')">Ver trabajo</button>`;
-    else if(a.tipo==='evento_proximo') btn=`<button class="btn btn-ghost btn-sm" onclick="openEvento('${d.id}')">Ver evento</button>`;
-    else if(a.tipo==='quincena_vencida') btn=`<button class="btn btn-ghost btn-sm" onclick="openTrabajo('${d.id}')">Ver quincenas</button>`;
-    return `<div class="alert-item ${a.leida?'':'unread'}">
-      <div class="alert-icon">${alertIcons[a.tipo]||'🔔'}</div>
-      <div class="alert-body">
-        <div class="alert-title">${alertLabels[a.tipo]||a.tipo}</div>
-        <div class="alert-desc">${desc}</div>
-        <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
-          <span class="alert-time">${fmtDateTime(a.fecha)}</span>${btn}
-          ${!a.leida?`<button class="btn btn-ghost btn-sm" onclick="leerAlerta('${a.id}',this)">Marcar leída</button>`:''}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+    const alertas = await api('/api/alertas');
+    if(!Array.isArray(alertas)) throw new Error(alertas?.error || 'Respuesta inválida');
+    allAlertas = alertas.filter(a=>!a.leida);
+    updateBadge(allAlertas);
+    paPintar();
+    document.querySelectorAll('#page-alertas .pd-in').forEach(n=>{ n.classList.remove('pd-in'); void n.offsetWidth; n.classList.add('pd-in'); });
   } catch(err) { toast('No se pudieron cargar las alertas: '+err.message,'err'); }
 }
 async function leerAlerta(id,btn){
   btn.disabled=true;
   try {
-  const result=await api('/api/alertas/'+id+'/leer',{method:'PUT'});
-  if(!result?.ok) throw new Error(result?.error || 'No se guardó el cambio');
-  btn.closest('.alert-item').remove();
-  allAlertas = allAlertas.filter(a=>a.id!==id);
-  updateBadge(allAlertas);
-  if(!document.querySelectorAll('.alert-item').length)
-    document.getElementById('alertas-list').innerHTML='<div class="empty">No hay alertas</div>';
-  } catch(err) { toast('No se pudo marcar la alerta como leída: '+err.message,'err'); }
-  finally { btn.disabled=false; }
+    const result=await api('/api/alertas/'+id+'/leer',{method:'PUT'});
+    if(!result?.ok) throw new Error(result?.error || 'No se guardó el cambio');
+    allAlertas = allAlertas.filter(a=>a.id!==id);
+    updateBadge(allAlertas);
+    // Slide the row out, then re-rank (the next most urgent becomes the hero).
+    const row=btn.closest('.pa-it,.pa-hero');
+    if(row && !pdQuieto){ row.style.maxHeight=row.offsetHeight+'px'; void row.offsetWidth; row.classList.add('pa-fuera'); await new Promise(r=>setTimeout(r,330)); }
+    paPintar();
+  } catch(err) { toast('No se pudo marcar la alerta como leída: '+err.message,'err'); btn.disabled=false; }
 }
 async function marcarTodasLeidas(btn){
   btn.disabled=true;
@@ -1948,10 +2047,9 @@ async function marcarTodasLeidas(btn){
     if(!result?.ok) throw new Error(result?.error || 'No se guardó el cambio');
     allAlertas=[];
     updateBadge(allAlertas);
-    document.getElementById('alertas-list').innerHTML='<div class="empty">No hay alertas</div>';
+    paPintar();
     await loadAlertas();
-  } catch(err) { toast('No se pudieron marcar las alertas como leídas: '+err.message,'err'); }
-  finally { btn.disabled=false; }
+  } catch(err) { toast('No se pudieron marcar las alertas como leídas: '+err.message,'err'); btn.disabled=false; }
 }
 function updateBadge(alertas){
   const n=(alertas||[]).filter(a=>!a.leida).length;
@@ -3775,7 +3873,9 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 // INIT — polling every 30s
 // ═══════════════════════════════════════════════════════════
 loadDashboard();
-setInterval(async()=>{ allAlertas=await api('/api/alertas'); updateBadge(allAlertas); }, 30000);
+// Badge refresh — keep only unread, same as loadAlertas (the Alertas page
+// renders from allAlertas, so read ones must never slip back in).
+setInterval(async()=>{ const a=await api('/api/alertas').catch(()=>null); if(Array.isArray(a)){ allAlertas=a.filter(x=>!x.leida); updateBadge(allAlertas); } }, 30000);
 </script>
 </body>
 </html>

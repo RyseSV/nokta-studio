@@ -369,6 +369,47 @@ async function checkAlerts() {
       if (!existeAlerta('evento_proximo', 'id', t.id)) await addAlertTracked('evento_proximo', { id: t.id, cliente: t.cliente, tipo: t.servicio, hora: t.horaInicio, fecha: t.fecha });
     }
   }
+
+  // Upcoming class sessions and calendar events (next 48 h). Classes live in
+  // t.sesiones and one-off events in the Evento collection — the loop above
+  // only looks at t.fecha, so "mañana tengo clase" never produced an alert.
+  const eventos = await Evento.find({}).lean();
+  const tituloDe = (e) => String(e.titulo || '').trim().toLowerCase();
+  const enVentana = (fecha, hora) => {
+    if (typeof fecha !== 'string' || !anioMesDeFecha(fecha)) return false;
+    // No time → count it until the end of that day.
+    const h = /^\d{1,2}:\d{2}$/.test(String(hora || '').trim()) ? String(hora).trim().padStart(5, '0') : '23:59';
+    const diffH = (new Date(`${fecha.slice(0, 10)}T${h}`) - now) / 3600000;
+    return diffH > 0 && diffH <= 48;
+  };
+  // "cliente|fecha" of every class session, alerted or not, so its calendar
+  // event (same date, title starting with the client's name) never doubles it.
+  const sesionesCubiertas = [];
+  // Plain objects: trabajoSchema is strict:false, and fields outside the
+  // schema (like `sesiones`) aren't reliably reachable on a Mongoose document.
+  const trabajosPlanos = trabajos.map(t => (typeof t.toObject === 'function' ? t.toObject() : t));
+  for (const t of trabajosPlanos) {
+    for (const s of t.sesiones || []) {
+      if (s.estado === 'oculta' || s.estado === 'cancelado' || !t.cliente) continue;
+      sesionesCubiertas.push({ cliente: String(t.cliente).toLowerCase(), fecha: s.fecha });
+      if (estadoClienteDe(t.cliente) !== 'activo') continue; // paused: no class reminders
+      const ev = eventos.find(e => e.fecha === s.fecha && tituloDe(e).startsWith(String(t.cliente).toLowerCase()));
+      const hora = ev?.horaInicio || '';
+      if (!enVentana(s.fecha, hora)) continue;
+      const key = `${t.id}-ses-${s.id}`;
+      if (!existeAlerta('evento_proximo', 'key', key)) await addAlertTracked('evento_proximo', { key, id: t.id, cliente: t.cliente, tipo: 'Clase', hora, fecha: s.fecha });
+    }
+  }
+  const idsTrabajo = new Set(trabajosPlanos.map(t => t.id));
+  for (const e of eventos) {
+    if (idsTrabajo.has(e.id)) continue; // a trabajo's own event — alerted above via t.fecha
+    if (sesionesCubiertas.some(c => c.fecha === e.fecha && tituloDe(e).startsWith(c.cliente))) continue;
+    if (!enVentana(e.fecha, e.horaInicio)) continue;
+    const key = `ev-${e.id}`;
+    if (!existeAlerta('evento_proximo', 'key', key)) {
+      await addAlertTracked('evento_proximo', { key, id: e.id, cliente: String(e.titulo || '').split(' — ')[0] || e.tipo || 'Evento', tipo: e.tipo || 'Evento', hora: e.horaInicio || '', fecha: e.fecha });
+    }
+  }
 }
 
 // ══════════════════════════════════════════════════════════════

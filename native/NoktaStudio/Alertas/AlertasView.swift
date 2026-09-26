@@ -198,7 +198,10 @@ struct AlertasView: View {
         switch a.tipo {
         case "pago_pendiente": return ("Ver trabajo", { vm.trabajoIdMostrado = id })
         case "quincena_vencida": return ("Ver quincenas", { vm.trabajoIdMostrado = id })
-        case "evento_proximo": return ("Ver trabajo", { vm.trabajoIdMostrado = id })
+        case "evento_proximo":
+            // Standalone calendar events aren't trabajos — nothing to open here.
+            if a.datos.key?.hasPrefix("ev-") == true { return nil }
+            return (a.datos.key?.contains("-ses-") == true ? "Ver clase" : "Ver trabajo", { vm.trabajoIdMostrado = id })
         default: return nil
         }
     }
@@ -217,7 +220,7 @@ private func descripcion(_ a: NoktaAlerta) -> String {
     case "pago_pendiente":
         return "\(d.cliente ?? "") · \(d.servicio ?? "") · saldo \(NoktaFormato.dinero(d.saldo ?? 0))"
     case "evento_proximo":
-        return "\(d.cliente ?? "") · \(d.tipo ?? "") · \(FechaUtil.fechaCorta(d.fecha)) \(d.hora ?? "")"
+        return "\(d.cliente ?? "") · \(d.tipo ?? "") · \(diaRelativo(d.fecha))" + ((d.hora ?? "").isEmpty ? "" : " · \(d.hora!)")
     case "quincena_vencida":
         return d.mensaje ?? ""
     default:
@@ -234,10 +237,23 @@ private func frase(_ a: NoktaAlerta) -> String {
     case "link_venciendo":
         let dias = d.diasRestantes ?? 0
         return "La galería de \(d.nombre ?? "un cliente") vence en \(dias) día\(dias == 1 ? "" : "s")"
-    case "evento_proximo": return "\(d.cliente ?? "Tienes un evento") · \(d.tipo ?? "evento") \(FechaUtil.fechaCorta(d.fecha))"
+    case "evento_proximo":
+        let hora = (d.hora ?? "").isEmpty ? "" : " a las \(d.hora!)"
+        return "\(d.cliente ?? "Tienes un evento") · \(d.tipo ?? "evento") \(diaRelativo(d.fecha))\(hora)"
     case "descarga": return "\(d.nombre ?? "Un cliente") descargó su galería"
     default: return alertaTipo(a).titulo
     }
+}
+
+/// "hoy", "mañana" or a short date for a "YYYY-MM-DD".
+private func diaRelativo(_ fecha: String?) -> String {
+    guard let fecha, fecha.count >= 10 else { return "" }
+    let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
+    guard let d = f.date(from: String(fecha.prefix(10))) else { return FechaUtil.fechaCorta(fecha) }
+    let cal = Calendar.current
+    if cal.isDateInToday(d) { return "hoy" }
+    if cal.isDateInTomorrow(d) { return "mañana" }
+    return "el " + FechaUtil.fechaCorta(fecha)
 }
 
 private func haceCuanto(_ iso: String) -> String {

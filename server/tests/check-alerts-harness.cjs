@@ -53,8 +53,9 @@ function loadCheckAlerts() {
   return code;
 }
 
-function newWorld({ clientes = [], trabajos = [], alertas = [], estados = [] } = {}, now = new Date()) {
+function newWorld({ clientes = [], trabajos = [], alertas = [], estados = [], eventos = [] } = {}, now = new Date()) {
   const ctx = {
+    Evento: makeModel(eventos),
     Cliente: makeModel(clientes),
     Trabajo: makeModel(trabajos),
     Alerta: makeModel(alertas),

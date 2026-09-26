@@ -201,6 +201,76 @@ const daysFromNow = (n, base) => new Date(base.getTime() + n * 86400000);
     assert.ok(periodos.includes('2026-01-q2'), 'pero la otra quincena de enero sí debe avisar');
   });
 
+  // ── Clases (sesiones) y eventos del calendario ─────────────────────
+  const CLASE_NOW = new Date('2026-09-25T15:00:00Z');
+  const fatima = (sesiones) => ({ id: 'tF', cliente: 'Clases de IA Fátima', servicio: 'Clases', estado: 'pendiente', sesiones });
+  const proximos = (ctx) => ctx.Alerta._docs().filter(a => a.tipo === 'evento_proximo');
+
+  await test('clase de mañana genera evento_proximo (una sola vez)', async () => {
+    const ctx = newWorld({ trabajos: [fatima([{ id: 's1', fecha: '2026-09-26', monto: 60, estado: 'pendiente' }])] }, CLASE_NOW);
+    await ctx.__checkAlerts(); await ctx.__checkAlerts();
+    const a = proximos(ctx);
+    assert.equal(a.length, 1);
+    assert.equal(a[0].datos.tipo, 'Clase');
+    assert.equal(a[0].datos.id, 'tF');
+    assert.equal(a[0].datos.fecha, '2026-09-26');
+  });
+
+  await test('clase cancelada, oculta o lejana no genera alerta', async () => {
+    const ctx = newWorld({ trabajos: [fatima([
+      { id: 'c', fecha: '2026-09-26', estado: 'cancelado' },
+      { id: 'o', fecha: '2026-09-26', estado: 'oculta' },
+      { id: 'l', fecha: '2026-10-10', estado: 'pendiente' },
+      { id: 'p', fecha: '2026-09-20', estado: 'pendiente' },
+    ])] }, CLASE_NOW);
+    await ctx.__checkAlerts();
+    assert.equal(proximos(ctx).length, 0);
+  });
+
+  await test('cliente pausado: ni su clase ni su evento de calendario avisan', async () => {
+    const ctx = newWorld({
+      trabajos: [fatima([{ id: 's1', fecha: '2026-09-26', estado: 'pendiente' }])],
+      eventos: [{ id: 'e1', titulo: 'Clases de IA Fátima — Clases', tipo: 'Clases', fecha: '2026-09-26' }],
+      estados: [{ nombre: 'Clases de IA Fátima', estado: 'pausado' }],
+    }, CLASE_NOW);
+    await ctx.__checkAlerts();
+    assert.equal(proximos(ctx).length, 0);
+  });
+
+  await test('clase con su evento en el calendario: una sola alerta, con la hora del evento', async () => {
+    const ctx = newWorld({
+      trabajos: [fatima([{ id: 's1', fecha: '2026-09-26', estado: 'pendiente' }])],
+      eventos: [{ id: 'e1', titulo: 'Clases de IA Fátima — Clases', tipo: 'Clases', fecha: '2026-09-26', horaInicio: '10:00' }],
+    }, CLASE_NOW);
+    await ctx.__checkAlerts();
+    const a = proximos(ctx);
+    assert.equal(a.length, 1);
+    assert.equal(a[0].datos.hora, '10:00');
+  });
+
+  await test('evento suelto del calendario en las próximas 48 h avisa; uno pasado o lejano no', async () => {
+    const ctx = newWorld({ eventos: [
+      { id: 'e1', titulo: 'Reunión Vértice — Branding', tipo: 'Branding', fecha: '2026-09-26', horaInicio: '9:30' },
+      { id: 'e2', titulo: 'Boda López — Boda', tipo: 'Boda', fecha: '2026-10-20' },
+      { id: 'e3', titulo: 'Ayer — Evento', tipo: 'Evento', fecha: '2026-09-24' },
+    ] }, CLASE_NOW);
+    await ctx.__checkAlerts();
+    const a = proximos(ctx);
+    assert.equal(a.length, 1);
+    assert.equal(a[0].datos.id, 'e1');
+    assert.equal(a[0].datos.cliente, 'Reunión Vértice');
+    assert.equal(a[0].datos.key, 'ev-e1');
+  });
+
+  await test('evento que es el mismo de un trabajo no se duplica', async () => {
+    const ctx = newWorld({
+      trabajos: [{ id: 'tw', cliente: 'María López', servicio: 'Boda', estado: 'pendiente', fecha: '2026-09-26', horaInicio: '16:00' }],
+      eventos: [{ id: 'tw', titulo: 'María López — Boda', tipo: 'Boda', fecha: '2026-09-26', horaInicio: '16:00' }],
+    }, CLASE_NOW);
+    await ctx.__checkAlerts();
+    assert.equal(proximos(ctx).length, 1);
+  });
+
   console.log(`\n${pass} pasaron, ${fail} fallaron`);
   process.exitCode = fail ? 1 : 0;
 })();

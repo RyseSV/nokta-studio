@@ -1965,7 +1965,7 @@ function paDesc(a){
   if(a.tipo==='descarga') return `${esc(d.nombre)} descargó ${d.tipo==='todo'?'toda la galería':'sus favoritas'}`;
   if(a.tipo==='link_venciendo') return `${esc(d.nombre)} · ${esc(d.codigo)} · vence en ${d.diasRestantes} día${d.diasRestantes!==1?'s':''}`;
   if(a.tipo==='pago_pendiente') return `${esc(d.cliente)} · ${esc(d.servicio)} · saldo ${pdDinero(parseFloat(d.saldo||0))}`;
-  if(a.tipo==='evento_proximo') return `${esc(d.cliente)} · ${esc(d.tipo)} · ${fmtFecha(d.fecha)} ${esc(d.hora||'')}`;
+  if(a.tipo==='evento_proximo') return `${esc(d.cliente)} · ${esc(d.tipo)} · ${paDia(d.fecha)}${d.hora?' · '+esc(d.hora):''}`;
   return esc(d.mensaje||'');
 }
 function paFrase(a){
@@ -1973,9 +1973,16 @@ function paFrase(a){
   if(a.tipo==='quincena_vencida') return d.cliente?`${esc(d.cliente)} tiene una quincena sin pagar`:'Hay una quincena sin pagar';
   if(a.tipo==='pago_pendiente') return `${esc(d.cliente||'Un cliente')} te debe ${pdDinero(parseFloat(d.saldo||0))}`;
   if(a.tipo==='link_venciendo') return `La galería de ${esc(d.nombre||'un cliente')} vence en ${d.diasRestantes} día${d.diasRestantes!==1?'s':''}`;
-  if(a.tipo==='evento_proximo') return `${esc(d.cliente||'Tienes un evento')} · ${esc(d.tipo||'evento')} ${fmtFecha(d.fecha)}`;
+  if(a.tipo==='evento_proximo') return `${esc(d.cliente||'Tienes un evento')} · ${esc(d.tipo||'evento')} ${paDia(d.fecha)}${d.hora?' a las '+esc(d.hora):''}`;
   if(a.tipo==='descarga') return `${esc(d.nombre||'Un cliente')} descargó su galería`;
   return esc((PA_TIPO[a.tipo]||{}).t||a.tipo);
+}
+// "hoy", "mañana" or a short date for a "YYYY-MM-DD".
+function paDia(f){
+  if(!f) return ''; const [y,m,d]=String(f).slice(0,10).split('-').map(Number); if(!y) return fmtFecha(f);
+  const dia=new Date(y,m-1,d), hoy=new Date(); hoy.setHours(0,0,0,0);
+  const n=Math.round((dia-hoy)/86400000);
+  return n===0?'hoy':n===1?'mañana':'el '+fmtFecha(f);
 }
 function paHace(iso){
   const s=(Date.now()-new Date(iso).getTime())/1000; if(!isFinite(s)) return '';
@@ -1989,7 +1996,7 @@ function paAccion(a){
   if(a.tipo==='descarga') return {t:'Ver galería',on:`nav('galerias')`};
   if(a.tipo==='link_venciendo') return {t:'Reactivar',on:`openReactivar('${cod}')`};
   if(a.tipo==='pago_pendiente') return {t:'Ver trabajo',on:`openTrabajo('${id}')`};
-  if(a.tipo==='evento_proximo') return {t:'Ver evento',on:`openEvento('${id}')`};
+  if(a.tipo==='evento_proximo') return String(d.key||'').includes('-ses-') ? {t:'Ver clase',on:`openTrabajo('${id}')`} : {t:'Ver evento',on:`openEvento('${id}')`};
   if(a.tipo==='quincena_vencida') return {t:'Ver quincenas',on:`openTrabajo('${id}')`};
   return null;
 }

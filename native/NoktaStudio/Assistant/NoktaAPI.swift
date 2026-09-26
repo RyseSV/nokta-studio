@@ -214,6 +214,8 @@ struct NoktaAlerta: Codable {
 }
 struct NoktaAlertaDatos: Codable {
     var id: String?
+    /// Dedup key; "…-ses-…" = class session (id is the trabajo), "ev-…" = calendar event.
+    var key: String?
     var codigo: String?
     var nombre: String?
     var cliente: String?

@@ -206,6 +206,16 @@ const limpiar = () => { enviados = []; telegram = []; alertas = []; };
   assert.equal(historial[2].texto, '📷 Imagen: mi logo');
   assert.match(historial[3].texto, /\[Menú: Planes mensuales/);
 
+  // 13. Desregistrar: solo con WHATSAPP_DESREGISTRAR numérico, POST correcto
+  const llam = []; const salida = [];
+  const fx = async (u, o) => { llam.push({ u, o }); return { ok: true, text: async () => '{"success":true}' }; };
+  const lg = { log: (m) => salida.push(m), error: (m) => salida.push(m) };
+  delete process.env.WHATSAPP_DESREGISTRAR; await bot.desregistrarNumero(fx, lg); assert.equal(llam.length, 0);
+  process.env.WHATSAPP_DESREGISTRAR = '12/../x'; await bot.desregistrarNumero(fx, lg); assert.equal(llam.length, 0);
+  process.env.WHATSAPP_DESREGISTRAR = '1277562512115316'; await bot.desregistrarNumero(fx, lg);
+  assert.match(llam[0].u, /\/1277562512115316\/deregister$/); assert.equal(llam[0].o.method, 'POST'); assert.match(salida[0], /desconectado/);
+  delete process.env.WHATSAPP_DESREGISTRAR;
+
   // ── Rutas HTTP reales ──────────────────────────────────────
   const app = express();
   bot.montarWhatsAppBot(app, { addAlert, fetchImpl, log }); // sin llamadas reales a Meta

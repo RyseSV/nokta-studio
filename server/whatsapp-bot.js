@@ -346,11 +346,29 @@ async function asegurarSuscripcion(fetchImpl = globalThis.fetch, log = console) 
   } catch (e) { log.error('[WHATSAPP] No se pudo suscribir la cuenta:', e.message); }
 }
 
+// Soltar un número de la API para poder volver a usarlo en la app de WhatsApp
+// del móvil: se pone su id en WHATSAPP_DESREGISTRAR y al arrancar se
+// desregistra una vez (el resultado queda en el log). Reversible: el número se
+// puede volver a registrar en Meta cuando se quiera.
+async function desregistrarNumero(fetchImpl = globalThis.fetch, log = console) {
+  const { WHATSAPP_TOKEN: token, WHATSAPP_DESREGISTRAR: id } = process.env;
+  if (!token || !/^\d+$/.test(id || '')) return;
+  try {
+    const res = await fetchImpl(`https://graph.facebook.com/${GRAPH_VERSION}/${id}/deregister`, {
+      method: 'POST', headers: { Authorization: `Bearer ${token}` },
+    });
+    const cuerpo = await res.text().catch(() => '');
+    if (res.ok) log.log(`[WHATSAPP] Número ${id} desconectado de la API ✓ (ya se puede usar en la app del móvil)`);
+    else log.error(`[WHATSAPP] No se pudo desconectar el número ${id} (${res.status}): ${cuerpo.slice(0, 300)}`);
+  } catch (e) { log.error('[WHATSAPP] No se pudo desconectar el número:', e.message); }
+}
+
 let botCompartido = null;
 
 function montarWhatsAppBot(app, deps) {
   const bot = botCompartido = crearBot(deps);
   asegurarSuscripcion(deps?.fetchImpl, deps?.log);
+  desregistrarNumero(deps?.fetchImpl, deps?.log);
 
   // Meta comprueba la dirección una sola vez al guardar el webhook.
   app.get('/webhook/whatsapp', (req, res) => {
@@ -482,4 +500,4 @@ function montarBandejaWhatsApp(app, { requireAdmin, bot = null, log = console })
   });
 }
 
-module.exports = { montarWhatsAppBot, montarBandejaWhatsApp, asegurarSuscripcion, crearBot, WaMensaje, resumenEnvio, firmaValida, leerEntrada, PLANES, BotChat, BotMensaje };
+module.exports = { montarWhatsAppBot, montarBandejaWhatsApp, asegurarSuscripcion, desregistrarNumero, crearBot, WaMensaje, resumenEnvio, firmaValida, leerEntrada, PLANES, BotChat, BotMensaje };

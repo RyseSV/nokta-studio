@@ -9,26 +9,6 @@ const bot = require('../whatsapp-bot');
 const chats = new Map(), vistos = new Set();
 bot.BotMensaje.create = async ({ _id }) => { if (vistos.has(_id)) throw Object.assign(Error('dup'), { code: 11000 }); vistos.add(_id); };
 bot.BotChat.findOneAndUpdate = async ({ telefono }, { $set }) => { const c = { ...(chats.get(telefono) || { telefono }), ...$set }; chats.set(telefono, c); return { ...c }; };
-// Historial (WaMensaje) en memoria, con las cadenas .sort().limit().lean()
-let historial = [];
-const cadena = (arr) => { const q = { _a: arr, sort(o) { const [k, d] = Object.entries(o)[0]; q._a = [...q._a].sort((x, y) => (x[k] > y[k] ? 1 : -1) * d); return q; }, limit(n) { q._a = q._a.slice(0, n); return q; }, lean: async () => q._a.map((x) => ({ ...x })) }; return q; };
-const coincide = (m, q) => Object.entries(q).every(([k, v]) => m[k] === v);
-bot.WaMensaje.create = async (d) => { historial.push({ _id: `m${historial.length}`, ...d, fecha: new Date(Date.now() + historial.length) }); };
-bot.WaMensaje.find = (q) => cadena(historial.filter((m) => coincide(m, q)));
-bot.WaMensaje.findOne = (q) => { const c = cadena(historial.filter((m) => coincide(m, q))); return { sort: (o) => ({ lean: async () => (await c.sort(o).lean())[0] || null }) }; };
-bot.WaMensaje.updateMany = async (q, { $set }) => { historial.filter((m) => coincide(m, q)).forEach((m) => Object.assign(m, $set)); };
-// aggregate: misma agrupación que el pipeline real, hecha en JS
-bot.WaMensaje.aggregate = async () => {
-  const g = new Map();
-  for (const m of [...historial].sort((a, b) => b.fecha - a.fecha)) {
-    let c = g.get(m.telefono);
-    if (!c) g.set(m.telefono, c = { _id: m.telefono, ultimo: m.texto, autorUltimo: m.autor, fecha: m.fecha, nombre: null, ultimoCliente: null, noLeidos: 0 });
-    if (m.autor === 'cliente') { if (m.nombre && (!c.nombre || m.nombre > c.nombre)) c.nombre = m.nombre; if (!c.ultimoCliente || m.fecha > c.ultimoCliente) c.ultimoCliente = m.fecha; if (m.leido === false) c.noLeidos++; }
-  }
-  return [...g.values()].sort((a, b) => b.fecha - a.fecha);
-};
-bot.WaMensaje.deleteMany = async (q) => { historial = historial.filter((m) => !coincide(m, q)); };
-bot.BotChat.find = (q) => ({ lean: async () => [...chats.values()].filter((c) => q.telefono.$in.includes(c.telefono)).map((c) => ({ ...c })) });
 bot.BotChat.findOne = ({ telefono }) => ({ lean: async () => (chats.has(telefono) ? { ...chats.get(telefono) } : null) });
 bot.BotChat.updateOne = async ({ telefono }, { $set }) => { chats.set(telefono, { ...chats.get(telefono), ...$set }); };
 
@@ -164,12 +144,11 @@ const limpiar = () => { enviados = []; telegram = []; alertas = []; };
   store.push({ id: 'otra', tipo: 'whatsapp', datos: { telefono: '50370000000', mensaje: 'x' }, leida: true });
   let borradas = null; Alerta.deleteMany = async (q) => { borradas = q; store = store.filter((a) => !(a.tipo === q.tipo && a.datos.telefono === q['datos.telefono'])); };
   bot.BotChat.deleteOne = async ({ telefono }) => { chats.delete(telefono); };
-  limpiar(); await procesar(texto('“Borrar mis datos”'), BASE);
+  limpiar(); await procesar(texto('Borrar mis datos'), BASE);
   assert.equal(chats.has('50370000000'), false);
   assert.deepEqual(borradas, { tipo: 'whatsapp', 'datos.telefono': '50370000000' });
   assert.equal(store.length, 1); assert.equal(store[0].datos.telefono, undefined, 'el aviso no guarda el número');
   assert.match(enviados[0].text.body, /borrado/); store = [];
-  assert.equal(historial.filter((m) => m.telefono === '50370000000').length, 0, 'borra también el historial y no guarda la confirmación');
 
   // 9. Telegram: el nombre del cliente no rompe el HTML
   chats.clear(); limpiar();
@@ -195,16 +174,6 @@ const limpiar = () => { enviados = []; telegram = []; alertas = []; };
   await bot.asegurarSuscripcion(async () => ({ ok: false, status: 403, text: async () => '{"error":"perm"}' }), { log: (m) => out.push(m), error: (m) => out.push(m) });
   assert.match(out[1], /403/); assert.ok(!out.join('').includes('Bearer'));
   process.env.WHATSAPP_TOKEN = 'tok'; // (el caso 10 lo dejó igual)
-
-  // 12. Historial: guarda cliente y bot con resúmenes legibles
-  historial = []; chats.clear(); limpiar();
-  await procesar(texto('Hola'), BASE);
-  await procesar(msg({ type: 'image', image: { caption: 'mi logo' } }), BASE);
-  assert.deepEqual(historial.map((m) => m.autor), ['cliente', 'bot', 'cliente', 'bot']);
-  assert.equal(historial[0].texto, 'Hola'); assert.equal(historial[0].leido, false); assert.equal(historial[0].nombre, 'Ana');
-  assert.match(historial[1].texto, /^📷 ¡Hola!.*\n\[Ver planes · Pedir cotización · Hablar con Gabriel\]$/s);
-  assert.equal(historial[2].texto, '📷 Imagen: mi logo');
-  assert.match(historial[3].texto, /\[Menú: Planes mensuales/);
 
   // 13. Desregistrar: solo con WHATSAPP_DESREGISTRAR numérico, POST correcto
   const llam = []; const salida = [];
@@ -243,44 +212,6 @@ const limpiar = () => { enviados = []; telegram = []; alertas = []; };
     r = await fetch(`${url}?hub.mode=subscribe&hub.verify_token=&hub.challenge=abc`);
     assert.equal(r.status, 403);
   } finally { server.close(); }
-
-  // ── Bandeja (rutas reales, con requireAdmin simulado) ──────
-  process.env.WHATSAPP_APP_SECRET = 'secreto';
-  const app2 = express(); let logueado = true;
-  const requireAdmin = (req, res, next) => (logueado ? ((req.authUser = { nombre: 'Gabo' }), next()) : res.status(401).json({ error: 'No autorizado' }));
-  const botB = bot.crearBot({ addAlert, Alerta, fetchImpl, log, pausaEntreTarjetasMs: 0 });
-  app2.use(express.json());
-  bot.montarBandejaWhatsApp(app2, { requireAdmin, bot: botB, log });
-  const srv2 = app2.listen(0); const B2 = `http://127.0.0.1:${srv2.address().port}/api/whatsapp/chats`;
-  const pj = (u, body) => fetch(u, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  try {
-    let r = await fetch(B2); let j = await r.json();
-    assert.equal(j.chats.length, 1); assert.equal(j.chats[0].nombre, 'Ana'); assert.equal(j.chats[0].noLeidos, 2);
-    assert.equal(j.chats[0].ventanaAbierta, true); assert.equal(j.noLeidos, 2);
-    r = await fetch(`${B2}/50370000000`); j = await r.json();
-    assert.equal(j.mensajes.length, 4); assert.equal(j.mensajes[0].texto, 'Hola'); assert.equal(j.ventanaAbierta, true);
-    assert.equal((await (await fetch(B2)).json()).noLeidos, 0, 'abrir el chat lo marca como leído');
-    // Responder: sale por la API de Meta, queda en el historial como "gabriel" y pausa el bot
-    limpiar(); r = await pj(`${B2}/50370000000/enviar`, { texto: '  Hola Ana, soy Gabriel  ' });
-    assert.equal(r.status, 200); assert.equal(enviados[0].text.body, 'Hola Ana, soy Gabriel'); assert.equal(enviados[0].to, '50370000000');
-    assert.equal(historial.at(-1).autor, 'gabriel'); assert.equal(historial.at(-1).quien, 'Gabo');
-    assert.ok(chats.get('50370000000').pausaHasta > new Date());
-    j = await (await fetch(`${B2}/50370000000`)).json(); assert.equal(j.botPausado, true);
-    // Reactivar / pausar el bot
-    j = await (await pj(`${B2}/50370000000/bot`, { activo: true })).json(); assert.equal(j.botPausado, false);
-    j = await (await pj(`${B2}/50370000000/bot`, { activo: false })).json(); assert.equal(j.botPausado, true);
-    assert.equal((await pj(`${B2}/50370000000/bot`, { activo: 'si' })).status, 400);
-    // Validaciones
-    assert.equal((await pj(`${B2}/50370000000/enviar`, { texto: '   ' })).status, 400);
-    assert.equal((await pj(`${B2}/50370000000/enviar`, { texto: 'x'.repeat(4097) })).status, 400);
-    assert.equal((await pj(`${B2}/abc/enviar`, { texto: 'hola' })).status, 400);
-    assert.equal((await fetch(`${B2}/12;drop`)).status, 400);
-    // Fuera de las 24 h: no se puede responder
-    historial.filter((m) => m.autor === 'cliente').forEach((m) => { m.fecha = new Date(Date.now() - 25 * 3600 * 1000); });
-    r = await pj(`${B2}/50370000000/enviar`, { texto: 'hola' }); assert.equal(r.status, 409); assert.match((await r.json()).error, /24 horas/);
-    // Sin sesión: nada
-    logueado = false; assert.equal((await fetch(B2)).status, 401); assert.equal((await pj(`${B2}/50370000000/enviar`, { texto: 'x' })).status, 401);
-  } finally { srv2.close(); }
 
   console.log('PASS whatsapp-bot: bienvenida, menú, planes, interés, pausa, cotización, humano, reintentos, límites de WhatsApp, HTML seguro, errores, firma y verificación');
 })().catch((e) => { console.error(e); process.exitCode = 1; });

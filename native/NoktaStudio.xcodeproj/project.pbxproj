@@ -67,7 +67,6 @@
 		D698C5BFEE2A09EBBFABCD56 /* TrabajosListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 782030FFE8B32DDA3562A562 /* TrabajosListView.swift */; };
 		EE923713082FE87D563B2D86 /* UsuariosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E42946AE63B18DBC5A437DCD /* UsuariosView.swift */; };
 		831A7066B0F64F0101EF1A1E /* NoktaWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB38ED61BB052E334C9FBAA6 /* NoktaWebView.swift */; };
-		E5489C9300869FD4868B8201 /* WhatsAppView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBC95FBFF165F7CA4AE29FCA /* WhatsAppView.swift */; };
 		58497FCDE13489145EEB693B /* AlertasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAD2111EEC191ABB2041A543 /* AlertasView.swift */; };
 		0B938DFB33FE6DE1AA266648 /* AnaliticasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05498723964046F076C233DD /* AnaliticasView.swift */; };
 		7A98018EB868FB65026A8ACD /* NoktaStudioApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 753E68B7B4953F70C848178A /* NoktaStudioApp.swift */; };
@@ -128,7 +127,6 @@
 		5F8C68D10312DA9064113AF9 /* TrabajosListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 782030FFE8B32DDA3562A562 /* TrabajosListView.swift */; };
 		714128F0DCF74CFCF328B0A7 /* UsuariosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E42946AE63B18DBC5A437DCD /* UsuariosView.swift */; };
 		2AB4D63607EE84CB3E49151A /* NoktaWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB38ED61BB052E334C9FBAA6 /* NoktaWebView.swift */; };
-		2E448A7685CCA0749ABE9280 /* WhatsAppView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBC95FBFF165F7CA4AE29FCA /* WhatsAppView.swift */; };
 		1567291634E038F286E91D2C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CFDBAC21689581B04CB7ABB5 /* Assets.xcassets */; };
 		7B6B6A277A353A0833D22730 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CFDBAC21689581B04CB7ABB5 /* Assets.xcassets */; };
 		4B7AC2CF262456D74D75C9C7 /* Poppins-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6EE96B676F11A1B72FB10D74 /* Poppins-Bold.ttf */; };
@@ -206,7 +204,6 @@
 		782030FFE8B32DDA3562A562 /* TrabajosListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrabajosListView.swift; sourceTree = "<group>"; };
 		E42946AE63B18DBC5A437DCD /* UsuariosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsuariosView.swift; sourceTree = "<group>"; };
 		DB38ED61BB052E334C9FBAA6 /* NoktaWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoktaWebView.swift; sourceTree = "<group>"; };
-		CBC95FBFF165F7CA4AE29FCA /* WhatsAppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsAppView.swift; sourceTree = "<group>"; };
 		6EE96B676F11A1B72FB10D74 /* Poppins-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Poppins-Bold.ttf; sourceTree = "<group>"; };
 		44296FB7088CFED343CFF1EE /* Poppins-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Poppins-Light.ttf; sourceTree = "<group>"; };
 		39085646C607B488D1B05BC6 /* Poppins-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Poppins-Medium.ttf; sourceTree = "<group>"; };
@@ -257,7 +254,6 @@
 				518371CAC0C183E82510C847,
 				E35B0AA77333B098B40E4BFD,
 				9E8191CD8A03A7B5FF478C7E,
-				D47F0AE70D12C6EC33740452,
 				CFDBAC21689581B04CB7ABB5,
 				5151B46607EBC8890D8DFCC2,
 			);
@@ -480,14 +476,6 @@
 			path = "WebView";
 			sourceTree = "<group>";
 		};
-		D47F0AE70D12C6EC33740452 = {
-			isa = PBXGroup;
-			children = (
-				CBC95FBFF165F7CA4AE29FCA,
-			);
-			path = "WhatsApp";
-			sourceTree = "<group>";
-		};
 		5151B46607EBC8890D8DFCC2 = {
 			isa = PBXGroup;
 			children = (
@@ -659,7 +647,6 @@
 				D698C5BFEE2A09EBBFABCD56 /* TrabajosListView.swift in Sources */,
 				EE923713082FE87D563B2D86 /* UsuariosView.swift in Sources */,
 				831A7066B0F64F0101EF1A1E /* NoktaWebView.swift in Sources */,
-				E5489C9300869FD4868B8201 /* WhatsAppView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -727,7 +714,6 @@
 				5F8C68D10312DA9064113AF9 /* TrabajosListView.swift in Sources */,
 				714128F0DCF74CFCF328B0A7 /* UsuariosView.swift in Sources */,
 				2AB4D63607EE84CB3E49151A /* NoktaWebView.swift in Sources */,
-				2E448A7685CCA0749ABE9280 /* WhatsAppView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

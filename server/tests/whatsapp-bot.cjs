@@ -33,7 +33,7 @@ Object.assign(process.env, {
   WHATSAPP_APP_SECRET: 'secreto', TELEGRAM_BOT_TOKEN: 'tg', TELEGRAM_CHAT_ID: '99',
 });
 
-const { procesar } = bot.crearBot({ addAlert, Alerta, fetchImpl, log });
+const { procesar } = bot.crearBot({ addAlert, Alerta, fetchImpl, log, pausaEntreTarjetasMs: 0 });
 const BASE = 'https://nokta.test';
 let n = 0;
 const msg = (m, nombre = 'Ana') => ({ entry: [{ changes: [{ value: { contacts: [{ wa_id: '50370000000', profile: { name: nombre } }], messages: [{ from: '50370000000', id: `wamid.${++n}`, ...m }] } }] }] });
@@ -42,20 +42,25 @@ const toque = (id, title = id) => msg({ type: 'interactive', interactive: { type
 const limpiar = () => { enviados = []; telegram = []; alertas = []; };
 
 (async () => {
-  // 1. Primer mensaje → imagen de bienvenida + menú (lista)
+  // 1. Primer mensaje → UN solo mensaje: imagen + saludo + 3 botones (en orden garantizado)
   await procesar(texto('Hola, info'), BASE);
-  assert.equal(enviados.length, 2);
-  assert.equal(enviados[0].type, 'image');
-  assert.equal(enviados[0].image.link, `${BASE}/public/bot/bienvenida.png`);
+  assert.equal(enviados.length, 1);
+  assert.equal(enviados[0].interactive.type, 'button');
+  assert.equal(enviados[0].interactive.header.image.link, `${BASE}/public/bot/bienvenida.png`);
+  assert.deepEqual(enviados[0].interactive.action.buttons.map((b) => b.reply.id), ['planes', 'cotizar', 'humano']);
+  enviados[0].interactive.action.buttons.forEach((b) => assert.ok(b.reply.title.length <= 20, b.reply.title));
+  assert.ok(enviados[0].interactive.body.text.length <= 1024);
   assert.equal(enviados[0].to, '50370000000');
   assert.equal(enviados[0].auth, 'Bearer tok');
   assert.match(enviados[0].url, /graph\.facebook\.com\/v\d+\.0\/123\/messages$/);
-  assert.equal(enviados[1].interactive.type, 'list');
-  const filas = enviados[1].interactive.action.sections[0].rows;
+  // El menú completo (lista) sale cuando el cliente vuelve a escribir
+  limpiar(); await procesar(texto('Hola'), BASE);
+  assert.equal(enviados[0].interactive.type, 'list');
+  const filas = enviados[0].interactive.action.sections[0].rows;
   assert.deepEqual(filas.map((r) => r.id), ['planes', 'trabajo', 'cotizar', 'humano']);
   // Límites de WhatsApp: título ≤24, descripción ≤72, botón ≤20
   filas.forEach((r) => { assert.ok(r.title.length <= 24, r.title); assert.ok(r.description.length <= 72); });
-  assert.ok(enviados[1].interactive.action.button.length <= 20);
+  assert.ok(enviados[0].interactive.action.button.length <= 20);
   assert.equal(chats.get('50370000000').nombre, 'Ana');
 
   // 2. Reintento de Meta del mismo mensaje → no contesta dos veces

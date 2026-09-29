@@ -79,7 +79,10 @@ function leerEntrada(m) {
 // Sin \b: no funciona tras letras con tilde ("menú").
 const esSaludoOMenu = (t) => /^(hola|buenas|buenos|buen día|menu|menú|inicio|opciones|empezar)(?=$|[\s,.!?¡¿])/i.test(t.normalize('NFC'));
 
-function crearBot({ addAlert, Alerta, fetchImpl = globalThis.fetch, log = console } = {}) {
+// Cada mensaje con imagen tarda distinto en llegar: se espera un poco entre
+// tarjetas para que el cliente las reciba en orden.
+function crearBot({ addAlert, Alerta, fetchImpl = globalThis.fetch, log = console, pausaEntreTarjetasMs = 1500 } = {}) {
+  const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
   const env = process.env;
 
   async function enviar(to, payload) {
@@ -225,7 +228,8 @@ function crearBot({ addAlert, Alerta, fetchImpl = globalThis.fetch, log = consol
 
     switch (id) {
       case 'planes':
-        for (const [clave, plan] of Object.entries(PLANES)) {
+        for (const [i, [clave, plan]] of Object.entries(PLANES).entries()) {
+          if (i > 0) await esperar(pausaEntreTarjetasMs);
           await botones(telefono, plan.texto, [[`interes_${clave}`, 'Me interesa'], ['menu', 'Ver menú']], img(plan.imagen));
         }
         return;
@@ -251,8 +255,14 @@ function crearBot({ addAlert, Alerta, fetchImpl = globalThis.fetch, log = consol
     const tocaBienvenida = !chat.ultimaBienvenida || ahora - chat.ultimaBienvenida > BIENVENIDA_CADA_MS;
     await guardar({ paso: null, pausaHasta: null, ...(tocaBienvenida ? { ultimaBienvenida: ahora } : {}) });
     if (tocaBienvenida) {
-      await enviar(telefono, { type: 'image', image: { link: img('bienvenida.png'), caption: '¡Hola! 👋 Gracias por escribir a *Nokta Studio*.' } });
-    } else if (escrito && !esSaludoOMenu(escrito)) {
+      // Imagen + saludo + botones en UN mensaje: así nunca llegan desordenados.
+      await botones(telefono,
+        `¡Hola! 👋 Gracias por escribir a *Nokta Studio*.\n¿En qué le podemos ayudar?\n\n📸 Nuestro trabajo: ${INSTAGRAM}`,
+        [['planes', 'Ver planes'], ['cotizar', 'Pedir cotización'], ['humano', 'Hablar con Gabriel']],
+        img('bienvenida.png'));
+      return;
+    }
+    if (escrito && !esSaludoOMenu(escrito)) {
       await texto(telefono, 'Disculpe, no entendí su mensaje. 🙏');
     }
     await menu(telefono);

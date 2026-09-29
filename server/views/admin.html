@@ -2250,15 +2250,17 @@ const PA_TIPO={
   link_venciendo:{ic:'link',c:'var(--pf-aviso)',t:'Link por vencer'},
   evento_proximo:{ic:'calendario',c:'var(--pf-marca)',t:'Evento próximo'},
   descarga:{ic:'bajar',c:'#7FA7F0',t:'Descargaron una galería'},
+  whatsapp:{ic:'campana',c:'#25D366',t:'Cliente en WhatsApp'},
 };
 // Lower = more urgent: money owed, links about to expire, upcoming events, rest.
-function paUrgencia(a){ return {quincena_vencida:0,pago_pendiente:1,evento_proximo:3}[a.tipo] ?? (a.tipo==='link_venciendo'?((a.datos?.diasRestantes??99)<=2?2:4):5); }
+function paUrgencia(a){ return {quincena_vencida:0,pago_pendiente:1,whatsapp:1,evento_proximo:3}[a.tipo] ?? (a.tipo==='link_venciendo'?((a.datos?.diasRestantes??99)<=2?2:4):5); }
 function paDesc(a){
   const d=a.datos||{};
   if(a.tipo==='descarga') return `${esc(d.nombre)} descargó ${d.tipo==='todo'?'toda la galería':'sus favoritas'}`;
   if(a.tipo==='link_venciendo') return `${esc(d.nombre)} · ${esc(d.codigo)} · vence en ${d.diasRestantes} día${d.diasRestantes!==1?'s':''}`;
   if(a.tipo==='pago_pendiente') return `${esc(d.cliente)} · ${esc(d.servicio)} · saldo ${pdDinero(parseFloat(d.saldo||0))}`;
   if(a.tipo==='evento_proximo') return `${esc(d.cliente)} · ${esc(d.tipo)} · ${paDia(d.fecha)}${d.hora?' · '+esc(d.hora):''}`;
+  if(a.tipo==='whatsapp') return `${esc(d.nombre||'Cliente')} · ${esc(d.mensaje||'')}`;
   return esc(d.mensaje||'');
 }
 function paFrase(a){
@@ -2268,6 +2270,7 @@ function paFrase(a){
   if(a.tipo==='link_venciendo') return `La galería de ${esc(d.nombre||'un cliente')} vence en ${d.diasRestantes} día${d.diasRestantes!==1?'s':''}`;
   if(a.tipo==='evento_proximo') return `${esc(d.cliente||'Tienes un evento')} · ${esc(d.tipo||'evento')} ${paDia(d.fecha)}`;
   if(a.tipo==='descarga') return `${esc(d.nombre||'Un cliente')} descargó su galería`;
+  if(a.tipo==='whatsapp') return `${esc(d.nombre||'Un cliente')} te escribió por WhatsApp`;
   return esc((PA_TIPO[a.tipo]||{}).t||a.tipo);
 }
 // "hoy", "mañana" or a short date for a "YYYY-MM-DD".
@@ -2291,6 +2294,7 @@ function paAccion(a){
   if(a.tipo==='pago_pendiente') return {t:'Ver trabajo',on:`openTrabajo('${id}')`};
   if(a.tipo==='evento_proximo') return String(d.key||'').includes('-ses-') ? {t:'Ver clase',on:`openTrabajo('${id}')`} : {t:'Ver evento',on:`openEvento('${id}')`};
   if(a.tipo==='quincena_vencida') return {t:'Ver quincenas',on:`openTrabajo('${id}')`};
+  if(a.tipo==='whatsapp'){ const tel=String(d.telefono||'').replace(/\D/g,''); return tel?{t:'Responder',on:`window.open('https://wa.me/${tel}','_blank','noopener')`}:null; }
   return null;
 }
 function paPintar(){

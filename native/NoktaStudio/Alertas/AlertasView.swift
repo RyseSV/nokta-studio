@@ -14,6 +14,7 @@ private func alertaTipo(_ a: NoktaAlerta) -> AlertaTipo {
     case "link_venciendo": AlertaTipo(icono: "link", color: NoktaTheme.aviso, titulo: "Link por vencer")
     case "evento_proximo": AlertaTipo(icono: "calendar", color: NoktaTheme.marca, titulo: "Evento próximo")
     case "descarga": AlertaTipo(icono: "arrow.down.to.line", color: NoktaPalette.blue, titulo: "Descargaron una galería")
+    case "whatsapp": AlertaTipo(icono: "message", color: Color(red: 0.145, green: 0.827, blue: 0.4), titulo: "Cliente en WhatsApp")
     default: AlertaTipo(icono: "bell", color: NoktaTheme.textoSuave, titulo: a.tipo)
     }
 }
@@ -23,7 +24,7 @@ private func alertaTipo(_ a: NoktaAlerta) -> AlertaTipo {
 private func urgencia(_ a: NoktaAlerta) -> Int {
     switch a.tipo {
     case "quincena_vencida": 0
-    case "pago_pendiente": 1
+    case "pago_pendiente", "whatsapp": 1
     case "link_venciendo": (a.datos.diasRestantes ?? 99) <= 2 ? 2 : 4
     case "evento_proximo": 3
     default: 5
@@ -95,6 +96,7 @@ struct AlertasView: View {
     /// here, instead of waiting for its own 30s poll.
     var onUnreadChange: (Int) -> Void = { _ in }
     @State private var aparecio = false
+    @Environment(\.openURL) private var openURL
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
     private var compacto: Bool { sizeClass == .compact }
@@ -194,6 +196,11 @@ struct AlertasView: View {
 
     /// Same actions the native app already had: alerts tied to a trabajo open it.
     private func accion(_ a: NoktaAlerta) -> (titulo: String, hacer: () -> Void)? {
+        if a.tipo == "whatsapp" {
+            let tel = (a.datos.telefono ?? "").filter(\.isNumber)
+            guard !tel.isEmpty, let url = URL(string: "https://wa.me/\(tel)") else { return nil }
+            return ("Responder", { openURL(url) })
+        }
         guard let id = a.datos.id else { return nil }
         switch a.tipo {
         case "pago_pendiente": return ("Ver trabajo", { vm.trabajoIdMostrado = id })
@@ -223,6 +230,8 @@ private func descripcion(_ a: NoktaAlerta) -> String {
         return "\(d.cliente ?? "") · \(d.tipo ?? "") · \(diaRelativo(d.fecha))" + ((d.hora ?? "").isEmpty ? "" : " · \(d.hora!)")
     case "quincena_vencida":
         return d.mensaje ?? ""
+    case "whatsapp":
+        return "\(d.nombre ?? "Cliente") · \(d.mensaje ?? "")"
     default:
         return d.mensaje ?? ""
     }
@@ -240,6 +249,7 @@ private func frase(_ a: NoktaAlerta) -> String {
     case "evento_proximo":
         return "\(d.cliente ?? "Tienes un evento") · \(d.tipo ?? "evento") \(diaRelativo(d.fecha))"
     case "descarga": return "\(d.nombre ?? "Un cliente") descargó su galería"
+    case "whatsapp": return "\(d.nombre ?? "Un cliente") te escribió por WhatsApp"
     default: return alertaTipo(a).titulo
     }
 }

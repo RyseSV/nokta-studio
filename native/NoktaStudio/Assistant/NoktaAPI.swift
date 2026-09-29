@@ -226,6 +226,8 @@ struct NoktaAlertaDatos: Codable {
     var hora: String?
     @Flex var saldo: Double?
     var diasRestantes: Int?
+    /// Alertas "whatsapp": número del cliente (solo dígitos, con código de país).
+    var telefono: String?
 }
 
 /// Evento suelto en el calendario (no ligado a un trabajo) — ver

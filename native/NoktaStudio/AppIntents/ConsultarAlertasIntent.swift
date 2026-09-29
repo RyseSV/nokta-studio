@@ -20,7 +20,7 @@ struct ConsultarAlertasIntent: AppIntent {
         let etiquetas: [String: String] = [
             "descarga": "descarga de galería", "link_venciendo": "link por vencer",
             "pago_pendiente": "pago pendiente", "evento_proximo": "evento próximo",
-            "quincena_vencida": "quincena sin pagar",
+            "quincena_vencida": "quincena sin pagar", "whatsapp": "mensaje de WhatsApp",
         ]
         let resumen = Dictionary(grouping: sinLeer, by: { $0.tipo })
             .map { tipo, items in "\(items.count) \(etiquetas[tipo] ?? tipo)\(items.count == 1 ? "" : "s")" }

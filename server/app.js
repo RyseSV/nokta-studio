@@ -118,6 +118,9 @@ app.use(helmet({
     },
   },
 }));
+// Antes de express.json(): el webhook necesita el cuerpo sin procesar para
+// comprobar la firma de Meta.
+require('./whatsapp-bot').montarWhatsAppBot(app, { addAlert, Alerta });
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/img', express.static(path.join(__dirname, '../img')));

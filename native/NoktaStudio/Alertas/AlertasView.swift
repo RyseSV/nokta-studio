@@ -95,8 +95,9 @@ struct AlertasView: View {
     /// Lets RootView's sidebar badge update the instant an alert is read
     /// here, instead of waiting for its own 30s poll.
     var onUnreadChange: (Int) -> Void = { _ in }
+    /// Alertas de WhatsApp: abre ese chat en la sección WhatsApp de la app.
+    var onAbrirWhatsApp: (String) -> Void = { _ in }
     @State private var aparecio = false
-    @Environment(\.openURL) private var openURL
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
     private var compacto: Bool { sizeClass == .compact }
@@ -198,8 +199,8 @@ struct AlertasView: View {
     private func accion(_ a: NoktaAlerta) -> (titulo: String, hacer: () -> Void)? {
         if a.tipo == "whatsapp" {
             let tel = (a.datos.telefono ?? "").filter(\.isNumber)
-            guard !tel.isEmpty, let url = URL(string: "https://wa.me/\(tel)") else { return nil }
-            return ("Responder", { openURL(url) })
+            guard !tel.isEmpty else { return nil }
+            return ("Abrir chat", { onAbrirWhatsApp(tel) })
         }
         guard let id = a.datos.id else { return nil }
         switch a.tipo {

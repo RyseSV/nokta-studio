@@ -7,7 +7,7 @@ import WebKit
 enum NoktaSection: String, CaseIterable, Identifiable, Hashable {
     case dashboard, calendario, alertas
     case nuevoTrabajo, trabajos, gastos, documentos, contratos
-    case clientes, galerias
+    case clientes, galerias, whatsapp
     case analiticas, equipo, reportes
     case usuarios
     case asistente
@@ -26,6 +26,7 @@ enum NoktaSection: String, CaseIterable, Identifiable, Hashable {
         case .contratos: "Contratos"
         case .clientes: "Clientes"
         case .galerias: "Galerías"
+        case .whatsapp: "WhatsApp"
         case .analiticas: "Analíticas"
         case .equipo: "Mi equipo"
         case .reportes: "Reportes"
@@ -47,6 +48,7 @@ enum NoktaSection: String, CaseIterable, Identifiable, Hashable {
         case .contratos: "signature"
         case .clientes: "person.2"
         case .galerias: "photo.on.rectangle"
+        case .whatsapp: "bubble.left.and.bubble.right"
         case .analiticas: "chart.pie"
         case .equipo: "person.3"
         case .reportes: "chart.bar"
@@ -60,7 +62,7 @@ enum NoktaSection: String, CaseIterable, Identifiable, Hashable {
     /// sidebar `onclick="nav('...')"` handlers for the exact id list.
     var webPageId: String? {
         switch self {
-        case .dashboard, .asistente, .trabajos, .nuevoTrabajo, .calendario, .alertas, .clientes, .galerias,
+        case .dashboard, .asistente, .trabajos, .nuevoTrabajo, .calendario, .alertas, .clientes, .galerias, .whatsapp,
              .gastos, .documentos, .contratos, .reportes, .analiticas, .equipo, .usuarios: nil
         default: rawValue
         }
@@ -72,7 +74,7 @@ private let sidebarGroups: [SidebarGroup] = [
     SidebarGroup(title: "GENERAL", items: [.dashboard, .calendario, .alertas, .asistente]),
     SidebarGroup(title: "TRABAJOS", items: [.nuevoTrabajo, .trabajos, .contratos, .documentos]),
     SidebarGroup(title: "FINANZAS", items: [.gastos, .reportes, .analiticas]),
-    SidebarGroup(title: "CLIENTES", items: [.clientes, .galerias]),
+    SidebarGroup(title: "CLIENTES", items: [.clientes, .galerias, .whatsapp]),
     SidebarGroup(title: "ESTUDIO", items: [.equipo]),
     SidebarGroup(title: "ADMINISTRACIÓN", items: [.usuarios]),
 ]
@@ -92,6 +94,9 @@ struct RootView: View {
     @State private var isLoading = false
     @State private var canGoBack = false
     @State private var unreadAlertas = 0
+    @State private var unreadWhatsApp = 0
+    /// Chat de WhatsApp a abrir al ir a esa sección desde una alerta.
+    @State private var whatsAppAbrir: String?
     @State private var appearance = NoktaAppearance.shared
     /// Trabajo to open directly when navigating to Trabajos from the
     /// Dashboard search; cleared whenever a sidebar row is picked.
@@ -127,6 +132,7 @@ struct RootView: View {
             // as alerts are read/created anywhere (native or web).
             while !Task.isCancelled {
                 await refreshUnreadAlertas()
+                if let wa: WaChatsRespuesta = try? await NoktaAPI.get("/api/whatsapp/chats") { unreadWhatsApp = wa.noLeidos }
                 try? await Task.sleep(nanoseconds: 30_000_000_000)
             }
         }
@@ -206,7 +212,12 @@ struct RootView: View {
             case .nuevoTrabajo: NuevoTrabajoView(alGuardar: { ir(a: .trabajos) })
             case .trabajos: TrabajosContainerView(abrir: trabajoAbrir, onNuevo: { ir(a: .nuevoTrabajo) })
             case .calendario: CalendarioView()
-            case .alertas: AlertasView(onUnreadChange: { unreadAlertas = $0 })
+            case .alertas: AlertasView(onUnreadChange: { unreadAlertas = $0 }, onAbrirWhatsApp: { tel in
+                whatsAppAbrir = tel
+                ir(a: .whatsapp)
+            })
+            case .whatsapp: WhatsAppView(abrir: whatsAppAbrir, onUnreadChange: { unreadWhatsApp = $0 })
+                .id(whatsAppAbrir ?? "")
             case .clientes: ClientesContainerView()
             case .galerias: GaleriasView()
             case .gastos: GastosView()
@@ -288,6 +299,7 @@ struct RootView: View {
                             ForEach(group.items) { item in
                                 Button {
                                     trabajoAbrir = nil
+                                    whatsAppAbrir = nil
                                     macSelection = item
                                     onSelect(item)
                                 } label: {
@@ -449,7 +461,7 @@ struct RootView: View {
             // Back at the root list: a later tap on "Trabajos" should show
             // the list, not the trabajo last opened from the Dashboard search.
             .onChange(of: iosPath) { _, path in
-                if path.isEmpty { trabajoAbrir = nil }
+                if path.isEmpty { trabajoAbrir = nil; whatsAppAbrir = nil }
             }
         }
     }
@@ -490,6 +502,14 @@ struct RootView: View {
                     .padding(.horizontal, 7)
                     .padding(.vertical, 1)
                     .background(NoktaTheme.marca, in: Capsule())
+            }
+            if item == .whatsapp, unreadWhatsApp > 0 {
+                Text(String(unreadWhatsApp))
+                    .font(NoktaFont.poppins(10, .medium))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 1)
+                    .background(Color(red: 0.145, green: 0.827, blue: 0.4), in: Capsule())
             }
         }
         .padding(.vertical, 8)

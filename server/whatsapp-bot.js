@@ -55,7 +55,37 @@ const botMensajeSchema = new mongoose.Schema({
   _id: String,
   creado: { type: Date, default: Date.now, expires: 7 * 24 * 3600 },
 });
+// Historial para la bandeja de WhatsApp de Nokta (lo que escribe el cliente,
+// lo que contesta el bot y lo que contesta Gabriel desde la app).
+const waMensajeSchema = new mongoose.Schema({
+  telefono: { type: String, index: true },
+  nombre: String,
+  autor: String,         // 'cliente' | 'bot' | 'gabriel'
+  quien: String,         // usuario de Nokta que respondió (autor 'gabriel')
+  texto: String,
+  tipo: String,          // text, interactive, image, audio…
+  leido: Boolean,        // solo mensajes del cliente
+  fecha: { type: Date, default: Date.now, index: true },
+});
+waMensajeSchema.index({ telefono: 1, fecha: -1 });
 const BotChat = mongoose.models.BotChat || mongoose.model('BotChat', botChatSchema);
+const WaMensaje = mongoose.models.WaMensaje || mongoose.model('WaMensaje', waMensajeSchema);
+const TIPOS_MEDIA = { image: '📷 Imagen', audio: '🎤 Audio', video: '🎬 Video', document: '📄 Documento', sticker: 'Sticker', location: '📍 Ubicación', contacts: '👤 Contacto' };
+
+// Resumen legible de lo que se envió, para el historial.
+function resumenEnvio(p) {
+  if (p.type === 'text') return p.text.body;
+  if (p.type === 'image') return `📷 ${p.image.caption || 'Imagen'}`;
+  const i = p.interactive || {};
+  const cuerpo = i.body?.text || '';
+  if (i.type === 'button') return `${i.header?.image ? '📷 ' : ''}${cuerpo}\n[${i.action.buttons.map((b) => b.reply.title).join(' · ')}]`;
+  if (i.type === 'list') return `${cuerpo}\n[Menú: ${i.action.sections.flatMap((x) => x.rows.map((r) => r.title)).join(' · ')}]`;
+  return cuerpo || p.type;
+}
+async function registrar(doc, log = console) {
+  try { await WaMensaje.create({ fecha: new Date(), ...doc }); }
+  catch (e) { log.error('[WHATSAPP] No se pudo guardar el mensaje en el historial:', e.message); }
+}
 const BotMensaje = mongoose.models.BotMensaje || mongoose.model('BotMensaje', botMensajeSchema);
 
 function firmaValida(rawBody, firma, secreto) {
@@ -85,10 +115,10 @@ function crearBot({ addAlert, Alerta, fetchImpl = globalThis.fetch, log = consol
   const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
   const env = process.env;
 
-  async function enviar(to, payload) {
+  async function enviar(to, payload, autor = 'bot', quien) {
     if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_NUMBER_ID) {
       log.warn('[WHATSAPP] Falta WHATSAPP_TOKEN o WHATSAPP_PHONE_NUMBER_ID; no se envía respuesta');
-      return;
+      throw new Error('El bot de WhatsApp no está configurado');
     }
     const res = await fetchImpl(`https://graph.facebook.com/${GRAPH_VERSION}/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
       method: 'POST',
@@ -100,6 +130,7 @@ function crearBot({ addAlert, Alerta, fetchImpl = globalThis.fetch, log = consol
       const cuerpo = await res.text().catch(() => '');
       throw new Error(`WhatsApp API ${res.status}: ${cuerpo.slice(0, 300)}`);
     }
+    if (autor) await registrar({ telefono: to, autor, ...(quien ? { quien } : {}), texto: resumenEnvio(payload), tipo: payload.type }, log);
   }
 
   const texto = (to, body) => enviar(to, { type: 'text', text: { body, preview_url: true } });
@@ -183,16 +214,23 @@ function crearBot({ addAlert, Alerta, fetchImpl = globalThis.fetch, log = consol
       { upsert: true, returnDocument: 'after' },
     );
     const { id, texto: escrito, otroTipo } = leerEntrada(m);
+    const caption = m[m.type]?.caption;
+    await registrar({
+      telefono, nombre: perfil || chat.nombre, autor: 'cliente', tipo: m.type, leido: false,
+      texto: escrito || [TIPOS_MEDIA[otroTipo] || `[${otroTipo}]`, caption].filter(Boolean).join(': '),
+    }, log);
     const guardar = (cambios) => BotChat.updateOne({ telefono }, { $set: cambios });
     const img = (archivo) => `${base}/public/bot/${archivo}`;
 
     // "Borrar mis datos" (lo promete /privacidad): se borra al momento, haya
     // pausa o no. Solo queda un aviso SIN el número para Gabriel.
-    if (/^borrar mis datos[.!]*$/i.test(escrito)) {
+    if (/^borrar mis datos[.!]*$/i.test(escrito.replace(/["“”'‘’«»]/g, '').trim())) {
       await BotChat.deleteOne({ telefono });
+      await WaMensaje.deleteMany({ telefono });
       if (Alerta) await Alerta.deleteMany({ tipo: 'whatsapp', 'datos.telefono': telefono }).catch(() => {});
       await addAlert('whatsapp', { nombre: 'Un cliente', mensaje: 'Pidió borrar sus datos: ya se borraron del bot y de las alertas. Si recibió avisos suyos en Telegram, bórrelos también.' }).catch(() => {});
-      await texto(telefono, 'Listo. ✅ Hemos borrado su número y sus mensajes de nuestro sistema.');
+      // autor null: esta confirmación no se guarda (acabamos de borrar su historial)
+      await enviar(telefono, { type: 'text', text: { body: 'Listo. ✅ Hemos borrado su número y sus mensajes de nuestro sistema.' } }, null);
       return;
     }
 
@@ -289,7 +327,7 @@ function crearBot({ addAlert, Alerta, fetchImpl = globalThis.fetch, log = consol
     }
   }
 
-  return { procesar, atender, firmaValida, leerEntrada };
+  return { procesar, atender, enviar, firmaValida, leerEntrada };
 }
 
 // La cuenta de WhatsApp (WABA) tiene que estar suscrita a la app para que
@@ -308,8 +346,10 @@ async function asegurarSuscripcion(fetchImpl = globalThis.fetch, log = console) 
   } catch (e) { log.error('[WHATSAPP] No se pudo suscribir la cuenta:', e.message); }
 }
 
+let botCompartido = null;
+
 function montarWhatsAppBot(app, deps) {
-  const bot = crearBot(deps);
+  const bot = botCompartido = crearBot(deps);
   asegurarSuscripcion(deps?.fetchImpl, deps?.log);
 
   // Meta comprueba la dirección una sola vez al guardar el webhook.
@@ -337,4 +377,109 @@ function montarWhatsAppBot(app, deps) {
   });
 }
 
-module.exports = { montarWhatsAppBot, asegurarSuscripcion, crearBot, firmaValida, leerEntrada, PLANES, BotChat, BotMensaje };
+// ── Bandeja de WhatsApp en Nokta (panel web + app) ──────────
+// Se monta después de la sesión (requireAdmin la necesita) y del express.json global.
+const VENTANA_MS = 24 * 3600 * 1000; // Meta: respuestas libres (y gratis) hasta 24 h después del último mensaje del cliente
+const telValido = (t) => /^\d{6,16}$/.test(String(t || ''));
+
+function montarBandejaWhatsApp(app, { requireAdmin, bot = null, log = console }) {
+  const obtenerBot = () => bot || botCompartido;
+
+  async function estadoChat(telefono) {
+    const [chat, ultimoCliente] = await Promise.all([
+      BotChat.findOne({ telefono }).lean(),
+      WaMensaje.findOne({ telefono, autor: 'cliente' }).sort({ fecha: -1 }).lean(),
+    ]);
+    const ahora = Date.now();
+    const cierra = ultimoCliente ? new Date(ultimoCliente.fecha).getTime() + VENTANA_MS : 0;
+    return {
+      botPausado: !!(chat?.pausaHasta && new Date(chat.pausaHasta).getTime() > ahora),
+      pausaHasta: chat?.pausaHasta || null,
+      ventanaAbierta: cierra > ahora,
+      ventanaCierra: cierra ? new Date(cierra).toISOString() : null,
+    };
+  }
+
+  // Lista de conversaciones, la más reciente primero.
+  app.get('/api/whatsapp/chats', requireAdmin, async (req, res) => {
+    try {
+      // Un resumen por chat, calculado en Mongo (no se traen los mensajes).
+      const esCliente = { $eq: ['$autor', 'cliente'] };
+      const chats = (await WaMensaje.aggregate([
+        { $sort: { fecha: -1 } },
+        { $group: {
+          _id: '$telefono',
+          ultimo: { $first: '$texto' }, autorUltimo: { $first: '$autor' }, fecha: { $first: '$fecha' },
+          nombre: { $max: { $cond: [esCliente, '$nombre', null] } },
+          ultimoCliente: { $max: { $cond: [esCliente, '$fecha', null] } },
+          noLeidos: { $sum: { $cond: [{ $and: [esCliente, { $eq: ['$leido', false] }] }, 1, 0] } },
+        } },
+        { $sort: { fecha: -1 } },
+        { $limit: 500 },
+      ])).map(({ _id, ...c }) => ({ telefono: _id, ...c }));
+      const pausas = await BotChat.find({ telefono: { $in: chats.map((c) => c.telefono) } }, 'telefono pausaHasta nombre').lean();
+      const ahora = Date.now();
+      for (const c of chats) {
+        const b = pausas.find((x) => x.telefono === c.telefono);
+        if (!c.nombre) c.nombre = b?.nombre || null;
+        c.botPausado = !!(b?.pausaHasta && new Date(b.pausaHasta).getTime() > ahora);
+        c.ventanaAbierta = !!(c.ultimoCliente && new Date(c.ultimoCliente).getTime() + VENTANA_MS > ahora);
+        delete c.ultimoCliente;
+      }
+      res.json({ chats, noLeidos: chats.reduce((n, c) => n + c.noLeidos, 0) });
+    } catch (e) { log.error('[WHATSAPP] bandeja:', e.message); res.status(500).json({ error: 'No se pudieron cargar los chats' }); }
+  });
+
+  // Una conversación (y se marca como leída).
+  app.get('/api/whatsapp/chats/:telefono', requireAdmin, async (req, res) => {
+    const { telefono } = req.params;
+    if (!telValido(telefono)) return res.status(400).json({ error: 'Número inválido' });
+    try {
+      const ultimos = await WaMensaje.find({ telefono }).sort({ fecha: -1 }).limit(300).lean();
+      await WaMensaje.updateMany({ telefono, autor: 'cliente', leido: false }, { $set: { leido: true } });
+      const nombre = ultimos.find((m) => m.autor === 'cliente' && m.nombre)?.nombre || null;
+      res.json({
+        telefono, nombre, ...(await estadoChat(telefono)),
+        mensajes: ultimos.reverse().map(({ _id, autor, quien, texto, tipo, fecha }) => ({ id: String(_id), autor, quien, texto, tipo, fecha })),
+      });
+    } catch (e) { log.error('[WHATSAPP] chat:', e.message); res.status(500).json({ error: 'No se pudo cargar la conversación' }); }
+  });
+
+  // Gabriel responde desde Nokta con el número de Nokta. El bot se pausa
+  // para no hablar a la vez que él.
+  app.post('/api/whatsapp/chats/:telefono/enviar', requireAdmin, async (req, res) => {
+    const { telefono } = req.params;
+    const texto = typeof req.body?.texto === 'string' ? req.body.texto.trim() : '';
+    if (!telValido(telefono)) return res.status(400).json({ error: 'Número inválido' });
+    if (!texto) return res.status(400).json({ error: 'Escribe un mensaje' });
+    if (texto.length > 4096) return res.status(400).json({ error: 'El mensaje es demasiado largo (máx. 4096 caracteres)' });
+    const b = obtenerBot();
+    if (!b) return res.status(503).json({ error: 'El bot de WhatsApp no está activo' });
+    try {
+      const estado = await estadoChat(telefono);
+      if (!estado.ventanaAbierta) {
+        return res.status(409).json({ error: 'Pasaron más de 24 horas desde el último mensaje de este cliente. WhatsApp solo permite responder gratis dentro de ese plazo: pídale que le escriba de nuevo.' });
+      }
+      await b.enviar(telefono, { type: 'text', text: { body: texto, preview_url: true } }, 'gabriel', req.authUser?.nombre || req.authUser?.username);
+      await BotChat.updateOne({ telefono }, { $set: { pausaHasta: new Date(Date.now() + PAUSA_HUMANO_MS), paso: null } }, { upsert: true });
+      res.json({ ok: true });
+    } catch (e) {
+      log.error('[WHATSAPP] enviar desde bandeja:', e.message);
+      res.status(502).json({ error: 'WhatsApp no aceptó el mensaje. Inténtelo de nuevo en un momento.' });
+    }
+  });
+
+  // Encender o apagar el bot para un cliente.
+  app.post('/api/whatsapp/chats/:telefono/bot', requireAdmin, async (req, res) => {
+    const { telefono } = req.params;
+    if (!telValido(telefono)) return res.status(400).json({ error: 'Número inválido' });
+    if (typeof req.body?.activo !== 'boolean') return res.status(400).json({ error: 'Falta "activo"' });
+    try {
+      const pausaHasta = req.body.activo ? null : new Date(Date.now() + PAUSA_HUMANO_MS);
+      await BotChat.updateOne({ telefono }, { $set: { pausaHasta, paso: null } }, { upsert: true });
+      res.json({ ok: true, ...(await estadoChat(telefono)) });
+    } catch (e) { log.error('[WHATSAPP] bot on/off:', e.message); res.status(500).json({ error: 'No se pudo cambiar el bot' }); }
+  });
+}
+
+module.exports = { montarWhatsAppBot, montarBandejaWhatsApp, asegurarSuscripcion, crearBot, WaMensaje, resumenEnvio, firmaValida, leerEntrada, PLANES, BotChat, BotMensaje };

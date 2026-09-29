@@ -425,6 +425,11 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
+// Página pública que Meta exige para publicar la app del bot de WhatsApp.
+app.get('/privacidad', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'privacidad.html'));
+});
+
 app.get('/galeria', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'galeria.html'));
 });

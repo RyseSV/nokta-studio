@@ -134,6 +134,17 @@ const limpiar = () => { enviados = []; telegram = []; alertas = []; };
   limpiar(); await procesar(texto('Menú'), BASE);
   assert.deepEqual(enviados.map((e) => e.type), ['interactive']);
 
+  // 8c. "Borrar mis datos" borra el chat y sus alertas, incluso en pausa
+  await procesar(toque('humano'), BASE);
+  store.push({ id: 'otra', tipo: 'whatsapp', datos: { telefono: '50370000000', mensaje: 'x' }, leida: true });
+  let borradas = null; Alerta.deleteMany = async (q) => { borradas = q; store = store.filter((a) => !(a.tipo === q.tipo && a.datos.telefono === q['datos.telefono'])); };
+  bot.BotChat.deleteOne = async ({ telefono }) => { chats.delete(telefono); };
+  limpiar(); await procesar(texto('Borrar mis datos'), BASE);
+  assert.equal(chats.has('50370000000'), false);
+  assert.deepEqual(borradas, { tipo: 'whatsapp', 'datos.telefono': '50370000000' });
+  assert.equal(store.length, 1); assert.equal(store[0].datos.telefono, undefined, 'el aviso no guarda el número');
+  assert.match(enviados[0].text.body, /borrado/); store = [];
+
   // 9. Telegram: el nombre del cliente no rompe el HTML
   chats.clear(); limpiar();
   await procesar(texto('Hola'), BASE); await procesar(toque('humano'), BASE, 'x');

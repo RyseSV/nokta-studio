@@ -183,6 +183,16 @@ function crearBot({ addAlert, Alerta, fetchImpl = globalThis.fetch, log = consol
     const guardar = (cambios) => BotChat.updateOne({ telefono }, { $set: cambios });
     const img = (archivo) => `${base}/public/bot/${archivo}`;
 
+    // "Borrar mis datos" (lo promete /privacidad): se borra al momento, haya
+    // pausa o no. Solo queda un aviso SIN el número para Gabriel.
+    if (/^borrar mis datos[.!]*$/i.test(escrito)) {
+      await BotChat.deleteOne({ telefono });
+      if (Alerta) await Alerta.deleteMany({ tipo: 'whatsapp', 'datos.telefono': telefono }).catch(() => {});
+      await addAlert('whatsapp', { nombre: 'Un cliente', mensaje: 'Pidió borrar sus datos: ya se borraron del bot y de las alertas. Si recibió avisos suyos en Telegram, bórrelos también.' }).catch(() => {});
+      await texto(telefono, 'Listo. ✅ Hemos borrado su número y sus mensajes de nuestro sistema.');
+      return;
+    }
+
     // En pausa: Gabriel está atendiendo. Se le reenvía lo que escriba el
     // cliente, salvo que pida el menú explícitamente.
     const pideMenu = id === 'menu' || /^(menu|menú)$/i.test(escrito);

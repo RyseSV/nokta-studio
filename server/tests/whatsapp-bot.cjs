@@ -161,9 +161,18 @@ const limpiar = () => { enviados = []; telegram = []; alertas = []; };
   assert.match(store[0].datos.mensaje, /no pudo responderle/);
   assert.ok(!logs.some((l) => l.includes('tok')), 'no se registra el token');
 
+  // 11. Suscripción de la cuenta al arrancar: POST correcto, sin filtrar el token
+  const llamadas = []; const out = [];
+  await bot.asegurarSuscripcion(async (u, o) => { llamadas.push({ u, o }); return { ok: true, text: async () => '{"success":true}' }; }, { log: (m) => out.push(m), error: (m) => out.push(m) });
+  assert.match(llamadas[0].u, /\/2075908746368446\/subscribed_apps$/); assert.equal(llamadas[0].o.method, 'POST');
+  assert.match(out[0], /suscrita/);
+  await bot.asegurarSuscripcion(async () => ({ ok: false, status: 403, text: async () => '{"error":"perm"}' }), { log: (m) => out.push(m), error: (m) => out.push(m) });
+  assert.match(out[1], /403/); assert.ok(!out.join('').includes('Bearer'));
+  process.env.WHATSAPP_TOKEN = 'tok'; // (el caso 10 lo dejó igual)
+
   // ── Rutas HTTP reales ──────────────────────────────────────
   const app = express();
-  bot.montarWhatsAppBot(app, { addAlert });
+  bot.montarWhatsAppBot(app, { addAlert, fetchImpl, log }); // sin llamadas reales a Meta
   app.use(express.json()); // como en app.js: el json global va después
   const server = app.listen(0); const url = `http://127.0.0.1:${server.address().port}/webhook/whatsapp`;
   try {

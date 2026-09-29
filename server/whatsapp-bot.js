@@ -282,8 +282,25 @@ function crearBot({ addAlert, Alerta, fetchImpl = globalThis.fetch, log = consol
   return { procesar, atender, firmaValida, leerEntrada };
 }
 
+// La cuenta de WhatsApp (WABA) tiene que estar suscrita a la app para que
+// Meta entregue los mensajes reales (la prueba del panel funciona aunque no
+// lo esté). Se asegura al arrancar; es idempotente y deja el resultado en el log.
+async function asegurarSuscripcion(fetchImpl = globalThis.fetch, log = console) {
+  const { WHATSAPP_TOKEN: token, WHATSAPP_WABA_ID: waba = '2075908746368446' } = process.env;
+  if (!token) return;
+  try {
+    const res = await fetchImpl(`https://graph.facebook.com/${GRAPH_VERSION}/${waba}/subscribed_apps`, {
+      method: 'POST', headers: { Authorization: `Bearer ${token}` },
+    });
+    const cuerpo = await res.text().catch(() => '');
+    if (res.ok) log.log('[WHATSAPP] Cuenta de WhatsApp suscrita a la app ✓');
+    else log.error(`[WHATSAPP] No se pudo suscribir la cuenta (${res.status}): ${cuerpo.slice(0, 300)}`);
+  } catch (e) { log.error('[WHATSAPP] No se pudo suscribir la cuenta:', e.message); }
+}
+
 function montarWhatsAppBot(app, deps) {
   const bot = crearBot(deps);
+  asegurarSuscripcion(deps?.fetchImpl, deps?.log);
 
   // Meta comprueba la dirección una sola vez al guardar el webhook.
   app.get('/webhook/whatsapp', (req, res) => {
@@ -310,4 +327,4 @@ function montarWhatsAppBot(app, deps) {
   });
 }
 
-module.exports = { montarWhatsAppBot, crearBot, firmaValida, leerEntrada, PLANES, BotChat, BotMensaje };
+module.exports = { montarWhatsAppBot, asegurarSuscripcion, crearBot, firmaValida, leerEntrada, PLANES, BotChat, BotMensaje };

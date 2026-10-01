@@ -972,6 +972,48 @@ html[data-tema="claro"] .modal input[type=date],html[data-tema="claro"] .modal i
 .modal .btn-outline{background:none;border:1px solid color-mix(in srgb,var(--pf-marca) 50%,transparent);color:var(--pf-marca)}
 .modal .btn-danger{background:color-mix(in srgb,var(--pf-error) 14%,transparent);color:var(--pf-error)}
 .modal .form-actions .btn-danger{margin-left:0!important;margin-right:auto}
+/* Mi equipo: visor de cámara */
+#page-equipo{color:var(--pf-texto)}
+.eq-wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:22px;align-items:start}
+@media(max-width:900px){.eq-wrap{grid-template-columns:minmax(0,1fr)}}
+.eq-foto{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden}
+.eq-foto em{font-style:normal;font-weight:300;color:rgba(255,255,255,.85);letter-spacing:-.04em}
+.eq-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:pdIn .4s both}
+.eq-visor{position:relative;height:460px;border-radius:18px;overflow:hidden;background:#000;color:rgba(255,255,255,.9);font:500 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.06em}
+.eq-vig{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 42%,transparent 50%,rgba(0,0,0,.6)),linear-gradient(180deg,transparent 50%,rgba(0,0,0,.55));pointer-events:none}
+.eq-esq{position:absolute;width:26px;height:26px;border:0 solid rgba(255,255,255,.8);pointer-events:none}
+.eq-esq.a{left:18px;top:18px;border-width:2px 0 0 2px}.eq-esq.b{right:18px;top:18px;border-width:2px 2px 0 0}
+.eq-esq.c{left:18px;bottom:18px;border-width:0 0 2px 2px}.eq-esq.d{right:18px;bottom:18px;border-width:0 2px 2px 0}
+.eq-foco{position:absolute;left:50%;top:40%;width:120px;height:120px;margin:-60px 0 0 -60px;border:1.5px solid #6CFF9E;border-radius:4px;box-shadow:0 0 8px rgba(108,255,158,.55);animation:eqEnfoca .8s cubic-bezier(.2,.9,.25,1.4) both;pointer-events:none}
+@keyframes eqEnfoca{0%{transform:scale(1.5);opacity:0}60%{transform:scale(.94);opacity:1}100%{transform:scale(1)}}
+.eq-hud{position:absolute;left:30px;right:30px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;text-shadow:0 0 4px rgba(0,0,0,.6)}
+.eq-hud.arriba{top:28px;align-items:center}.eq-hud.abajo{bottom:28px}
+.eq-hud.arriba span:first-child{display:flex;align-items:center;gap:6px}
+.eq-rec{width:9px;height:9px;border-radius:50%;background:#FF4D3D;animation:eqParp 1.2s steps(1) infinite}
+@keyframes eqParp{50%{opacity:.25}}
+.eq-nom{font:300 28px/1.15 'Poppins',sans-serif;letter-spacing:-.03em;min-width:0}
+.eq-nom small{display:block;font:500 10px 'Poppins',sans-serif;letter-spacing:.2em;opacity:.75}
+.eq-nom em{display:block;font:400 10.5px 'Poppins',sans-serif;font-style:normal;opacity:.6;letter-spacing:0;margin-top:2px}
+.eq-med{display:grid;justify-items:center;gap:5px;width:150px;flex:none}
+.eq-med .esc{position:relative;display:flex;justify-content:space-between;align-items:flex-end;width:100%;height:22px}
+.eq-med .esc i{width:1.5px;height:7px;background:rgba(255,255,255,.75)}.eq-med .esc i.g{height:12px}
+.eq-med .esc b{position:absolute;top:0;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #FFC24A;transition:left .9s cubic-bezier(.2,.9,.25,1)}
+.eq-med small{font-size:8.5px;opacity:.8}
+.eq-disparo{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none}
+.eq-disparo.go{animation:eqObtura .32s ease-out}
+@keyframes eqObtura{0%{opacity:0}35%{opacity:1}100%{opacity:0}}
+.eq-lado{display:grid;gap:18px;align-content:start}
+.eq-rollo{display:grid;grid-template-columns:repeat(4,64px);gap:10px}
+.eq-rollo button{position:relative;width:64px;height:64px;border-radius:12px;overflow:hidden;border:1px solid var(--pf-borde);padding:0;cursor:pointer;opacity:.55;transition:opacity .3s,transform .3s,box-shadow .3s;background:none}
+.eq-rollo button.on{opacity:1;transform:translateY(-3px);box-shadow:0 0 0 2px var(--pf-marca)}
+.eq-rollo button:hover{opacity:1}
+.eq-rollo .mas{display:grid;place-items:center;border:1px dashed var(--pf-borde);color:var(--pf-tenue);font-size:18px;opacity:1}
+.eq-nums{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.eq-nums b{display:block;font-size:30px;font-weight:300;letter-spacing:-.04em;margin-top:2px}
+.eq-acc{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.eq-acc .td-accion{margin:0;width:auto;height:36px;padding:0 16px}
+.eq-nota{font-size:11.5px;color:var(--pf-tenue);line-height:1.55}
+@media(max-width:600px){.eq-visor{height:360px}.eq-nom{font-size:22px}.eq-med{display:none}}
 </style>
 </head>
 <body class="en-dash">
@@ -1323,13 +1365,10 @@ html[data-tema="claro"] .modal input[type=date],html[data-tema="claro"] .modal i
 <section class="page" id="page-analiticas"><div class="pt" id="an-wrap"></div></section>
 
 <!-- ═══════════════ EQUIPO ═══════════════ -->
-<section class="page" id="page-equipo">
-  <div class="page-header">
-    <div class="page-title">Mi equipo</div>
-    <button class="btn btn-primary" onclick="openEquipoModal()">＋ Agregar miembro</button>
-  </div>
+<section class="page" id="page-equipo"><div class="pt">
+  <div class="px-h px-in"><div><h1>Mi equipo</h1><p id="eq-sub">Las personas que trabajan contigo</p></div><button class="td-b1" onclick="openEquipoModal()">＋ Agregar persona</button></div>
   <div id="equipo-list"></div>
-</section>
+</div></section>
 
 <!-- ═══════════════ REPORTES ═══════════════ -->
 <section class="page" id="page-reportes"><div class="pt" id="rp-wrap"></div></section>
@@ -1428,18 +1467,33 @@ html[data-tema="claro"] .modal input[type=date],html[data-tema="claro"] .modal i
 </div>
 
 <!-- ═══ MODAL equipo ═══ -->
+<div class="modal-overlay" id="modal-pago-equipo">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-title">Registrar pago</div>
+    <p style="font-size:12px;margin-bottom:16px" id="eqp-desc"></p>
+    <div class="form-group"><label>Cuánto le pagaste ($)</label><input type="number" id="eqp-monto" step="0.01" min="0"></div>
+    <p style="font-size:11.5px;margin-top:10px">Se suma a lo pagado y se resta de lo pendiente.</p>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="eqPagoConfirmar()">Registrar pago</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-pago-equipo')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-equipo">
   <div class="modal">
-    <div class="modal-title">Miembro del equipo</div>
+    <div class="modal-title" id="eq-titulo">Agregar persona</div>
+    <p style="font-size:12px;margin-bottom:16px">Su foto sale de su cuenta: la que sube a su perfil.</p>
     <form onsubmit="guardarEquipo(event)">
       <input type="hidden" id="eq-id">
       <div class="form-grid">
         <div class="form-group"><label>Nombre *</label><input id="eq-nombre" required></div>
-        <div class="form-group"><label>Rol *</label><input id="eq-rol" required placeholder="Fotógrafo, editor..."></div>
+        <div class="form-group"><label>Rol *</label><input id="eq-rol" required placeholder="Fotógrafo, editora…"></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Cuenta (para su foto)</label><select id="eq-usuario" onchange="eqCuentaElegida(this)"><option value="">Sin cuenta</option></select></div>
         <div class="form-group"><label>Tipo de pago</label>
           <select id="eq-tipo-pago"><option value="fijo">Fijo por evento</option><option value="comision">Comisión %</option></select>
         </div>
-        <div class="form-group"><label>Comisión % / Monto fijo</label><input type="number" id="eq-comision" step="0.01" value="0"></div>
+        <div class="form-group"><label>Comisión % / monto por evento</label><input type="number" id="eq-comision" step="0.01" value="0"></div>
         <div class="form-group"><label>Total pagado ($)</label><input type="number" id="eq-pagado" step="0.01" value="0"></div>
         <div class="form-group"><label>Pendiente ($)</label><input type="number" id="eq-pendiente" step="0.01" value="0"></div>
       </div>
@@ -1680,7 +1734,7 @@ function nav(id){
   document.getElementById('page-'+id).classList.add('active');
   // Only the Dashboard follows the premium light/dark theme so far; the other
   // sections keep their original dark background.
-  document.body.classList.toggle('en-dash', ['dashboard','calendario','alertas','trabajos','nuevo-trabajo','contratos','documentos','gastos','reportes','analiticas','clientes','galerias'].includes(id));
+  document.body.classList.toggle('en-dash', ['dashboard','calendario','alertas','trabajos','nuevo-trabajo','contratos','documentos','gastos','reportes','analiticas','clientes','galerias','equipo'].includes(id));
   document.querySelectorAll('.sb-link').forEach(l=>{ if(l.getAttribute('onclick')?.includes(`'${id}'`)) l.classList.add('active'); });
   closeSb();
   loadSection(id);
@@ -4568,22 +4622,84 @@ function anPintar(anim){
 // ═══════════════════════════════════════════════════════════
 // EQUIPO
 // ═══════════════════════════════════════════════════════════
-async function loadEquipo(){
-  allEquipo=await api('/api/equipo');
-  const list=document.getElementById('equipo-list');
-  list.innerHTML=allEquipo.length?allEquipo.map(m=>`
-    <div class="team-card">
-      <div class="team-avatar">${esc((m.nombre||'?')[0])}</div>
-      <div class="team-info"><div class="team-name">${esc(m.nombre)}</div><div class="team-rol">${esc(m.rol)}</div></div>
-      <div style="text-align:right;font-size:12px;color:var(--muted)"><div>Pagado: <span style="color:var(--green)">$${parseFloat(m.pagado||0).toFixed(2)}</span></div><div>Pendiente: <span style="color:var(--yellow)">$${parseFloat(m.pendiente||0).toFixed(2)}</span></div></div>
-      <button class="btn btn-ghost btn-sm" onclick="editEquipo('${m.id}')">✏ Editar</button>
-      <button class="btn btn-danger btn-sm" onclick="eliminarEquipo('${m.id}')">🗑</button>
-    </div>`).join(''):'<div class="empty">No hay miembros registrados</div>';
+// ═══════════════════════════════════════════════════════════
+// EQUIPO — "visor de cámara": la persona elegida se ve como por el visor de
+// una cámara. Su foto es la de su cuenta de usuario (la del menú lateral),
+// así que cuando alguien cambia su foto se actualiza aquí sola.
+// ═══════════════════════════════════════════════════════════
+let eqSel=null, eqUsuarios=[], eqListo=false;
+const EQ_FONDOS=[['#C9764A','#3A1E12'],['#5F7FC4','#18213D'],['#5FA57C','#11291C'],['#A06CC0','#26163A']];
+const eqPago=m=>{ const v=Number(m.comision)||0; return m.tipo==='comision'?`${v}% de comisión`:(v>0?`${pdDinero(v)} por evento`:'Fijo por evento'); };
+function eqFoto(m,i,tam){
+  const [a,b]=EQ_FONDOS[i%EQ_FONDOS.length];
+  return `<span class="eq-foto" style="background:linear-gradient(135deg,${a},${b})"><em style="font-size:${tam}">${pxIni(m.nombre)}</em>${m.foto?`<img src="${esc(m.foto)}" alt="" onerror="this.remove()">`:''}</span>`;
 }
-function openEquipoModal(){ document.getElementById('eq-id').value=''; document.getElementById('modal-equipo').querySelector('form').reset(); openModal('modal-equipo'); }
-function editEquipo(id){ const m=allEquipo.find(m=>m.id===id); if(!m) return; document.getElementById('eq-id').value=m.id; document.getElementById('eq-nombre').value=m.nombre; document.getElementById('eq-rol').value=m.rol; document.getElementById('eq-tipo-pago').value=m.tipo||'fijo'; document.getElementById('eq-comision').value=m.comision||0; document.getElementById('eq-pagado').value=m.pagado||0; document.getElementById('eq-pendiente').value=m.pendiente||0; openModal('modal-equipo'); }
-async function guardarEquipo(e){ e.preventDefault(); const id=document.getElementById('eq-id').value; const datos={nombre:document.getElementById('eq-nombre').value,rol:document.getElementById('eq-rol').value,tipo:document.getElementById('eq-tipo-pago').value,comision:document.getElementById('eq-comision').value,pagado:document.getElementById('eq-pagado').value,pendiente:document.getElementById('eq-pendiente').value}; if(id) await api('/api/equipo/'+id,{method:'PUT',body:JSON.stringify(datos)}); else await api('/api/equipo',{method:'POST',body:JSON.stringify(datos)}); closeModal('modal-equipo'); await loadEquipo(); }
-async function eliminarEquipo(id){ if(!confirm('¿Eliminar miembro?')) return; await api('/api/equipo/'+id,{method:'DELETE'}); await loadEquipo(); }
+async function loadEquipo(){
+  const w=document.getElementById('equipo-list');
+  if(!eqListo) w.innerHTML=`<div class="px-brillo" style="height:460px"></div>`;
+  const [m,u]=await Promise.all([api('/api/equipo'), api('/api/equipo/usuarios').catch(()=>[])]);
+  allEquipo=(m||[]).sort((a,b)=>String(a.creado||'').localeCompare(String(b.creado||''))); eqUsuarios=u||[];
+  if(!allEquipo.some(x=>x.id===eqSel)) eqSel=allEquipo[0]?.id||null;
+  eqListo=true; eqPintar(true);
+}
+function eqPintar(anim){
+  const tP=allEquipo.reduce((s,m)=>s+(Number(m.pagado)||0),0), tD=allEquipo.reduce((s,m)=>s+(Number(m.pendiente)||0),0);
+  const n=allEquipo.length;
+  document.getElementById('eq-sub').textContent=n?`${n} persona${n===1?'':'s'} · ${tD>0?'le debes '+pdDinero(tD):'todo al día'}`:'Las personas que trabajan contigo';
+  const w=document.getElementById('equipo-list');
+  if(!n){ w.innerHTML=`<div class="px-card px-vacio" style="padding:48px 20px"><p style="font-size:14px;color:var(--pf-texto);margin-bottom:6px">Aún no hay nadie en tu equipo</p>Agrega a tus fotógrafos, editores y asistentes para llevar lo que les pagas.<br><button class="td-b1" style="margin-top:16px" onclick="openEquipoModal()">＋ Agregar persona</button></div>`; return; }
+  const m=allEquipo.find(x=>x.id===eqSel)||allEquipo[0], i=allEquipo.indexOf(m);
+  const pag=Number(m.pagado)||0, pen=Number(m.pendiente)||0, f=pag+pen>0?pag/(pag+pen):1;
+  w.innerHTML=`<div class="eq-wrap">
+    <div class="eq-visor${anim?' px-in':''}" style="--i:1" id="eq-visor">${eqFoto(m,i,'120px')}
+      <i class="eq-vig"></i><i class="eq-esq a"></i><i class="eq-esq b"></i><i class="eq-esq c"></i><i class="eq-esq d"></i><i class="eq-foco"></i>
+      <div class="eq-hud arriba"><span><b class="eq-rec"></b>MI EQUIPO</span><span>${n} PERSONA${n===1?'':'S'} · ${pdDinero(tD)} PENDIENTE</span></div>
+      <div class="eq-hud abajo"><span class="eq-nom"><small>${esc((m.rol||'').toUpperCase())}</small>${esc(m.nombre||'—')}${m.usuarioNombre&&!m.foto?`<em>${esc(m.usuarioNombre)} aún no sube su foto</em>`:''}</span>
+        <span class="eq-med"><span class="esc">${[...Array(13)].map((_,k)=>`<i class="${k%3===0?'g':''}"></i>`).join('')}<b style="left:calc(${((1-f)*100).toFixed(1)}% - 5px)"></b></span><small>PAGADO ◂ ▸ LE DEBES</small></span>
+        <span style="text-align:right">${esc(eqPago(m).toUpperCase())}<br>${pen>0?'LE DEBES '+pdDinero(pen):'AL DÍA ✓'}</span></div>
+      <i class="eq-disparo" id="eq-disparo"></i></div>
+    <div class="eq-lado${anim?' px-in':''}" style="--i:2">
+      <div><span class="px-k" style="margin-bottom:10px">El equipo</span><div class="eq-rollo">${allEquipo.map((x,k)=>`<button class="${x.id===m.id?'on':''}" title="${esc(x.nombre||'')}" onclick="eqElegir('${escJs(x.id)}')">${eqFoto(x,k,'20px')}</button>`).join('')}<button class="mas" title="Agregar persona" onclick="openEquipoModal()">＋</button></div></div>
+      <div class="eq-nums"><div><span class="px-k">Pagado</span><b style="color:var(--pf-exito)">${pdDinero(pag)}</b></div><div><span class="px-k">Le debes</span><b style="color:${pen>0?'var(--pf-aviso)':'var(--pf-tenue)'}">${pdDinero(pen)}</b></div></div>
+      <div class="eq-acc">${pen>0?`<button class="td-accion" onclick="eqPagoAbrir('${escJs(m.id)}')">Registrar pago</button>`:''}<button class="td-b2" onclick="editEquipo('${escJs(m.id)}')">Editar</button>
+        <details class="td-mas"><summary title="Más acciones">···</summary><div class="td-menu"><button class="rojo" onclick="this.closest('details').open=false;eliminarEquipo('${escJs(m.id)}')">Eliminar del equipo</button></div></details></div>
+      <p class="eq-nota">${m.foto?'La foto es la de su perfil: si la cambia, se actualiza aquí y en la app.':m.usuarioNombre?'Cuando suba su foto de perfil aparecerá aquí sola.':'Para ver su foto, vincúlala a su cuenta en Editar. La foto es la que cada quien sube a su perfil.'}</p>
+      <div><span class="px-k">Todo el equipo</span><p class="eq-nota" style="margin-top:4px">Pagado ${pdDinero(tP)} · pendiente ${pdDinero(tD)}</p></div>
+    </div></div>`;
+}
+function eqElegir(id){
+  if(id===eqSel) return;
+  const d=document.getElementById('eq-disparo'); if(d){ d.classList.remove('go'); void d.offsetWidth; d.classList.add('go'); }
+  setTimeout(()=>{ eqSel=id; eqPintar(false); },110);
+}
+function eqLlenarCuentas(sel){
+  const s=document.getElementById('eq-usuario');
+  s.innerHTML='<option value="">Sin cuenta</option>'+eqUsuarios.map(u=>`<option value="${esc(u.id)}" ${u.id===sel?'selected':''}>${esc(u.nombre||u.username)}${u.foto?'':' · sin foto aún'}</option>`).join('');
+}
+function openEquipoModal(){ document.getElementById('eq-id').value=''; document.getElementById('modal-equipo').querySelector('form').reset(); document.getElementById('eq-titulo').textContent='Agregar persona'; eqLlenarCuentas(''); openModal('modal-equipo'); }
+function editEquipo(id){ const m=allEquipo.find(m=>m.id===id); if(!m) return; document.getElementById('eq-id').value=m.id; document.getElementById('eq-nombre').value=m.nombre||''; document.getElementById('eq-rol').value=m.rol||''; document.getElementById('eq-tipo-pago').value=m.tipo||'fijo'; document.getElementById('eq-comision').value=m.comision||0; document.getElementById('eq-pagado').value=m.pagado||0; document.getElementById('eq-pendiente').value=m.pendiente||0; document.getElementById('eq-titulo').textContent='Editar persona'; eqLlenarCuentas(m.usuarioId||''); openModal('modal-equipo'); }
+function eqCuentaElegida(sel){ const n=document.getElementById('eq-nombre'); const u=eqUsuarios.find(x=>x.id===sel.value); if(u&&!n.value.trim()) n.value=u.nombre||''; }
+async function guardarEquipo(e){
+  e.preventDefault();
+  const id=document.getElementById('eq-id').value;
+  const datos={nombre:document.getElementById('eq-nombre').value.trim(),rol:document.getElementById('eq-rol').value.trim(),tipo:document.getElementById('eq-tipo-pago').value,comision:document.getElementById('eq-comision').value,pagado:document.getElementById('eq-pagado').value,pendiente:document.getElementById('eq-pendiente').value,usuarioId:document.getElementById('eq-usuario').value};
+  try{
+    if(id) await api('/api/equipo/'+id,{method:'PUT',body:JSON.stringify(datos)});
+    else { const r=await api('/api/equipo',{method:'POST',body:JSON.stringify(datos)}); if(r?.miembro?.id) eqSel=r.miembro.id; }
+    closeModal('modal-equipo'); await loadEquipo();
+  }catch(x){ toast('No se pudo guardar: '+x.message,'err'); }
+}
+async function eliminarEquipo(id){ if(!confirm('¿Eliminar a esta persona del equipo? Su cuenta de usuario no se toca.')) return; await api('/api/equipo/'+id,{method:'DELETE'}); if(eqSel===id) eqSel=null; await loadEquipo(); }
+let eqPagoId=null;
+function eqPagoAbrir(id){ const m=allEquipo.find(x=>x.id===id); if(!m) return; eqPagoId=id; document.getElementById('eqp-desc').textContent=`A ${m.nombre} le debes ${pdDinero(Number(m.pendiente)||0)}.`; document.getElementById('eqp-monto').value=Number(m.pendiente)||0; openModal('modal-pago-equipo'); }
+async function eqPagoConfirmar(){
+  const m=allEquipo.find(x=>x.id===eqPagoId); if(!m) return;
+  const monto=parseFloat(document.getElementById('eqp-monto').value);
+  if(!(monto>0)){ toast('Escribe un monto mayor que cero','err'); return; }
+  const datos={nombre:m.nombre,rol:m.rol,tipo:m.tipo||'fijo',comision:m.comision||0,pagado:(Number(m.pagado)||0)+monto,pendiente:Math.max(0,(Number(m.pendiente)||0)-monto),usuarioId:m.usuarioId||''};
+  try{ await api('/api/equipo/'+m.id,{method:'PUT',body:JSON.stringify(datos)}); closeModal('modal-pago-equipo'); toast(`✓ Pago de ${pdDinero(monto)} registrado`); await loadEquipo(); }
+  catch(x){ toast('No se pudo guardar: '+x.message,'err'); }
+}
 
 // ═══════════════════════════════════════════════════════════
 // REPORTES — biblioteca: cada reporte es una pila de hojas con su portada

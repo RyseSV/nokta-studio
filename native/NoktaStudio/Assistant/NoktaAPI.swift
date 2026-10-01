@@ -203,6 +203,10 @@ struct NoktaEquipo: Codable, Identifiable {
     @Flex var pagado: Double?
     @Flex var pendiente: Double?
     var creado: String?
+    /// Cuenta de usuario vinculada; de ahí sale la foto (la llena el servidor).
+    var usuarioId: String?
+    var foto: String?
+    var usuarioNombre: String?
 }
 
 struct NoktaAlerta: Codable {

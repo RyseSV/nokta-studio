@@ -185,7 +185,7 @@ const TRABAJO_FIELDS = [
   'cantPiezas', 'formato', 'alcance', 'fechaEntrega',
 ];
 const GASTO_FIELDS = ['concepto', 'categoria', 'monto', 'fecha'];
-const EQUIPO_FIELDS = ['nombre', 'rol', 'tipo', 'comision', 'pagado', 'pendiente'];
+const EQUIPO_FIELDS = ['nombre', 'rol', 'tipo', 'comision', 'pagado', 'pendiente', 'usuarioId'];
 const DOCUMENTO_FIELDS = ['clienteNombre', 'empresa', 'telefono', 'email', 'fechaEmision', 'fechaValidez', 'servicios', 'total', 'notas'];
 const CONTRATO_FIELDS = [
   'trabajoId', 'ciudad', 'fechaContrato', 'clienteNombre', 'clienteDui', 'clienteTelefono',
@@ -534,7 +534,8 @@ app.post('/api/usuarios/:id/foto', requireAdmin, async (req, res) => {
       folder: 'nokta-usuarios',
       public_id: `user_${req.params.id}`,
       overwrite: true,
-      transformation: [{ width: 200, height: 200, crop: 'fill', gravity: 'face' }],
+      // 800 px: se ve nítida también en grande (visor de Mi equipo).
+      transformation: [{ width: 800, height: 800, crop: 'fill', gravity: 'face' }],
     });
     await Usuario.updateOne({ _id: req.params.id }, { $set: { foto: result.secure_url } });
     res.json({ ok: true, url: result.secure_url });
@@ -918,9 +919,30 @@ app.delete('/api/alertas/:id', requireAdmin, async (req, res) => {
 // EQUIPO API
 // ══════════════════════════════════════════════════════════════
 
+// La foto de cada miembro sale de su cuenta de usuario (la misma del menú
+// lateral), así cuando alguien cambia su foto se ve en todos lados. Si no
+// se eligió cuenta, se busca una con el mismo nombre.
+const normNombre = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
 app.get('/api/equipo', requireAdmin, async (req, res) => {
-  try { res.json(await Equipo.find({}).lean()); }
-  catch (err) { handleError(res, err); }
+  try {
+    const [miembros, usuarios] = await Promise.all([
+      Equipo.find({}).lean(),
+      Usuario.find({}, 'nombre username foto').lean(),
+    ]);
+    res.json(miembros.map(m => {
+      const u = usuarios.find(x => m.usuarioId && String(x._id) === String(m.usuarioId))
+        || (!m.usuarioId ? usuarios.find(x => normNombre(x.nombre) && normNombre(x.nombre) === normNombre(m.nombre)) : null);
+      return { ...m, foto: u?.foto || null, usuarioNombre: u?.nombre || null };
+    }));
+  } catch (err) { handleError(res, err); }
+});
+
+// Cuentas que se pueden vincular a un miembro (solo nombre y foto).
+app.get('/api/equipo/usuarios', requireAdmin, async (req, res) => {
+  try {
+    const usuarios = await Usuario.find({}, 'nombre username foto').lean();
+    res.json(usuarios.map(u => ({ id: String(u._id), nombre: u.nombre || u.username, foto: u.foto || null })));
+  } catch (err) { handleError(res, err); }
 });
 
 app.post('/api/equipo', requireAdmin, async (req, res) => {

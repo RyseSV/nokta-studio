@@ -518,7 +518,7 @@ struct GaleriasView: View {
     @ViewBuilder
     private var panelLateral: some View {
         if let p = panel {
-            ZStack(alignment: .trailing) {
+            ZStack {
                 Color.black.opacity(0.45).ignoresSafeArea()
                     .onTapGesture { abrir(nil) }
                     .transition(.opacity)
@@ -540,12 +540,15 @@ struct GaleriasView: View {
                         }
                     }
                 }
-                .frame(width: min(ancho * 0.92, 430))
-                .frame(maxHeight: .infinity)
-                .background(NoktaTheme.superficie)
-                .overlay(alignment: .leading) { Rectangle().fill(NoktaTheme.borde).frame(width: 1) }
-                .shadow(color: .black.opacity(0.45), radius: 30, x: -12)
-                .transition(.move(edge: .trailing))
+                .frame(width: min(ancho * 0.92, 460))
+                .frame(maxHeight: 620)
+                .fixedSize(horizontal: false, vertical: true)
+                .background(NoktaTheme.superficie, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(NoktaTheme.borde))
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .shadow(color: .black.opacity(0.45), radius: 34, y: 14)
+                .padding(20)
+                .transition(.scale(scale: 0.94).combined(with: .opacity))
             }
             .onKeyPress(.escape) { abrir(nil); return .handled }
         }

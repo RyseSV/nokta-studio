@@ -901,14 +901,14 @@ html[data-tema="claro"] .px-campo input[type=date],html[data-tema="claro"] .gs-r
 /* Paneles laterales de Galerías */
 .gp-velo{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0);pointer-events:none;transition:background .35s}
 .gp-velo.open{background:rgba(0,0,0,.45);pointer-events:auto}
-.gp{position:absolute;top:0;right:0;bottom:0;width:min(430px,92vw);display:flex;flex-direction:column;background:var(--pf-sup);border-left:1px solid var(--pf-borde);box-shadow:-24px 0 60px -16px rgba(0,0,0,.55);color:var(--pf-texto);font-family:'Poppins',sans-serif;transform:translateX(105%);transition:transform .45s cubic-bezier(.2,.9,.25,1)}
-.gp-velo.open .gp{transform:none}
+.gp{position:absolute;left:50%;top:50%;width:min(460px,92vw);max-height:min(640px,90vh);display:flex;flex-direction:column;background:var(--pf-sup);border:1px solid var(--pf-borde);border-radius:22px;box-shadow:0 30px 70px -20px rgba(0,0,0,.6);color:var(--pf-texto);font-family:'Poppins',sans-serif;overflow:hidden;opacity:0;transform:translate(-50%,-47%) scale(.96);transition:transform .4s cubic-bezier(.2,.9,.25,1.15),opacity .25s}
+.gp-velo.open .gp{opacity:1;transform:translate(-50%,-50%)}
 .gp-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:26px 24px 0}
 .gp-hd h3{font-size:24px;font-weight:300;letter-spacing:-.03em}
 .gp-hd p{font-size:12px;color:var(--pf-suave);margin-top:3px;line-height:1.5}
 .gp-x{width:30px;height:30px;border-radius:50%;border:0;background:var(--pf-sup2);color:var(--pf-suave);cursor:pointer;flex:none;font-size:11px}
 .gp-x:hover{color:var(--pf-texto)}
-.gp-cuerpo{flex:1;overflow:auto;padding:20px 24px;display:grid;gap:18px;align-content:start}
+.gp-cuerpo{flex:1 1 auto;min-height:0;overflow:auto;padding:20px 24px;display:grid;gap:18px;align-content:start}
 .gp-pie{display:flex;justify-content:flex-end;gap:8px;padding:16px 24px;border-top:1px solid var(--pf-borde)}
 .gp-pie .td-accion{margin:0;width:auto;height:36px;padding:0 16px}
 .gp-k{font-size:10px;font-weight:500;letter-spacing:.13em;color:var(--pf-tenue);text-transform:uppercase}

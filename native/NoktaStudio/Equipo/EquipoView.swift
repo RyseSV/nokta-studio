@@ -125,6 +125,9 @@ private struct FotoMiembro: View {
     let miembro: NoktaEquipo
     let indice: Int
     var tamanoIniciales: CGFloat = 20
+    /// En el visor la foto va completa (sin recortar ni agrandar de más) sobre
+    /// una copia desenfocada que llena el fondo.
+    var completa = false
 
     var body: some View {
         ZStack {
@@ -136,7 +139,15 @@ private struct FotoMiembro: View {
             if let url = miembro.foto.flatMap(URL.init) {
                 AsyncImage(url: url) { fase in
                     if let img = fase.image {
-                        img.resizable().scaledToFill().transition(.opacity)
+                        if completa {
+                            ZStack {
+                                img.resizable().scaledToFill().blur(radius: 40).overlay(Color.black.opacity(0.35))
+                                img.resizable().interpolation(.high).scaledToFit()
+                            }
+                            .transition(.opacity)
+                        } else {
+                            img.resizable().interpolation(.high).scaledToFill().transition(.opacity)
+                        }
                     }
                 }
             }
@@ -256,7 +267,7 @@ struct EquipoView: View {
         let f = pag + pen > 0 ? pag / (pag + pen) : 1
         let hud = Font.system(size: 11, weight: .medium, design: .monospaced)
         return ZStack {
-            FotoMiembro(miembro: m, indice: i, tamanoIniciales: 120)
+            FotoMiembro(miembro: m, indice: i, tamanoIniciales: 120, completa: true)
                 .id(m.id)
             RadialGradient(colors: [.clear, .black.opacity(0.6)], center: .init(x: 0.5, y: 0.42), startRadius: 120, endRadius: 520)
             LinearGradient(colors: [.clear, .black.opacity(0.55)], startPoint: .center, endPoint: .bottom)

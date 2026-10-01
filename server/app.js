@@ -534,8 +534,8 @@ app.post('/api/usuarios/:id/foto', requireAdmin, async (req, res) => {
       folder: 'nokta-usuarios',
       public_id: `user_${req.params.id}`,
       overwrite: true,
-      // 800 px: se ve nítida también en grande (visor de Mi equipo).
-      transformation: [{ width: 800, height: 800, crop: 'fill', gravity: 'face' }],
+      // 1200 px y buena calidad: se ve nítida también en grande (visor de Mi equipo).
+      transformation: [{ width: 1200, height: 1200, crop: 'fill', gravity: 'face', quality: 'auto:best' }],
     });
     await Usuario.updateOne({ _id: req.params.id }, { $set: { foto: result.secure_url } });
     res.json({ ok: true, url: result.secure_url });

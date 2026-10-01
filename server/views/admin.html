@@ -979,6 +979,8 @@ html[data-tema="claro"] .modal input[type=date],html[data-tema="claro"] .modal i
 .eq-foto{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden}
 .eq-foto em{font-style:normal;font-weight:300;color:rgba(255,255,255,.85);letter-spacing:-.04em}
 .eq-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:pdIn .4s both}
+.eq-foto img.fondo{filter:blur(40px) brightness(.65);transform:scale(1.15)}
+.eq-foto img.frente{object-fit:contain}
 .eq-visor{position:relative;height:460px;border-radius:18px;overflow:hidden;background:#000;color:rgba(255,255,255,.9);font:500 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.06em}
 .eq-vig{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 42%,transparent 50%,rgba(0,0,0,.6)),linear-gradient(180deg,transparent 50%,rgba(0,0,0,.55));pointer-events:none}
 .eq-esq{position:absolute;width:26px;height:26px;border:0 solid rgba(255,255,255,.8);pointer-events:none}
@@ -1862,10 +1864,10 @@ async function subirFotoUsuario(){
     const canvas = document.createElement('canvas');
     const img = new Image();
     await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=src; });
-    const max=600, r=Math.min(max/img.width,max/img.height,1);
+    const max=1400, r=Math.min(max/img.width,max/img.height,1);
     canvas.width=Math.round(img.width*r); canvas.height=Math.round(img.height*r);
     canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-    const base64 = canvas.toDataURL('image/jpeg',0.82);
+    const base64 = canvas.toDataURL('image/jpeg',0.9);
     const res = await api('/api/usuarios/'+id+'/foto',{method:'POST',body:JSON.stringify({base64})});
     if(res.ok){
       toast('✓ Foto actualizada');
@@ -4630,9 +4632,11 @@ function anPintar(anim){
 let eqSel=null, eqUsuarios=[], eqListo=false;
 const EQ_FONDOS=[['#C9764A','#3A1E12'],['#5F7FC4','#18213D'],['#5FA57C','#11291C'],['#A06CC0','#26163A']];
 const eqPago=m=>{ const v=Number(m.comision)||0; return m.tipo==='comision'?`${v}% de comisión`:(v>0?`${pdDinero(v)} por evento`:'Fijo por evento'); };
-function eqFoto(m,i,tam){
+function eqFoto(m,i,tam,completa=false){
   const [a,b]=EQ_FONDOS[i%EQ_FONDOS.length];
-  return `<span class="eq-foto" style="background:linear-gradient(135deg,${a},${b})"><em style="font-size:${tam}">${pxIni(m.nombre)}</em>${m.foto?`<img src="${esc(m.foto)}" alt="" onerror="this.remove()">`:''}</span>`;
+  // En el visor la foto va completa sobre una copia desenfocada que llena el fondo.
+  const img=m.foto?(completa?`<img class="fondo" src="${esc(m.foto)}" alt="" onerror="this.remove()"><img class="frente" src="${esc(m.foto)}" alt="" onerror="this.remove()">`:`<img src="${esc(m.foto)}" alt="" onerror="this.remove()">`):'';
+  return `<span class="eq-foto" style="background:linear-gradient(135deg,${a},${b})"><em style="font-size:${tam}">${pxIni(m.nombre)}</em>${img}</span>`;
 }
 async function loadEquipo(){
   const w=document.getElementById('equipo-list');
@@ -4651,7 +4655,7 @@ function eqPintar(anim){
   const m=allEquipo.find(x=>x.id===eqSel)||allEquipo[0], i=allEquipo.indexOf(m);
   const pag=Number(m.pagado)||0, pen=Number(m.pendiente)||0, f=pag+pen>0?pag/(pag+pen):1;
   w.innerHTML=`<div class="eq-wrap">
-    <div class="eq-visor${anim?' px-in':''}" style="--i:1" id="eq-visor">${eqFoto(m,i,'120px')}
+    <div class="eq-visor${anim?' px-in':''}" style="--i:1" id="eq-visor">${eqFoto(m,i,'120px',true)}
       <i class="eq-vig"></i><i class="eq-esq a"></i><i class="eq-esq b"></i><i class="eq-esq c"></i><i class="eq-esq d"></i><i class="eq-foco"></i>
       <div class="eq-hud arriba"><span><b class="eq-rec"></b>MI EQUIPO</span><span>${n} PERSONA${n===1?'':'S'} · ${pdDinero(tD)} PENDIENTE</span></div>
       <div class="eq-hud abajo"><span class="eq-nom"><small>${esc((m.rol||'').toUpperCase())}</small>${esc(m.nombre||'—')}${m.usuarioNombre&&!m.foto?`<em>${esc(m.usuarioNombre)} aún no sube su foto</em>`:''}</span>

@@ -283,15 +283,15 @@ enum UsuarioFoto {
               let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
                 kCGImageSourceCreateThumbnailFromImageAlways: true,
                 kCGImageSourceCreateThumbnailWithTransform: true,
-                kCGImageSourceThumbnailMaxPixelSize: 400,
+                kCGImageSourceThumbnailMaxPixelSize: 1400,
                 kCGImageSourceShouldCacheImmediately: true
               ] as CFDictionary) else { throw FotoError.imagenInvalida }
         let output = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(output, UTType.jpeg.identifier as CFString, 1, nil) else {
             throw FotoError.imagenInvalida
         }
-        CGImageDestinationAddImage(destination, image, [kCGImageDestinationLossyCompressionQuality: 0.82] as CFDictionary)
-        guard CGImageDestinationFinalize(destination), output.length <= 1_048_576 else { throw FotoError.noSePudoReducir }
+        CGImageDestinationAddImage(destination, image, [kCGImageDestinationLossyCompressionQuality: 0.9] as CFDictionary)
+        guard CGImageDestinationFinalize(destination), output.length <= 4_000_000 else { throw FotoError.noSePudoReducir }
         return output as Data
     }
 

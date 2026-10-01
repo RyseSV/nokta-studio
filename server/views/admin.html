@@ -898,6 +898,51 @@ html[data-tema="claro"] .px-campo input[type=date],html[data-tema="claro"] .gs-r
 .gl-ev i{width:7px;height:7px;border-radius:50%;background:var(--c);box-shadow:0 0 6px var(--c);margin-top:5px;flex:none}
 .gl-ev b{font-weight:500;color:var(--pf-texto)}.gl-ev small{display:block;font-size:10.5px;color:var(--pf-tenue);margin-top:1px}
 @media(max-width:600px){.gl-fila{flex-wrap:wrap}.gl-fila .es{justify-items:start;text-align:left}}
+/* Paneles laterales de Galerías */
+.gp-velo{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0);pointer-events:none;transition:background .35s}
+.gp-velo.open{background:rgba(0,0,0,.45);pointer-events:auto}
+.gp{position:absolute;top:0;right:0;bottom:0;width:min(430px,92vw);display:flex;flex-direction:column;background:var(--pf-sup);border-left:1px solid var(--pf-borde);box-shadow:-24px 0 60px -16px rgba(0,0,0,.55);color:var(--pf-texto);font-family:'Poppins',sans-serif;transform:translateX(105%);transition:transform .45s cubic-bezier(.2,.9,.25,1)}
+.gp-velo.open .gp{transform:none}
+.gp-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:26px 24px 0}
+.gp-hd h3{font-size:24px;font-weight:300;letter-spacing:-.03em}
+.gp-hd p{font-size:12px;color:var(--pf-suave);margin-top:3px;line-height:1.5}
+.gp-x{width:30px;height:30px;border-radius:50%;border:0;background:var(--pf-sup2);color:var(--pf-suave);cursor:pointer;flex:none;font-size:11px}
+.gp-x:hover{color:var(--pf-texto)}
+.gp-cuerpo{flex:1;overflow:auto;padding:20px 24px;display:grid;gap:18px;align-content:start}
+.gp-pie{display:flex;justify-content:flex-end;gap:8px;padding:16px 24px;border-top:1px solid var(--pf-borde)}
+.gp-pie .td-accion{margin:0;width:auto;height:36px;padding:0 16px}
+.gp-k{font-size:10px;font-weight:500;letter-spacing:.13em;color:var(--pf-tenue);text-transform:uppercase}
+.gp-chips{display:flex;flex-wrap:wrap;gap:6px}
+.gp-chips button{height:32px;padding:0 13px;border-radius:99px;border:1px solid var(--pf-borde);background:var(--pf-sup2);color:var(--pf-suave);font:400 12px 'Poppins',sans-serif;cursor:pointer;transition:background .2s,color .2s}
+.gp-chips button.on{background:var(--pf-texto);color:var(--pf-fondo);border-color:transparent;font-weight:500}
+.gp-pase{display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;background:var(--pf-sup2);border:1px solid var(--pf-borde)}
+.gp-pase .an{position:relative;width:54px;height:54px;flex:none}
+.gp-pase .an svg{width:100%;height:100%;transform:rotate(-90deg)}
+.gp-pase .an circle{fill:none;stroke-width:4;stroke-linecap:round}
+.gp-pase .an .v{filter:drop-shadow(0 0 4px var(--pf-exito));transition:stroke-dasharray .6s cubic-bezier(.2,.9,.25,1)}
+.gp-pase .an div{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.gp-pase .an b{font-size:17px;font-weight:300;line-height:1}.gp-pase .an small{font-size:7px;font-weight:500;color:var(--pf-tenue)}
+.gp-pase .tx{min-width:0;display:grid;gap:2px}
+.gp-pase .tx b{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gp-pase .tx b.vacio{color:var(--pf-tenue)}
+.gp-pase .tx span{font-size:11px;color:var(--pf-suave)}
+.gp-pase code{font:400 10.5px ui-monospace,'SF Mono',Menlo,monospace;color:var(--pf-tenue)}
+.gp-pase code.si{font-size:15px;color:var(--pf-marca);letter-spacing:.04em}
+.gp-fechas{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;text-align:center}
+.gp-fechas>span{color:var(--pf-tenue)}
+.gp-fechas div{padding:14px 8px;border-radius:14px;background:var(--pf-sup2)}
+.gp-fechas small{display:block;font-size:9.5px;font-weight:500;letter-spacing:.1em;color:var(--pf-tenue)}
+.gp-fechas b{font-size:19px;font-weight:300}
+.gp-fechas .nueva{background:color-mix(in srgb,var(--pf-exito) 8%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pf-exito) 30%,transparent)}
+.gp-fechas .nueva b{color:var(--pf-exito)}
+.gp-nota{padding:14px;border-radius:14px;background:var(--pf-sup2);font-size:12px;color:var(--pf-suave);line-height:1.55}
+.gp-chat{border-radius:16px;padding:12px;background:#0B141A;background-image:radial-gradient(rgba(255,255,255,.025) 1px,transparent 1px);background-size:12px 12px;display:grid;gap:10px}
+.gp-chat .hd{display:flex;align-items:center;gap:9px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;font-weight:500;color:#E9EDEF}
+.gp-chat .hd i{width:28px;height:28px;border-radius:50%;background:#2A3942;display:grid;place-items:center;font-style:normal;font-size:9.5px;color:#aebac1;flex:none}
+.gp-chat .hd small{display:block;font-size:10px;font-weight:400;color:#8696A0}
+.gp-chat .burb{justify-self:end;width:88%;background:#005C4B;border-radius:12px 12px 3px 12px;padding:10px 10px 6px}
+.gp-chat textarea{display:block;width:100%;min-height:150px;border:0;outline:0;resize:none;background:none;color:#E9EDEF;font:400 12.5px/1.5 'Poppins',sans-serif;overflow:hidden}
+.gp-chat .burb small{display:block;text-align:right;font-size:9.5px;color:rgba(233,237,239,.55);margin-top:2px}
+.gp-wa{height:36px;padding:0 16px;border:0;border-radius:10px;color:#fff;font:500 12px 'Poppins',sans-serif;cursor:pointer;background:linear-gradient(135deg,#2BD06B,#1DA851);box-shadow:0 6px 14px -4px rgba(37,211,102,.4)}
 </style>
 </head>
 <body class="en-dash">
@@ -4179,7 +4224,7 @@ function galHead(cargando=false){
   const sub=cargando?'Cargando tus galerías…':u?`${u} por vencer sin descargar`:n?`${n} galería${n===1?'':'s'} · todo al día`:'Crea la primera galería para un cliente';
   return `<div class="px-h px-in"><div><h1>Galerías</h1><p>${sub}</p></div>
     <label class="pt-buscar">${PX_ICO.buscar}<input placeholder="Buscar cliente o código…" value="${esc(galQ)}" oninput="galQ=this.value;galLista(false)"></label>
-    <button class="td-b1" onclick="openNuevoCliente()">＋ Nueva galería</button></div>`;
+    <button class="td-b1" onclick="galPanel('nueva')">＋ Nueva galería</button></div>`;
 }
 function galPintar(anim){
   const g=galGal();
@@ -4206,8 +4251,8 @@ function galUrg(anim){
       <h3>${esc(c.nombre)}</h3><p>${esc(GAL_TIPOS[c.tipo]||'Galería')} · ${v?`la abrió ${v} ${v===1?'vez':'veces'} pero no ha descargado`:'todavía no la abre'}</p>
       <div class="cuenta"><b data-v="${d}">${d}</b><small>${d===0?'vence hoy':d===1?'día para que venza':'días para que venza'}</small></div>
       <div class="gasto"><u data-w="${Math.max(4,(1-d/total)*100).toFixed(1)}"></u></div>
-      <div class="acc">${c.whatsapp?`<button class="td-accion" onclick="waGaleria('${cj}',true)">Mandarle recordatorio</button>`:''}
-        <button class="td-b2" onclick="openReactivar('${cj}')">Darle más días</button>
+      <div class="acc">${c.whatsapp?`<button class="td-accion" onclick="galPanel('rec','${cj}','vencePronto')">Mandarle recordatorio</button>`:''}
+        <button class="td-b2" onclick="galPanel('dias','${cj}')">Darle más días</button>
         <button class="td-b2" onclick="galCopiar('${escJs(galLink(c))}','Link copiado')">Copiar link</button></div></div>`;
   }).join('');
   pxLuego(()=>el.querySelectorAll('.gasto u').forEach(u=>u.style.width=u.dataset.w+'%'));
@@ -4238,12 +4283,137 @@ function galLista(anim){
         <button onclick="this.closest('details').open=false;window.open('${escJs(galLink(c))}','_blank')">Ver galería</button>
         <button onclick="this.closest('details').open=false;galCopiar('${escJs(galLink(c))}','Link copiado')">Copiar link</button>
         <button onclick="this.closest('details').open=false;galCopiar('${cj}','Código copiado')">Copiar código</button>
-        ${c.whatsapp?`<button onclick="this.closest('details').open=false;waGaleria('${cj}',${galSit(c)==='porVencer'})">Enviar por WhatsApp</button>`:''}
-        <button onclick="this.closest('details').open=false;openReactivar('${cj}')">${galVencida(c)?'Reactivar':'Darle más días'}</button>
+        ${c.whatsapp?`<button onclick="this.closest('details').open=false;galPanel('rec','${cj}','${galSit(c)==='porVencer'?'vencePronto':'listas'}')">Enviar por WhatsApp</button>`:''}
+        <button onclick="this.closest('details').open=false;galPanel('dias','${cj}')">${galVencida(c)?'Reactivar':'Darle más días'}</button>
         ${admin?`<button class="rojo" onclick="this.closest('details').open=false;eliminarCliente('${cj}')">Eliminar</button>`:''}
       </div></details></div>`;
   }).join(''):`<div class="px-card px-vacio">${galGal().length?'Nada por aquí. Prueba con otro filtro o búsqueda.':'Aún no hay galerías. Crea una y mándale el link a tu cliente.'}</div>`;
 }
+// ── Paneles laterales de Galerías (nueva galería, más días, mensaje) ──
+const GP_TIPOS=[['boda','Boda'],['xvanios','XV Años'],['graduacion','Graduación'],['corporativo','Corporativo'],['deportivo','Deportivo'],['otro','Otro']];
+const GP_MSG=[['vencePronto','Vence pronto'],['listas','Ya están listas'],['masDias','Le di más días']];
+let gp={};
+const gpCorto=d=>d.toLocaleDateString('es',{day:'numeric',month:'short'}).replace('.','');
+const gpLargo=d=>d.toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'});
+function galMensaje(c,tipo){
+  const dias=galDias(c), evento=GAL_TIPOS[c.tipo]||c.tipo||'', link=galLink(c);
+  if(tipo==='vencePronto'){
+    const cuando=dias===null?'pronto':dias===0?'hoy':dias===1?'mañana':`en ${dias} días`;
+    return `Hola ${c.nombre} 👋 Te recuerdo que tu galería de ${evento} vence ${cuando}. Descargá tus fotos antes de que se cierre el acceso:\n${link}\n\nTu código de acceso es: ${c.codigo}`;
+  }
+  if(tipo==='masDias'){
+    const hasta=c.expira?`hasta el ${gpLargo(new Date(c.expira))}`:'sin límite de tiempo';
+    return `Hola ${c.nombre} 👋 Te di más días para tu galería de ${evento}: ahora podés entrar ${hasta}. Aquí está el link:\n${link}\n\nTu código de acceso es: ${c.codigo}`;
+  }
+  return `Hola ${c.nombre}, tus fotos de ${evento} ya están listas 📸\nPodés verlas y descargarlas en este link:\n${link}\n\nTu código de acceso es: ${c.codigo}\n${dias?`El acceso estará disponible por ${dias} días.`:'El acceso no tiene límite de tiempo.'}`;
+}
+function gpOpciones(lista, actual, fn){
+  return `<div class="gp-chips">${lista.map(([v,t])=>`<button type="button" class="${String(v)===String(actual)?'on':''}" onclick="${fn}('${v}',this)">${t}</button>`).join('')}</div>`;
+}
+const gpMarcar=btn=>btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===btn));
+function gpMarco(titulo, sub, cuerpo, pie){
+  return `<aside class="gp"><div class="gp-hd"><div><h3>${titulo}</h3><p>${sub}</p></div><button class="gp-x" title="Cerrar (Esc)" onclick="galPanelCerrar()">✕</button></div>
+    <div class="gp-cuerpo">${cuerpo}</div><div class="gp-pie">${pie}</div></aside>`;
+}
+function galPanel(tipo, codigo, msg){
+  let v=document.getElementById('gp-velo');
+  if(!v){
+    v=document.createElement('div'); v.id='gp-velo'; v.className='gp-velo';
+    v.addEventListener('click',e=>{ if(e.target===v) galPanelCerrar(); });
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&v.classList.contains('open')) galPanelCerrar(); });
+    document.body.appendChild(v);
+  }
+  gp={tipo, codigo};
+  if(tipo==='nueva'){ gp.t='boda'; gp.d=30; gp.listo=null; v.innerHTML=gpNueva(); }
+  else if(tipo==='dias'){ const c=allClientes.find(x=>x.codigo===codigo); if(!c) return; gp.d=15; gp.antes=c.expira?new Date(c.expira):null; gp.vencida=galVencida(c); gp.listo=false; v.innerHTML=gpDias(c); }
+  else { const c=allClientes.find(x=>x.codigo===codigo); if(!c) return; gp.m=msg||'listas'; v.innerHTML=gpRec(c); }
+  requestAnimationFrame(()=>{ v.classList.add('open'); const t=v.querySelector('#gp-texto'); if(t) t.style.height=t.scrollHeight+'px'; });
+  setTimeout(()=>v.querySelector('input:not([type=hidden])')?.focus(),250);
+}
+function galPanelCerrar(){ const v=document.getElementById('gp-velo'); if(v) v.classList.remove('open'); }
+
+// Nueva galería, con el pase de cómo le llega
+function gpPase(codigo){
+  const n=(document.getElementById('gp-nombre')?.value||gp.nombre||'').trim(), d=+gp.d;
+  const r=22, C=2*Math.PI*r, frac=d===0?1:Math.min(1,d/60);
+  return `<div class="gp-pase"><div class="an"><svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="${r}" stroke="color-mix(in srgb,var(--pf-texto) 8%,transparent)"/><circle cx="27" cy="27" r="${r}" stroke="var(--pf-exito)" stroke-dasharray="${(frac*C).toFixed(1)} ${C.toFixed(1)}" class="v"/></svg><div><b>${d===0?'∞':d}</b><small>DÍAS</small></div></div>
+    <div class="tx"><b class="${n?'':'vacio'}">${esc(n||'Nombre del cliente')}</b><span>${esc((GP_TIPOS.find(x=>x[0]===gp.t)||[])[1]||'')}</span><code class="${codigo?'si':''}">${codigo?esc(codigo):'El código se crea al guardar'}</code></div></div>`;
+}
+function gpNueva(){
+  if(gp.listo) return gpMarco('Galería creada','Sube las fotos a su carpeta y mándale el link.',
+    gpPase(gp.listo)+`<button class="td-b2" style="justify-self:start" onclick="galCopiar('${escJs(gp.listo)}','Código copiado')">Copiar código</button>`,
+    `${gp.wa?`<button class="td-b2" onclick="galPanel('rec','${escJs(gp.listo)}','listas')">Mandarle el link</button>`:''}<button class="td-b1" onclick="galPanelCerrar()">Listo</button>`);
+  return gpMarco('Nueva galería','Se crea un código privado para que tu cliente vea y descargue sus fotos.',
+    `<label class="px-campo"><span class="gp-k">Cliente</span><input id="gp-nombre" placeholder="Ej. Boda Andrea & Luis" autocomplete="off" oninput="document.getElementById('gp-pase').innerHTML=gpPase()"></label>
+     <div class="px-campo"><span class="gp-k">Evento</span>${gpOpciones(GP_TIPOS,gp.t,'gpTipo')}</div>
+     <div class="px-campo"><span class="gp-k">Acceso</span>${gpOpciones([[15,'15 días'],[30,'30 días'],[60,'60 días'],[0,'Sin límite']],gp.d,'gpDiasN')}</div>
+     <label class="px-campo"><span class="gp-k">WhatsApp del cliente</span><input id="gp-wa" inputmode="tel" placeholder="7000 0000 o con código de país" autocomplete="off"></label>
+     <div class="px-campo"><span class="gp-k">Así le llega</span><div id="gp-pase">${gpPase()}</div></div>
+     <div class="gs-err" id="gp-err"></div>`,
+    `<button class="td-b2" onclick="galPanelCerrar()">Cancelar</button><button class="td-accion" id="gp-crear" onclick="gpCrear()">＋ Crear galería</button>`);
+}
+function gpTipo(v,btn){ gp.t=v; gpMarcar(btn); document.getElementById('gp-pase').innerHTML=gpPase(); }
+function gpDiasN(v,btn){ gp.d=+v; gpMarcar(btn); document.getElementById('gp-pase').innerHTML=gpPase(); }
+async function gpCrear(){
+  const err=document.getElementById('gp-err'); err.textContent='';
+  const nombre=document.getElementById('gp-nombre').value.trim();
+  let wa=document.getElementById('gp-wa').value.replace(/\D/g,''); if(wa.length===8) wa='503'+wa;
+  if(!nombre){ err.textContent='Escribe el nombre del cliente'; document.getElementById('gp-nombre').focus(); return; }
+  const b=document.getElementById('gp-crear'); b.disabled=true; b.textContent='Creando…';
+  try{
+    const res=await api('/api/clientes',{method:'POST',body:JSON.stringify({nombre,tipo:gp.t,dias:gp.d,whatsapp:wa})});
+    if(!res?.ok) throw new Error(res?.error||'sin respuesta');
+    gp.nombre=nombre; gp.wa=wa; gp.listo=res.cliente?.codigo||'';
+    allClientes=await api('/api/clientes'); if(pxActiva('galerias')) galPintar(false);
+    document.getElementById('gp-velo').innerHTML=gpNueva();
+  }catch(x){ err.textContent='No se pudo crear la galería. '+x.message; b.disabled=false; b.textContent='＋ Crear galería'; }
+}
+
+// Darle más días: fecha de antes y la nueva (misma regla que el servidor)
+function gpNuevaFecha(){ const base=gp.antes&&gp.antes>new Date()?gp.antes:new Date(); return new Date(base.getTime()+gp.d*864e5); }
+function gpFechas(nueva){
+  return `<div class="gp-fechas"><div><small>${gp.vencida?'VENCIÓ':'VENCÍA'}</small><b>${gp.antes?gpCorto(gp.antes):'sin fecha'}</b></div><span>→</span>
+    <div class="nueva"><small>AHORA VENCE</small><b>${gpCorto(nueva)}</b></div></div>`;
+}
+function gpDias(c){
+  const tieneWA=!!c.whatsapp;
+  if(gp.listo) return gpMarco('Listo, más días',`${esc(c.nombre)} podrá entrar a su galería otra vez.`,
+    gpFechas(c.expira?new Date(c.expira):gpNuevaFecha())+`<div class="gp-nota">${tieneWA?'¿Le avisas por WhatsApp? El mensaje ya va con la fecha nueva.':'Ya puede entrar de nuevo con su mismo código.'}</div>`,
+    `${tieneWA?`<button class="td-b2" onclick="galPanel('rec','${escJs(c.codigo)}','masDias')">Avisarle</button>`:''}<button class="td-b1" onclick="galPanelCerrar()">Listo</button>`);
+  return gpMarco(gp.vencida?'Reactivar galería':'Darle más días',`${esc(c.nombre)} podrá entrar a su galería otra vez.`,
+    `<div class="px-campo"><span class="gp-k">Cuántos días</span>${gpOpciones([[7,'7 días'],[15,'15 días'],[30,'30 días'],[60,'60 días']],gp.d,'gpMas')}</div>
+     <div id="gp-fechas">${gpFechas(gpNuevaFecha())}</div>
+     <div class="gp-nota">Los días se suman a los que le quedan. Después puedes mandarle el aviso por WhatsApp.</div>`,
+    `<button class="td-b2" onclick="galPanelCerrar()">Cancelar</button><button class="td-accion" id="gp-dar" onclick="gpReactivar('${escJs(c.codigo)}')">Dar ${gp.d} días</button>`);
+}
+function gpMas(v,btn){ gp.d=+v; gpMarcar(btn); document.getElementById('gp-fechas').innerHTML=gpFechas(gpNuevaFecha()); document.getElementById('gp-dar').textContent=`Dar ${gp.d} días`; }
+async function gpReactivar(codigo){
+  const b=document.getElementById('gp-dar'); b.disabled=true; b.textContent='Guardando…';
+  try{
+    await api('/api/clientes/'+encodeURIComponent(codigo)+'/reactivar',{method:'PUT',body:JSON.stringify({dias:gp.d})});
+    allClientes=await api('/api/clientes'); if(pxActiva('galerias')) galPintar(false);
+    gp.listo=true; document.getElementById('gp-velo').innerHTML=gpDias(allClientes.find(x=>x.codigo===codigo));
+    toast(`✓ Acceso extendido ${gp.d} días`);
+  }catch(x){ toast('No se pudo guardar: '+x.message,'err'); b.disabled=false; b.textContent=`Dar ${gp.d} días`; }
+}
+
+// Mensaje por WhatsApp: se ve como burbuja, se puede cambiar y no se manda solo
+function gpRec(c){
+  const wa=String(c.whatsapp||'').replace(/\D/g,'');
+  return gpMarco('Mensaje por WhatsApp','Revisa el mensaje antes de enviarlo. No se manda solo.',
+    gpOpciones(GP_MSG,gp.m,'gpMsg')+`<div class="gp-chat"><div class="hd"><i>${pxIni(c.nombre)}</i><div>${esc(c.nombre)}<small>+${esc(wa)}</small></div></div>
+      <div class="burb"><textarea id="gp-texto" spellcheck="false" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${esc(galMensaje(c,gp.m))}</textarea><small>puedes cambiar el texto</small></div></div>`,
+    `<button class="td-b2" onclick="galCopiar(document.getElementById('gp-texto').value,'Texto copiado')">Copiar texto</button>
+     <button class="gp-wa" onclick="gpEnviar('${escJs(c.codigo)}')">Abrir WhatsApp</button>`);
+}
+function gpMsg(v,btn){ gp.m=v; gpMarcar(btn); const c=allClientes.find(x=>x.codigo===gp.codigo); const t=document.getElementById('gp-texto'); t.value=galMensaje(c,v); t.style.height='auto'; t.style.height=t.scrollHeight+'px'; }
+function gpEnviar(codigo){
+  const c=allClientes.find(x=>x.codigo===codigo); if(!c) return;
+  const wa=String(c.whatsapp||'').replace(/\D/g,'');
+  window.open(`https://wa.me/${wa.length===8?'503'+wa:wa}?text=${encodeURIComponent(document.getElementById('gp-texto').value)}`,'_blank');
+  galPanelCerrar();
+}
+
 function galCopiar(texto, aviso){ navigator.clipboard.writeText(texto).then(()=>toast(aviso)).catch(()=>toast('No se pudo copiar','err')); }
 function openNuevoCliente(){ openModal('modal-nuevo-cliente'); }
 async function crearCliente(e){

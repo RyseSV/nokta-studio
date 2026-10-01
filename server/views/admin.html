@@ -943,6 +943,35 @@ html[data-tema="claro"] .px-campo input[type=date],html[data-tema="claro"] .gs-r
 .gp-chat textarea{display:block;width:100%;min-height:150px;border:0;outline:0;resize:none;background:none;color:#E9EDEF;font:400 12.5px/1.5 'Poppins',sans-serif;overflow:hidden}
 .gp-chat .burb small{display:block;text-align:right;font-size:9.5px;color:rgba(233,237,239,.55);margin-top:2px}
 .gp-wa{height:36px;padding:0 16px;border:0;border-radius:10px;color:#fff;font:500 12px 'Poppins',sans-serif;cursor:pointer;background:linear-gradient(135deg,#2BD06B,#1DA851);box-shadow:0 6px 14px -4px rgba(37,211,102,.4)}
+
+/* Ventanas (modales) con el diseño nuevo — igual que las de Galerías */
+.modal-overlay{background:rgba(0,0,0,.45);padding:16px}
+.modal-overlay.open .modal{animation:mdIn .4s cubic-bezier(.2,.9,.25,1.15) both}
+@keyframes mdIn{from{opacity:0;transform:translateY(14px) scale(.96)}}
+.modal{background:var(--pf-sup);color:var(--pf-texto);border:1px solid var(--pf-borde);border-radius:22px;padding:26px 24px 22px;max-width:520px;box-shadow:0 30px 70px -20px rgba(0,0,0,.6);scrollbar-width:thin}
+.modal-title{font-size:24px;font-weight:300;letter-spacing:-.03em;margin-bottom:6px;color:var(--pf-texto)}
+.modal p{color:var(--pf-suave)}
+.modal .md-sec{font-size:13px;font-weight:500;color:var(--pf-marca);margin:20px 0 2px}
+.modal .form-grid{gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:560px){.modal .form-grid{grid-template-columns:minmax(0,1fr)}}
+.modal .form-group{gap:7px}
+.modal .form-group label,.modal label{font-size:10px;font-weight:500;letter-spacing:.13em;text-transform:uppercase;color:var(--pf-tenue)}
+.modal input:not([type=checkbox]):not([type=radio]):not([type=file]),.modal select,.modal textarea{width:100%;height:40px;padding:0 12px;border-radius:11px;border:1px solid var(--pf-borde);background:var(--pf-sup2);color:var(--pf-texto);font:400 13px 'Poppins',sans-serif;outline:0;transition:border-color .15s,box-shadow .15s}
+.modal textarea{height:auto;min-height:80px;padding:10px 12px;line-height:1.5}
+.modal select{appearance:none;-webkit-appearance:none;padding-right:30px;cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,var(--pf-tenue) 50%),linear-gradient(135deg,var(--pf-tenue) 50%,transparent 50%);background-position:calc(100% - 16px) 18px,calc(100% - 12px) 18px;background-size:4px 4px;background-repeat:no-repeat}
+.modal select option{background:var(--pf-sup);color:var(--pf-texto)}
+.modal input:focus,.modal select:focus,.modal textarea:focus{border-color:color-mix(in srgb,var(--pf-marca) 60%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--pf-marca) 12%,transparent)}
+.modal input::placeholder,.modal textarea::placeholder{color:var(--pf-tenue)}
+.modal input[type=date],.modal input[type=time]{color-scheme:dark}
+html[data-tema="claro"] .modal input[type=date],html[data-tema="claro"] .modal input[type=time]{color-scheme:light}
+.modal .form-actions{flex-direction:row-reverse;justify-content:flex-start;gap:8px;margin-top:22px;padding-top:16px;border-top:1px solid var(--pf-borde)}
+.modal .btn{height:38px;padding:0 16px;border-radius:11px;font-size:12.5px;transition:transform .12s,opacity .15s}
+.modal .btn:active{transform:scale(.97)}
+.modal .btn-primary{color:#fff;background:linear-gradient(135deg,#DA7A48,#B85228);box-shadow:0 6px 14px -4px rgba(208,103,58,.45)}
+.modal .btn-ghost{background:var(--pf-sup2);color:var(--pf-texto);border:1px solid var(--pf-borde)}
+.modal .btn-outline{background:none;border:1px solid color-mix(in srgb,var(--pf-marca) 50%,transparent);color:var(--pf-marca)}
+.modal .btn-danger{background:color-mix(in srgb,var(--pf-error) 14%,transparent);color:var(--pf-error)}
+.modal .form-actions .btn-danger{margin-left:0!important;margin-right:auto}
 </style>
 </head>
 <body class="en-dash">
@@ -1375,7 +1404,8 @@ html[data-tema="claro"] .px-campo input[type=date],html[data-tema="claro"] .gs-r
 <!-- ═══ MODAL nuevo evento calendario ═══ -->
 <div class="modal-overlay" id="modal-evento">
   <div class="modal">
-    <div class="modal-title">Agregar evento al calendario</div>
+    <div class="modal-title">Agregar evento</div>
+    <p style="font-size:12px;margin-bottom:16px">Aparecerá en el calendario del día elegido.</p>
     <form onsubmit="guardarEvento(event)">
       <div class="form-grid">
         <div class="form-group"><label>Nombre del cliente *</label><input id="ev-cliente" list="clientes-list3" required><datalist id="clientes-list3"></datalist></div>
@@ -1390,7 +1420,7 @@ html[data-tema="claro"] .px-campo input[type=date],html[data-tema="claro"] .gs-r
         <div class="form-group"><label>Anticipo ($)</label><input type="number" id="ev-anticipo" step="0.01"></div>
       </div>
       <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="submit" class="btn btn-primary">Guardar evento</button>
         <button type="button" class="btn btn-ghost" onclick="closeModal('modal-evento')">Cancelar</button>
       </div>
     </form>
@@ -1573,9 +1603,12 @@ html[data-tema="claro"] .px-campo input[type=date],html[data-tema="claro"] .gs-r
 <div class="modal-overlay" id="modal-contrato">
   <div class="modal" style="max-width:560px;max-height:86vh;overflow-y:auto">
     <div class="modal-title">Generar contrato</div>
-    <p style="font-size:12px;color:var(--muted);margin-top:4px">Se llena con los datos del cliente; ajusta lo que haga falta antes de generar el PDF.</p>
-    <div class="form-group" style="margin-top:12px"><label>Ciudad del contrato</label><input id="ct-ciudad" style="width:100%" value="San Salvador"></div>
-    <div class="form-group" style="margin-top:12px"><label>Fecha del contrato</label><input type="date" id="ct-fecha" style="width:100%"></div>
+    <p style="font-size:12px;margin-top:4px">Ya viene lleno con los datos del trabajo; ajusta lo que haga falta antes de generar el PDF.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+      <div class="form-group"><label>Ciudad del contrato</label><input id="ct-ciudad" style="width:100%" value="San Salvador"></div>
+      <div class="form-group"><label>Fecha del contrato</label><input type="date" id="ct-fecha" style="width:100%"></div>
+    </div>
+    <div class="md-sec">Cliente</div>
     <div class="form-group" style="margin-top:12px"><label>Nombre del cliente *</label><input id="ct-cliente-nombre" required style="width:100%"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
       <div class="form-group"><label>DUI *</label><input id="ct-dui" required style="width:100%"></div>
@@ -1583,12 +1616,14 @@ html[data-tema="claro"] .px-campo input[type=date],html[data-tema="claro"] .gs-r
     </div>
     <div class="form-group" style="margin-top:12px"><label>Correo electrónico</label><input id="ct-email" style="width:100%"></div>
     <div class="form-group" style="margin-top:12px"><label>Dirección</label><input id="ct-direccion" style="width:100%"></div>
+    <div class="md-sec">Servicio</div>
     <div class="form-group" style="margin-top:12px"><label>Servicio contratado</label><input id="ct-servicio" style="width:100%"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
       <div class="form-group"><label>Fecha del servicio</label><input id="ct-servicio-fecha" style="width:100%"></div>
       <div class="form-group"><label>Lugar</label><input id="ct-servicio-lugar" style="width:100%"></div>
     </div>
     <div class="form-group" style="margin-top:12px"><label>Entregables</label><input id="ct-entregables" style="width:100%"></div>
+    <div class="md-sec">Pago y condiciones</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
       <div class="form-group"><label>Anticipo (USD)</label><input type="number" id="ct-anticipo-monto" step="0.01" style="width:100%"></div>
       <div class="form-group"><label>Fecha límite anticipo</label><input type="date" id="ct-anticipo-fecha" style="width:100%"></div>
@@ -1602,7 +1637,7 @@ html[data-tema="claro"] .px-campo input[type=date],html[data-tema="claro"] .gs-r
       <div class="form-group"><label>Mora por día (USD)</label><input type="number" id="ct-mora" value="10" step="0.01" style="width:100%"></div>
     </div>
     <div class="form-actions" style="margin-top:20px">
-      <button class="btn btn-primary" onclick="confirmarContrato()">📜 Generar PDF</button>
+      <button class="btn btn-primary" onclick="confirmarContrato()">Generar PDF</button>
       <button class="btn btn-ghost" onclick="closeModal('modal-contrato')">Cancelar</button>
     </div>
   </div>

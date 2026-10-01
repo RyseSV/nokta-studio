@@ -765,14 +765,27 @@ private struct AgregarEventoSheet: View {
             Text("Aparecerá en el calendario del día elegido.").font(NoktaFont.poppins(12)).foregroundStyle(NoktaTheme.textoSuave).padding(.top, -8)
 
             field("Cliente") { TextField("Nombre del cliente", text: $cliente).textFieldStyle(.plain) }
-            VStack(alignment: .leading, spacing: 6) {
-                Text("TIPO DE SERVICIO").font(NoktaFont.poppins(10, .medium)).tracking(1.2).foregroundStyle(NoktaTheme.textoTenue)
-                Picker("", selection: $tipo) {
-                    ForEach(eventoTipos, id: \.self) { Text($0).tag($0) }
-                }.labelsHidden().pickerStyle(.menu)
+            field("Tipo de servicio") {
+                Menu {
+                    ForEach(eventoTipos, id: \.self) { t in Button(t) { tipo = t } }
+                } label: {
+                    HStack {
+                        Text(tipo).foregroundStyle(NoktaTheme.texto)
+                        Spacer()
+                        Image(systemName: "chevron.up.chevron.down").font(.system(size: 10)).foregroundStyle(NoktaTheme.textoTenue)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden)
             }
-            DatePicker("Fecha", selection: $fecha, displayedComponents: .date)
-                .font(NoktaFont.poppins(12)).foregroundStyle(NoktaTheme.textoSuave)
+            field("Fecha") {
+                HStack {
+                    DatePicker("", selection: $fecha, displayedComponents: .date)
+                        .labelsHidden().datePickerStyle(.compact)
+                        .environment(\.locale, Locale(identifier: "es"))
+                    Spacer(minLength: 0)
+                }
+            }
             HStack {
                 field("Hora inicio") { TextField("HH:MM", text: $horaInicio).textFieldStyle(.plain) }
                 field("Hora fin") { TextField("HH:MM", text: $horaFin).textFieldStyle(.plain) }
@@ -792,11 +805,12 @@ private struct AgregarEventoSheet: View {
                 Spacer()
                 Button("Guardar evento") { Task { await guardar() } }
                     .buttonStyle(NoktaBotonPrimario())
+                    .keyboardShortcut(.defaultAction)
             }
             .padding(.top, 4)
         }
         .padding(28)
-        .frame(width: 400)
+        .frame(width: 440)
         .background(NoktaTheme.superficie)
     }
 

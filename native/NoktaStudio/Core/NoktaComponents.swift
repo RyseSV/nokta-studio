@@ -96,13 +96,17 @@ private struct NoktaFoco: ViewModifier {
 extension View {
     /// Tarjeta con "borde de luz" (como la pantalla de entrada): al pasar el
     /// cursor, una luz del color dado recorre el contorno y la tarjeta se eleva.
-    /// En reposo queda un contorno fino y quieto.
-    func noktaBordeLuz(_ color: Color, radio: CGFloat = 20) -> some View { modifier(NoktaBordeLuz(color: color, radio: radio)) }
+    /// En reposo queda un contorno fino y quieto. Con `siempre` la luz gira
+    /// todo el tiempo (para lo que pide atención, p. ej. una galería por vencer).
+    func noktaBordeLuz(_ color: Color, radio: CGFloat = 20, siempre: Bool = false) -> some View {
+        modifier(NoktaBordeLuz(color: color, radio: radio, siempre: siempre))
+    }
 }
 
 private struct NoktaBordeLuz: ViewModifier {
     var color: Color
     var radio: CGFloat
+    var siempre = false
     @State private var encima = false
     @State private var inicio = Date()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -113,7 +117,7 @@ private struct NoktaBordeLuz: ViewModifier {
             .background(forma.fill(NoktaTheme.superficie))
             .overlay(forma.strokeBorder(NoktaTheme.borde, lineWidth: 1))
             .overlay {
-                TimelineView(.animation(paused: !encima || reduceMotion)) { ctx in
+                TimelineView(.animation(paused: !(encima || siempre) || reduceMotion)) { ctx in
                     let vueltas = ctx.date.timeIntervalSince(inicio) * 0.45
                     forma.strokeBorder(
                         AngularGradient(
@@ -132,11 +136,11 @@ private struct NoktaBordeLuz: ViewModifier {
                     )
                     .shadow(color: color.opacity(0.5), radius: 6)
                 }
-                .opacity(encima ? 1 : 0)
+                .opacity(encima || siempre ? 1 : 0)
                 .allowsHitTesting(false)
             }
             .shadow(color: .black.opacity(encima ? 0.22 : 0.08), radius: encima ? 18 : 8, y: encima ? 10 : 3)
-            .offset(y: encima ? -3 : 0)
+            .offset(y: encima && !siempre ? -3 : 0)
             .contentShape(forma)
             .onHover { h in
                 if h { inicio = Date() }

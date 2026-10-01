@@ -861,6 +861,43 @@ html[data-tema="claro"] .px-campo input[type=date],html[data-tema="claro"] .gs-r
   .cl-volver{display:block}.cl-big b{font-size:44px}.cl-ft h2{font-size:26px}
 }
 .cl-lista .pt-seg{flex-wrap:nowrap;max-width:100%}.cl-lista .pt-seg button{padding:7px 11px}
+/* Galerías: lo urgente primero */
+#page-galerias{color:var(--pf-texto)}
+.gl-cols{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+@media(max-width:900px){.gl-cols{grid-template-columns:minmax(0,1fr)}}
+.gl-main{display:grid;gap:12px;min-width:0}
+#gl-urg{display:grid;gap:12px}
+.gl-urg{padding:22px;border-radius:22px;background:linear-gradient(160deg,color-mix(in srgb,var(--pf-aviso) 8%,transparent),transparent 55%),var(--pf-sup)}
+.gl-urg .t{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.gl-urg .cod{font:400 12px ui-monospace,'SF Mono',Menlo,monospace;color:var(--pf-suave);letter-spacing:.04em}
+.gl-urg h3{font-size:24px;font-weight:300;letter-spacing:-.03em;margin-top:14px}
+.gl-urg p{font-size:12.5px;color:var(--pf-suave);margin-top:2px}
+.gl-urg .cuenta{display:flex;align-items:baseline;gap:8px;margin-top:10px}
+.gl-urg .cuenta b{font-size:54px;font-weight:300;letter-spacing:-.05em;line-height:1;color:var(--pf-aviso)}
+.gl-urg .cuenta small{font-size:13px;color:var(--pf-suave)}
+.gl-urg .gasto{height:6px;border-radius:99px;background:color-mix(in srgb,var(--pf-texto) 8%,transparent);margin-top:12px;overflow:hidden}
+.gl-urg .gasto u{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--pf-exito),var(--pf-aviso));transition:width 1.2s .3s cubic-bezier(.2,.9,.25,1)}
+.gl-urg .acc{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.gl-urg .acc .td-accion{margin:0;width:auto;height:36px;padding:0 16px}
+.gl-lista{display:grid;gap:8px}
+.gl-fila{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--pf-sup);border:1px solid var(--pf-borde);transition:background .2s,border-color .2s}
+.gl-fila:hover{background:color-mix(in srgb,var(--pf-texto) 3%,var(--pf-sup));border-color:color-mix(in srgb,var(--c) 30%,transparent)}
+.gl-fila .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:none;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent)}
+.gl-fila .ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.gl-fila .tx{flex:1;min-width:0}
+.gl-fila .tx b{display:block;font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gl-fila .tx em{font-style:normal;font-size:10px;color:var(--pf-aviso)}
+.gl-fila .tx small{font:400 11px ui-monospace,'SF Mono',Menlo,monospace;color:var(--pf-tenue)}
+.gl-fila .es{display:grid;justify-items:end;gap:3px;text-align:right}
+.gl-fila .es small{font-size:10.5px;color:var(--pf-tenue)}
+.gl-lado{display:grid;gap:12px}
+.gl-nums{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gl-act{padding:18px}
+.gl-ev{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--pf-borde);font-size:12px;color:var(--pf-suave)}
+.gl-ev:first-of-type{border-top:0}
+.gl-ev i{width:7px;height:7px;border-radius:50%;background:var(--c);box-shadow:0 0 6px var(--c);margin-top:5px;flex:none}
+.gl-ev b{font-weight:500;color:var(--pf-texto)}.gl-ev small{display:block;font-size:10.5px;color:var(--pf-tenue);margin-top:1px}
+@media(max-width:600px){.gl-fila{flex-wrap:wrap}.gl-fila .es{justify-items:start;text-align:left}}
 </style>
 </head>
 <body class="en-dash">
@@ -1206,26 +1243,7 @@ html[data-tema="claro"] .px-campo input[type=date],html[data-tema="claro"] .gs-r
 <section class="page" id="page-clientes"><div class="pt" id="cl-wrap"></div></section>
 
 <!-- ═══════════════ GALERÍAS ═══════════════ -->
-<section class="page" id="page-galerias">
-  <div class="page-header">
-    <div class="page-title">Galerías</div>
-    <button class="btn btn-primary" onclick="openNuevoCliente()">＋ Nuevo cliente</button>
-  </div>
-  <div class="cards" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
-    <div class="card"><div class="card-label">CLIENTES ACTIVOS</div><div class="card-value" id="gal-activos">0</div></div>
-    <div class="card"><div class="card-label">PENDIENTES DE DESCARGA</div><div class="card-value" id="gal-pendientes" style="color:var(--yellow)">0</div></div>
-    <div class="card"><div class="card-label">REACTIVADOS</div><div class="card-value" id="gal-reactivados" style="color:#6495ED">0</div></div>
-    <div class="card"><div class="card-label">TOTAL DEL AÑO</div><div class="card-value" id="gal-total">0</div></div>
-  </div>
-  <div class="tabs" id="gal-tabs" style="margin-bottom:16px">
-    <button class="tab active" onclick="filtrarGal('todos',this)">Todos</button>
-    <button class="tab" onclick="filtrarGal('activo',this)">Activos</button>
-    <button class="tab" onclick="filtrarGal('descargado',this)">Descargados</button>
-    <button class="tab" onclick="filtrarGal('expirado',this)">Expirados</button>
-    <button class="tab" onclick="filtrarGal('reactivado',this)">Reactivados</button>
-  </div>
-  <div class="gal-cards" id="gal-list"></div>
-</section>
+<section class="page" id="page-galerias"><div class="pt" id="gal-wrap"></div></section>
 
 <!-- ═══════════════ ANALÍTICAS ═══════════════ -->
 <section class="page" id="page-analiticas"><div class="pt" id="an-wrap"></div></section>
@@ -1582,7 +1600,7 @@ function nav(id){
   document.getElementById('page-'+id).classList.add('active');
   // Only the Dashboard follows the premium light/dark theme so far; the other
   // sections keep their original dark background.
-  document.body.classList.toggle('en-dash', ['dashboard','calendario','alertas','trabajos','nuevo-trabajo','contratos','documentos','gastos','reportes','analiticas','clientes'].includes(id));
+  document.body.classList.toggle('en-dash', ['dashboard','calendario','alertas','trabajos','nuevo-trabajo','contratos','documentos','gastos','reportes','analiticas','clientes','galerias'].includes(id));
   document.querySelectorAll('.sb-link').forEach(l=>{ if(l.getAttribute('onclick')?.includes(`'${id}'`)) l.classList.add('active'); });
   closeSb();
   loadSection(id);
@@ -4101,108 +4119,132 @@ async function guardarNotaCliente(nombre){
 // ═══════════════════════════════════════════════════════════
 // GALERÍAS
 // ═══════════════════════════════════════════════════════════
+// Galerías ("lo urgente primero", igual que la app): la que vence pronto sin
+// descargar sale en grande con borde de luz; a la derecha números y actividad.
+const GAL_TIPOS={boda:'Boda',xvanios:'XV Años',corporativo:'Corporativo',deportivo:'Deportivo',graduacion:'Graduación',otro:'Evento'};
+const GAL_AVISO=7;
+const GAL_SIT={
+  activa:{t:'Activa',c:'var(--pf-exito)',i:'<svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>'},
+  porVencer:{t:'Vence pronto',c:'var(--pf-aviso)',i:'<svg viewBox="0 0 24 24"><path d="M7 3h10M7 21h10M8 3v4l4 5-4 5v4M16 3v4l-4 5 4 5v4"/></svg>'},
+  descargada:{t:'Descargada',c:'#6495ED',i:'<svg viewBox="0 0 24 24"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg>'},
+  vencida:{t:'Vencida',c:'var(--pf-error)',i:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>'},
+};
+let galFiltro='todas', galQ='', galListo=false;
+const galGal=()=>allClientes.filter(c=>c.tipo!=='contacto');
+const galDias=c=>c.expira?Math.max(0,Math.ceil((new Date(c.expira)-new Date())/864e5)):null;
+const galVencida=c=>c.expira?new Date(c.expira)<new Date():c.estado==='expirado';
+const galDescargo=c=>(c.descargas||[]).length>0;
+function galSit(c){
+  if(galVencida(c)) return 'vencida';
+  if(galDescargo(c)) return 'descargada';
+  const d=galDias(c); if(d!==null&&d<=GAL_AVISO) return 'porVencer';
+  return 'activa';
+}
+const galUrgentes=()=>galGal().filter(c=>galSit(c)==='porVencer').sort((a,b)=>galDias(a)-galDias(b));
+const galA=(anim,i,extra='')=>`${anim?' px-in':''}" style="--i:${i};${extra}"`;
+const galLink=c=>`${location.origin}/galeria?codigo=${c.codigo}`;
+function galHace(iso){
+  const s=(Date.now()-new Date(iso))/1000;
+  if(!(s>=0)) return fmtFecha(iso);
+  if(s<60) return 'hace un momento';
+  const m=s/60, h=m/60, d=h/24;
+  if(m<60) return `hace ${Math.round(m)} min`;
+  if(h<24) return `hace ${Math.round(h)} hora${Math.round(h)===1?'':'s'}`;
+  if(d<2) return 'ayer';
+  if(d<30) return `hace ${Math.round(d)} días`;
+  return fmtFecha(iso);
+}
+function galActividad(){
+  const ev=[];
+  galGal().forEach(c=>{
+    if(c.creado) ev.push([c.creado,c.nombre,'galería creada','var(--pf-marca)']);
+    const vs=(c.visitas||[]).filter(v=>typeof v==='string').sort();
+    if(vs.length) ev.push([vs[vs.length-1],c.nombre,vs.length===1?'abrió su galería':`abrió su galería (${vs.length} veces)`,'var(--pf-exito)']);
+    (c.descargas||[]).forEach(x=>x.fecha&&ev.push([x.fecha,c.nombre,!x.tipo||x.tipo==='todo'?'descargó todas las fotos':'descargó fotos','#6495ED']));
+    (c.reactivaciones||[]).forEach(r=>r.fecha&&ev.push([r.fecha,c.nombre,`reactivada por ${r.dias} días`,'var(--pf-aviso)']));
+    if(galVencida(c)&&!galDescargo(c)&&c.expira) ev.push([c.expira,c.nombre,'venció sin descargar','var(--pf-error)']);
+  });
+  return ev.filter(e=>!isNaN(new Date(e[0]))).sort((a,b)=>new Date(b[0])-new Date(a[0])).slice(0,8);
+}
+
 async function loadGalerias(){
+  const w=document.getElementById('gal-wrap');
+  if(!galListo) w.innerHTML=galHead(true)+`<div class="gl-cols"><div style="display:grid;gap:12px">${[0,1,2].map(()=>'<div class="px-brillo" style="height:90px"></div>').join('')}</div><div class="px-brillo" style="height:300px"></div></div>`;
   allClientes=await api('/api/clientes');
-  const galClientes=allClientes.filter(c=>c.tipo!=='contacto');
-  const activos=galClientes.filter(c=>c.estado==='activo').length;
-  const pendientes=galClientes.filter(c=>c.estado==='activo'&&!(c.descargas||[]).length).length;
-  document.getElementById('gal-activos').textContent=activos;
-  document.getElementById('gal-pendientes').textContent=pendientes;
-  document.getElementById('gal-total').textContent=galClientes.length;
-  document.getElementById('gal-reactivados').textContent=galClientes.filter(c=>(c.reactivaciones||[]).length>0).length;
-  const list=document.getElementById('gal-list');
-  const tipoLabels={boda:'Boda',xvanios:'XV Años',corporativo:'Corporativo',deportivo:'Deportivo',graduacion:'Graduación',otro:'Evento'};
-
-  function galCard(c){
-    const dias=c.expira?Math.max(0,Math.ceil((new Date(c.expira)-new Date())/86400000)):null;
-    const link=`${location.origin}/galeria?codigo=${c.codigo}`;
-    const reacs=c.reactivaciones||[];
-    return `<div class="gal-card" id="gcard-${c.codigo}">
-      <div class="gal-card-top">
-        <div>
-          <div class="gal-card-name">${esc(c.nombre)} ${reacs.length?`<span class="reac-tag">↺ Reactivado ${reacs.length}x</span>`:''}</div>
-        </div>
-        <span class="pill ${c.estado==='activo'?'pill-green':c.estado==='descargado'?'pill-blue':'pill-red'}">${c.estado==='activo'?'Activo':c.estado==='descargado'?'Descargado':'Expirado'}</span>
-      </div>
-      <div class="link-box">
-        <span title="${esc(link)}">${esc(link)}</span>
-        <button class="copy-btn" onclick="copyText('${escJs(link)}',this)">📋 Copiar</button>
-      </div>
-      <div class="link-box" style="margin-top:4px">
-        <span style="color:var(--cream);font-weight:500;letter-spacing:1px">🔑 ${esc(c.codigo)}</span>
-        <button class="copy-btn" onclick="copyText('${escJs(c.codigo)}',this)">📋</button>
-      </div>
-      <div class="gal-card-meta">
-        <span>📂 ${esc(tipoLabels[c.tipo]||c.tipo)}</span>
-        <span>👁 ${(c.visitas||[]).length} visitas</span>
-        ${dias!==null?`<span style="color:${dias<=3?'var(--yellow)':'inherit'}">⏱ ${dias} días restantes</span>`:'<span>∞ Sin límite</span>'}
-        ${(c.descargas||[]).length?`<span style="color:var(--green)">✅ Descargado ${fmtDateTime(c.descargas[c.descargas.length-1].fecha)}</span>`:'<span style="color:var(--yellow)">⏳ Sin descargar</span>'}
-      </div>
-      <div class="gal-card-actions">
-        <a href="${link}" target="_blank" class="btn btn-ghost btn-sm">👁 Ver galería</a>
-        <button class="btn btn-outline btn-sm" onclick="openReactivar('${c.codigo}')">🔄 Reactivar</button>
-        ${c.whatsapp?`<button class="btn btn-ghost btn-sm" onclick="waGaleria('${c.codigo}')">💬 WA</button>`:''}
-        ${currentUser?.role==='admin'?`<button class="btn btn-danger btn-sm" onclick="eliminarCliente('${c.codigo}')">Eliminar</button>`:''}
-      </div>
-    </div>`;
-  }
-
-  if(!galClientes.length){ list.innerHTML='<div class="empty">No hay clientes con galería</div>'; return; }
-  renderGalCards('todos');
+  galListo=true;
+  galPintar(true);
 }
-
-function filtrarGal(filtro, btn){
-  document.querySelectorAll('#gal-tabs .tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  renderGalCards(filtro);
+function galHead(cargando=false){
+  const n=galGal().length, u=galUrgentes().length;
+  const sub=cargando?'Cargando tus galerías…':u?`${u} por vencer sin descargar`:n?`${n} galería${n===1?'':'s'} · todo al día`:'Crea la primera galería para un cliente';
+  return `<div class="px-h px-in"><div><h1>Galerías</h1><p>${sub}</p></div>
+    <label class="pt-buscar">${PX_ICO.buscar}<input placeholder="Buscar cliente o código…" value="${esc(galQ)}" oninput="galQ=this.value;galLista(false)"></label>
+    <button class="td-b1" onclick="openNuevoCliente()">＋ Nueva galería</button></div>`;
 }
-
-function renderGalCards(filtro){
-  const list=document.getElementById('gal-list');
-  const tipoLabels={boda:'Boda',xvanios:'XV Años',corporativo:'Corporativo',deportivo:'Deportivo',graduacion:'Graduación',otro:'Evento'};
-
-  const galClientes=allClientes.filter(c=>c.tipo!=='contacto');
-  let fil=galClientes;
-  if(filtro==='activo')     fil=galClientes.filter(c=>c.estado==='activo');
-  else if(filtro==='descargado') fil=galClientes.filter(c=>c.estado==='descargado');
-  else if(filtro==='expirado')   fil=galClientes.filter(c=>c.estado==='expirado');
-  else if(filtro==='reactivado') fil=galClientes.filter(c=>(c.reactivaciones||[]).length>0);
-
-  if(!fil.length){ list.innerHTML='<div class="empty">Sin clientes en esta categoría</div>'; return; }
-
-  list.innerHTML=fil.map(c=>{
-    const dias=c.expira?Math.max(0,Math.ceil((new Date(c.expira)-new Date())/86400000)):null;
-    const link=`${location.origin}/galeria?codigo=${c.codigo}`;
-    const reacs=c.reactivaciones||[];
-    return `<div class="gal-card" id="gcard-${c.codigo}">
-      <div class="gal-card-top">
-        <div class="gal-card-name">${esc(c.nombre)} ${reacs.length?`<span class="reac-tag">↺ ${reacs.length}x</span>`:''}</div>
-        <span class="pill ${c.estado==='activo'?'pill-green':c.estado==='descargado'?'pill-blue':'pill-red'}">${c.estado==='activo'?'Activo':c.estado==='descargado'?'Descargado':'Expirado'}</span>
-      </div>
-      <div class="link-box">
-        <span title="${esc(link)}">${esc(link)}</span>
-        <button class="copy-btn" onclick="copyText('${escJs(link)}',this)">📋 Copiar</button>
-      </div>
-      <div class="link-box" style="margin-top:4px">
-        <span style="color:var(--cream);font-weight:500;letter-spacing:1px">🔑 ${esc(c.codigo)}</span>
-        <button class="copy-btn" onclick="copyText('${escJs(c.codigo)}',this)">📋</button>
-      </div>
-      <div class="gal-card-meta">
-        <span>📂 ${esc(tipoLabels[c.tipo]||c.tipo)}</span>
-        <span>👁 ${(c.visitas||[]).length} visitas</span>
-        ${dias!==null?`<span style="color:${dias<=3?'var(--yellow)':'inherit'}">⏱ ${dias} días restantes</span>`:'<span>∞ Sin límite</span>'}
-        ${reacs.length?`<span style="color:#6495ED">↺ Reactivado ${reacs.length}x · Última: ${fmtFecha(reacs[reacs.length-1].fecha)}</span>`:''}
-        ${(c.descargas||[]).length?`<span style="color:var(--green)">✅ Descargado ${fmtDateTime(c.descargas[c.descargas.length-1].fecha)}</span>`:'<span style="color:var(--yellow)">⏳ Sin descargar</span>'}
-      </div>
-      <div class="gal-card-actions">
-        <a href="${link}" target="_blank" class="btn btn-ghost btn-sm">👁 Ver galería</a>
-        <button class="btn btn-outline btn-sm" onclick="openReactivar('${c.codigo}')">🔄 Reactivar</button>
-        ${c.whatsapp?`<button class="btn btn-ghost btn-sm" onclick="waGaleria('${c.codigo}')">💬 WA</button>`:''}
-        ${currentUser?.role==='admin'?`<button class="btn btn-danger btn-sm" onclick="eliminarCliente('${c.codigo}')">Eliminar</button>`:''}
-      </div>
-    </div>`;
+function galPintar(anim){
+  const g=galGal();
+  const num=(k,v,c,i)=>`<div class="px-card px-kpi${pxA(anim,2+i)}><span class="px-k">${k}</span><b style="color:${c}" data-v="${v}">0</b></div>`;
+  document.getElementById('gal-wrap').innerHTML=galHead()+`<div class="gl-cols">
+    <div class="gl-main"><div id="gl-urg"></div>
+      <div class="ct-sh${pxA(anim,3)}><span class="px-k" id="gl-tit">Tus galerías</span><small id="gl-n"></small></div>
+      <div class="pt-seg${galA(anim,3,'justify-self:start')}>${[['todas','Todas'],['activas','Activas'],['descargadas','Descargadas'],['vencidas','Vencidas'],['reactivadas','Reactivadas']].map(([k,l])=>`<button class="${k===galFiltro?'on':''}" onclick="galFiltro='${k}';this.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===this));galLista(false)">${l}</button>`).join('')}</div>
+      <div id="gl-lista" class="gl-lista"></div></div>
+    <div class="gl-lado"><div class="gl-nums">${num('Activas',g.filter(c=>!galVencida(c)).length,'var(--pf-exito)',0)}${num('Descargadas',g.filter(galDescargo).length,'#6495ED',1)}${num('Visitas',g.reduce((s,c)=>s+(c.visitas||[]).length,0),'var(--pf-texto)',2)}${num('Vencidas',g.filter(galVencida).length,'var(--pf-error)',3)}</div>
+      <div class="px-card gl-act${pxA(anim,5)}><span class="px-k" style="margin-bottom:8px">Actividad reciente</span>${(()=>{ const ev=galActividad(); return ev.length?ev.map(([f,n,t,c])=>`<div class="gl-ev" style="--c:${c}"><i></i><div><b>${esc(n)}</b> ${esc(t)}<small>${esc(galHace(f))}</small></div></div>`).join(''):'<div class="px-vacio" style="padding:8px 0;text-align:left">Todavía no hay movimiento</div>'; })()}</div></div></div>`;
+  galUrg(anim); galLista(anim);
+  document.querySelectorAll('#gal-wrap .gl-nums b').forEach(b=>pxContar(b,+b.dataset.v,String,800));
+}
+function galUrg(anim){
+  const el=document.getElementById('gl-urg'), us=galUrgentes();
+  if(!us.length){ el.innerHTML=''; return; }
+  el.innerHTML=`<div class="ct-sh${pxA(anim,1)}><span class="px-k">Por vencer</span><small>Sin descargar todavía</small></div>`+us.map((c,i)=>{
+    const d=galDias(c), v=(c.visitas||[]).length;
+    const total=Math.max((c.reactivaciones||[]).slice(-1)[0]?.dias||c.dias||30,d,1);
+    const cj=escJs(c.codigo);
+    return `<div class="px-card px-luz siempre gl-urg${galA(anim,2+i,'--pf-marca:var(--pf-aviso)')}>
+      <div class="t"><span class="pt-pill" style="--c:var(--pf-aviso)">Vence pronto</span><span class="cod">${esc(c.codigo)}</span></div>
+      <h3>${esc(c.nombre)}</h3><p>${esc(GAL_TIPOS[c.tipo]||'Galería')} · ${v?`la abrió ${v} ${v===1?'vez':'veces'} pero no ha descargado`:'todavía no la abre'}</p>
+      <div class="cuenta"><b data-v="${d}">${d}</b><small>${d===0?'vence hoy':d===1?'día para que venza':'días para que venza'}</small></div>
+      <div class="gasto"><u data-w="${Math.max(4,(1-d/total)*100).toFixed(1)}"></u></div>
+      <div class="acc">${c.whatsapp?`<button class="td-accion" onclick="waGaleria('${cj}',true)">Mandarle recordatorio</button>`:''}
+        <button class="td-b2" onclick="openReactivar('${cj}')">Darle más días</button>
+        <button class="td-b2" onclick="galCopiar('${escJs(galLink(c))}','Link copiado')">Copiar link</button></div></div>`;
   }).join('');
+  pxLuego(()=>el.querySelectorAll('.gasto u').forEach(u=>u.style.width=u.dataset.w+'%'));
 }
+function galLista(anim){
+  const q=galQ.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const urg=new Set(galUrgentes().map(c=>c.codigo));
+  const fil=galGal().filter(c=>{
+    const t=(c.nombre+' '+c.codigo).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    if(q&&!t.includes(q)) return false;
+    const s=galSit(c);
+    if(galFiltro==='activas') return s==='activa'||s==='porVencer';
+    if(galFiltro==='descargadas') return s==='descargada';
+    if(galFiltro==='vencidas') return s==='vencida';
+    if(galFiltro==='reactivadas') return (c.reactivaciones||[]).length>0;
+    return !urg.has(c.codigo)||!!q;
+  });
+  document.getElementById('gl-tit').textContent=urg.size&&!q?'Las demás':'Tus galerías';
+  document.getElementById('gl-n').textContent=fil.length;
+  const admin=currentUser?.role==='admin';
+  document.getElementById('gl-lista').innerHTML=fil.length?fil.map((c,i)=>{
+    const s=GAL_SIT[galSit(c)], d=galDias(c), r=(c.reactivaciones||[]).length, cj=escJs(c.codigo);
+    const det=galSit(c)==='vencida'?'reactívala para dar más días':galSit(c)==='descargada'?`descargó el ${fmtFecha((c.descargas||[]).slice(-1)[0]?.fecha)}`:d===null?'sin límite':d===1?'1 día':`${d} días`;
+    return `<div class="gl-fila${galA(anim,4+Math.min(i,10),'--c:'+s.c)}><span class="ic">${s.i}</span>
+      <div class="tx"><b>${esc(c.nombre)}${r?` <em title="Reactivada ${r} ${r===1?'vez':'veces'}">↺ ${r}</em>`:''}</b><small>${esc(c.codigo)} · ${(c.visitas||[]).length} visitas</small></div>
+      <div class="es"><span class="pt-pill" style="--c:${s.c}">${s.t}</span><small>${esc(det)}</small></div>
+      <details class="td-mas"><summary title="Más acciones">···</summary><div class="td-menu">
+        <button onclick="this.closest('details').open=false;window.open('${escJs(galLink(c))}','_blank')">Ver galería</button>
+        <button onclick="this.closest('details').open=false;galCopiar('${escJs(galLink(c))}','Link copiado')">Copiar link</button>
+        <button onclick="this.closest('details').open=false;galCopiar('${cj}','Código copiado')">Copiar código</button>
+        ${c.whatsapp?`<button onclick="this.closest('details').open=false;waGaleria('${cj}',${galSit(c)==='porVencer'})">Enviar por WhatsApp</button>`:''}
+        <button onclick="this.closest('details').open=false;openReactivar('${cj}')">${galVencida(c)?'Reactivar':'Darle más días'}</button>
+        ${admin?`<button class="rojo" onclick="this.closest('details').open=false;eliminarCliente('${cj}')">Eliminar</button>`:''}
+      </div></details></div>`;
+  }).join(''):`<div class="px-card px-vacio">${galGal().length?'Nada por aquí. Prueba con otro filtro o búsqueda.':'Aún no hay galerías. Crea una y mándale el link a tu cliente.'}</div>`;
+}
+function galCopiar(texto, aviso){ navigator.clipboard.writeText(texto).then(()=>toast(aviso)).catch(()=>toast('No se pudo copiar','err')); }
 function openNuevoCliente(){ openModal('modal-nuevo-cliente'); }
 async function crearCliente(e){
   e.preventDefault();
@@ -4224,12 +4266,25 @@ async function confirmarReactivar(){
   toast(`✓ Acceso reactivado por ${dias} días`);
 }
 async function eliminarCliente(codigo){ if(!confirm('¿Eliminar cliente? El código dejará de funcionar.')) return; await api('/api/clientes/'+codigo,{method:'DELETE'}); await loadGalerias(); }
-function waGaleria(codigo){
+function waGaleria(codigo, recordatorio=false){
   const c=allClientes.find(c=>c.codigo===codigo); if(!c||!c.whatsapp) return;
   const dias=c.expira?Math.max(0,Math.ceil((new Date(c.expira)-new Date())/86400000)):null;
   const link=`${location.origin}/galeria?codigo=${codigo}`;
-  const msg=`Hola ${c.nombre}, tus fotos de ${c.tipo} ya están listas 📸\nPodés verlas y descargarlas en este link:\n${link}\n\nTu código de acceso es: ${codigo}\n${dias?`El acceso estará disponible por ${dias} días.`:'El acceso no tiene límite de tiempo.'}`;
-  window.open(`https://wa.me/${c.whatsapp}?text=${encodeURIComponent(msg)}`,'_blank');
+  const evento=GAL_TIPOS[c.tipo]||c.tipo||'';
+  const cuando=dias===0?'hoy':dias===1?'mañana':`en ${dias} días`;
+  const msg=recordatorio&&dias!==null
+    ? `Hola ${c.nombre} 👋 Te recuerdo que tu galería de ${evento} vence ${cuando}. Descargá tus fotos antes de que se cierre el acceso:
+${link}
+
+Tu código de acceso es: ${codigo}`
+    : `Hola ${c.nombre}, tus fotos de ${evento} ya están listas 📸
+Podés verlas y descargarlas en este link:
+${link}
+
+Tu código de acceso es: ${codigo}
+${dias?`El acceso estará disponible por ${dias} días.`:'El acceso no tiene límite de tiempo.'}`;
+  const wa=String(c.whatsapp).replace(/\D/g,'');
+  window.open(`https://wa.me/${wa.length===8?'503'+wa:wa}?text=${encodeURIComponent(msg)}`,'_blank');
 }
 
 // ═══════════════════════════════════════════════════════════

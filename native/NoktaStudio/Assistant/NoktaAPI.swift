@@ -259,8 +259,18 @@ struct NoktaCliente: Codable {
     var descargas: [NoktaClienteDescarga]?
     var reactivaciones: [NoktaReactivacion]?
 }
-/// Solo se usa para contar entradas — la forma exacta de cada visita no importa aquí.
-struct NoktaClienteVisita: Codable {}
+/// Una visita a la galería: el servidor guarda la fecha ISO como texto.
+/// Tolerante: si algún registro viejo no es texto, cuenta igual sin fecha.
+struct NoktaClienteVisita: Codable {
+    var fecha: String?
+    init(from decoder: Decoder) throws {
+        fecha = try? decoder.singleValueContainer().decode(String.self)
+    }
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        try c.encode(fecha)
+    }
+}
 struct NoktaClienteDescarga: Codable {
     var fecha: String
     var tipo: String?

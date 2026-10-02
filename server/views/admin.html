@@ -4656,7 +4656,7 @@ function eqPintar(anim){
   const pag=Number(m.pagado)||0, pen=Number(m.pendiente)||0, f=pag+pen>0?pag/(pag+pen):1;
   w.innerHTML=`<div class="eq-wrap">
     <div class="eq-visor${anim?' px-in':''}" style="--i:1" id="eq-visor">${eqFoto(m,i,'120px',true)}
-      <i class="eq-vig"></i><i class="eq-esq a"></i><i class="eq-esq b"></i><i class="eq-esq c"></i><i class="eq-esq d"></i><i class="eq-foco"></i>
+      <i class="eq-vig"></i><i class="eq-esq a"></i><i class="eq-esq b"></i><i class="eq-esq c"></i><i class="eq-esq d"></i>
       <div class="eq-hud arriba"><span><b class="eq-rec"></b>MI EQUIPO</span><span>${n} PERSONA${n===1?'':'S'} · ${pdDinero(tD)} PENDIENTE</span></div>
       <div class="eq-hud abajo"><span class="eq-nom"><small>${esc((m.rol||'').toUpperCase())}</small>${esc(m.nombre||'—')}${m.usuarioNombre&&!m.foto?`<em>${esc(m.usuarioNombre)} aún no sube su foto</em>`:''}</span>
         <span class="eq-med"><span class="esc">${[...Array(13)].map((_,k)=>`<i class="${k%3===0?'g':''}"></i>`).join('')}<b style="left:calc(${((1-f)*100).toFixed(1)}% - 5px)"></b></span><small>PAGADO ◂ ▸ LE DEBES</small></span>

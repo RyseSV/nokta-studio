@@ -287,14 +287,6 @@ struct EquipoView: View {
                     }
                 }
                 .stroke(.white.opacity(0.8), lineWidth: 2)
-                // Cuadro de enfoque
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(Color(red: 0.42, green: 1, blue: 0.62), lineWidth: 1.5)
-                    .shadow(color: Color(red: 0.42, green: 1, blue: 0.62).opacity(0.6), radius: 6)
-                    .frame(width: 120, height: 120)
-                    .scaleEffect(enfoque ? 1 : 1.5)
-                    .opacity(enfoque ? 1 : 0)
-                    .position(x: g.size.width / 2, y: g.size.height * 0.4)
             }
 
             VStack {

@@ -1490,12 +1490,12 @@ html[data-tema="claro"] .modal input[type=date],html[data-tema="claro"] .modal i
       <input type="hidden" id="eq-id">
       <div class="form-grid">
         <div class="form-group"><label>Nombre *</label><input id="eq-nombre" required></div>
-        <div class="form-group"><label>Rol *</label><input id="eq-rol" required placeholder="Fotógrafo, editora…"></div>
+        <div class="form-group"><label>Rol</label><input id="eq-rol" placeholder="Fotógrafo, editora…"></div>
         <div class="form-group" style="grid-column:1/-1"><label>Cuenta (para su foto)</label><select id="eq-usuario" onchange="eqCuentaElegida(this)"><option value="">Sin cuenta</option></select></div>
         <div class="form-group"><label>Tipo de pago</label>
           <select id="eq-tipo-pago"><option value="fijo">Fijo por evento</option><option value="comision">Comisión %</option></select>
         </div>
-        <div class="form-group"><label>Comisión % / monto por evento</label><input type="number" id="eq-comision" step="0.01" value="0"></div>
+        <div class="form-group"><label>Por evento ($) o comisión (%)</label><input type="number" id="eq-comision" step="0.01" value="0"></div>
         <div class="form-group"><label>Total pagado ($)</label><input type="number" id="eq-pagado" step="0.01" value="0"></div>
         <div class="form-group"><label>Pendiente ($)</label><input type="number" id="eq-pendiente" step="0.01" value="0"></div>
       </div>

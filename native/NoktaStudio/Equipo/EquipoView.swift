@@ -532,7 +532,7 @@ private struct EquipoFormSheet: View {
             }
 
             HStack(spacing: 10) {
-                campo(form.tipo == "comision" ? "Comisión (%)" : "Monto por evento ($)") { TextField("", value: $form.comision, format: .number) }
+                campo(form.tipo == "comision" ? "Comisión (%)" : "Por evento ($)") { TextField("", value: $form.comision, format: .number) }
                 campo("Pagado ($)") { TextField("", value: $form.pagado, format: .number) }
                 campo("Pendiente ($)") { TextField("", value: $form.pendiente, format: .number) }
             }
@@ -546,7 +546,8 @@ private struct EquipoFormSheet: View {
                 Button(isSaving ? "Guardando…" : "Guardar") { Task { await guardar() } }
                     .buttonStyle(NoktaBotonPrimario())
                     .keyboardShortcut(.defaultAction)
-                    .disabled(isSaving || form.nombre.trimmingCharacters(in: .whitespaces).isEmpty || form.rol.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(isSaving)
+                    .opacity(isSaving ? 0.6 : 1)
             }
         }
         .padding(26)
@@ -561,6 +562,9 @@ private struct EquipoFormSheet: View {
 
     private func guardar() async {
         guard !isSaving else { return }
+        guard !form.nombre.trimmingCharacters(in: .whitespaces).isEmpty else {
+            errorMessage = "Escribe el nombre de la persona"; return
+        }
         isSaving = true
         defer { isSaving = false }
         errorMessage = await onGuardar(form)

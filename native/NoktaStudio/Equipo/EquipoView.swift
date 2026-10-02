@@ -140,11 +140,16 @@ private struct FotoMiembro: View {
                 AsyncImage(url: url) { fase in
                     if let img = fase.image {
                         if completa {
-                            ZStack {
-                                img.resizable().scaledToFill().blur(radius: 40).overlay(Color.black.opacity(0.35))
-                                img.resizable().interpolation(.high).scaledToFit()
-                            }
-                            .transition(.opacity)
+                            // La foto completa ocupa el espacio que le dan; la copia
+                            // desenfocada va de fondo y no puede agrandar el visor.
+                            img.resizable().interpolation(.high).scaledToFit()
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .background {
+                                    img.resizable().scaledToFill()
+                                        .blur(radius: 40).overlay(Color.black.opacity(0.35))
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity).clipped()
+                                }
+                                .transition(.opacity)
                         } else {
                             img.resizable().interpolation(.high).scaledToFill().transition(.opacity)
                         }
@@ -152,6 +157,7 @@ private struct FotoMiembro: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .clipped()
     }
 }

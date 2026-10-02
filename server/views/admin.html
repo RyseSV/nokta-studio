@@ -1016,6 +1016,39 @@ html[data-tema="claro"] .modal input[type=date],html[data-tema="claro"] .modal i
 .eq-acc .td-accion{margin:0;width:auto;height:36px;padding:0 16px}
 .eq-nota{font-size:11.5px;color:var(--pf-tenue);line-height:1.55}
 @media(max-width:600px){.eq-visor{height:360px}.eq-nom{font-size:22px}.eq-med{display:none}}
+
+/* Usuarios: gafetes del estudio */
+#page-usuarios{color:var(--pf-texto)}
+.us-riel{height:14px;margin-top:6px;border-radius:99px;background:linear-gradient(180deg,#3d3a37,#191816);box-shadow:0 4px 10px rgba(0,0,0,.45)}
+.us-gafetes{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:30px 34px;margin-top:-4px}
+.us-colg{display:flex;flex-direction:column;align-items:center;transform-origin:50% 0;animation:usMece 3.6s ease-in-out infinite;animation-delay:calc(var(--i)*-.9s)}
+.us-colg:hover{animation-play-state:paused}
+@keyframes usMece{0%,100%{transform:rotate(2.2deg)}50%{transform:rotate(-2.2deg)}}
+@media (prefers-reduced-motion:reduce){.us-colg{animation:none}}
+.us-cinta{width:14px;height:90px;border-radius:2px;background:repeating-linear-gradient(180deg,var(--cc) 0 6px,color-mix(in srgb,var(--cc) 70%,#000) 6px 12px)}
+.us-broche{width:26px;height:16px;margin-top:-2px;border-radius:4px;background:linear-gradient(180deg,#d9d6cf,#8c8984)}
+.us-tarj{position:relative;width:200px;height:280px;margin-top:-2px;perspective:900px;cursor:pointer}
+.us-cara{position:absolute;inset:0;border-radius:16px;backface-visibility:hidden;-webkit-backface-visibility:hidden;transition:transform .8s cubic-bezier(.3,.7,.2,1);box-shadow:0 18px 30px -12px rgba(0,0,0,.7)}
+.us-frente{background:linear-gradient(180deg,#F6F2EA,#E8E1D4);color:#1C1C1A;display:flex;flex-direction:column;align-items:center;text-align:center;padding:14px 12px}
+.us-frente .ranura{width:40px;height:7px;border-radius:99px;background:#cbc3b5}
+.us-foto{position:relative;width:108px;height:122px;margin-top:14px;border-radius:12px;overflow:hidden;display:grid;place-items:center;background:linear-gradient(135deg,#D17345,#4C1F0F);box-shadow:0 0 0 3px #fff,0 6px 12px rgba(0,0,0,.18)}
+.us-foto em{font-style:normal;font-size:40px;font-weight:300;color:rgba(255,255,255,.92);letter-spacing:-.02em}
+.us-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.us-frente h4{margin-top:12px;font-size:15px;font-weight:500;line-height:1.25}
+.us-frente .rol{margin-top:6px;font-size:9px;font-weight:600;letter-spacing:.24em;padding:4px 10px;border-radius:99px;color:#fff;background:var(--cc)}
+.us-frente .marca{margin-top:auto;font-size:9.5px;font-weight:500;color:#958d81;display:flex;align-items:center;gap:4px}
+.us-frente .marca i{width:5px;height:5px;border-radius:50%;background:#D0673A}
+.us-atras{transform:rotateY(180deg);background:linear-gradient(180deg,#24221F,#171615);border:1px solid rgba(255,255,255,.07);padding:16px;display:flex;flex-direction:column;gap:10px;color:#F4F1EA}
+.us-atras small{display:block;font-size:9px;font-weight:500;letter-spacing:.16em;color:rgba(255,255,255,.35)}
+.us-atras b{display:block;font-size:13px;font-weight:400;margin-top:2px}
+.us-atras .bt{margin-top:auto;display:grid;gap:6px}
+.us-atras .bt button{height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.06);color:#F4F1EA;font:500 11.5px 'Poppins',sans-serif;cursor:pointer}
+.us-atras .bt button:hover{background:rgba(255,255,255,.11)}
+.us-atras .bt button.rojo{color:var(--pf-error)}
+.us-tarj.vuelta .us-frente{transform:rotateY(-180deg)}.us-tarj.vuelta .us-atras{transform:rotateY(0)}
+.us-nuevo{width:200px;height:280px;margin:108px auto 0;border-radius:16px;border:1.5px dashed var(--pf-borde);background:none;display:grid;place-content:center;gap:6px;color:var(--pf-tenue);font:400 12px 'Poppins',sans-serif;cursor:pointer}
+.us-nuevo b{font-size:28px;font-weight:200}
+.us-pista{text-align:center;font-size:11.5px;color:var(--pf-tenue);margin-top:4px}
 </style>
 </head>
 <body class="en-dash">
@@ -1376,16 +1409,12 @@ html[data-tema="claro"] .modal input[type=date],html[data-tema="claro"] .modal i
 <section class="page" id="page-reportes"><div class="pt" id="rp-wrap"></div></section>
 
 <!-- ═══════════════ USUARIOS ═══════════════ -->
-<section class="page" id="page-usuarios">
-  <div class="page-header">
-    <div class="page-title">Usuarios</div>
-    <button class="btn btn-primary" onclick="openUsuarioModal()">＋ Nuevo usuario</button>
-  </div>
-  <div class="table-card">
-    <table><thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Creado</th><th></th></tr></thead>
-    <tbody id="usuarios-tbody"></tbody></table>
-  </div>
-</section>
+<section class="page" id="page-usuarios"><div class="pt">
+  <div class="px-h px-in"><div><h1>Usuarios</h1><p id="us-sub">Las cuentas que entran a Nokta</p></div><button class="td-b1" onclick="openUsuarioModal()">＋ Nueva cuenta</button></div>
+  <div class="us-riel px-in" style="--i:1"></div>
+  <div class="us-gafetes" id="usuarios-tbody"></div>
+  <p class="us-pista">Toca un gafete para voltearlo</p>
+</div></section>
 
 </main>
 
@@ -1736,7 +1765,7 @@ function nav(id){
   document.getElementById('page-'+id).classList.add('active');
   // Only the Dashboard follows the premium light/dark theme so far; the other
   // sections keep their original dark background.
-  document.body.classList.toggle('en-dash', ['dashboard','calendario','alertas','trabajos','nuevo-trabajo','contratos','documentos','gastos','reportes','analiticas','clientes','galerias','equipo'].includes(id));
+  document.body.classList.toggle('en-dash', ['dashboard','calendario','alertas','trabajos','nuevo-trabajo','contratos','documentos','gastos','reportes','analiticas','clientes','galerias','equipo','usuarios'].includes(id));
   document.querySelectorAll('.sb-link').forEach(l=>{ if(l.getAttribute('onclick')?.includes(`'${id}'`)) l.classList.add('active'); });
   closeSb();
   loadSection(id);
@@ -1797,24 +1826,34 @@ async function initSession(){
 // ═══════════════════════════════════════════════════════════
 let allUsuarios = [];
 
+// Iniciales de nombre y apellido ("Carlos Méndez" → "CM", "Gabriel" → "G").
+function usIniciales(n){ const p=String(n||'').trim().split(/\s+/).filter(Boolean); if(!p.length) return '·'; return (p[0][0]+(p.length>1?p[p.length-1][0]:'')).toUpperCase(); }
+// Usuarios ("gafetes del estudio"): cada cuenta es una credencial colgada que
+// se mece; al tocarla se voltea y atrás están su usuario y las acciones.
 async function loadUsuarios(){
   allUsuarios = await api('/api/usuarios');
-  const tbody = document.getElementById('usuarios-tbody');
-  const roles = { admin:'Administrador', editor:'Editor' };
-  tbody.innerHTML = allUsuarios.length
-    ? allUsuarios.map(u=>{
-        const iconSrc = u.foto || (u.icono === 'cream' ? '/img/logo/avatar_cream.png' : '/img/logo/avatar_dark.png');
-        const initials = (u.nombre||'?')[0].toUpperCase();
-        const avatar = `<div style="width:32px;height:32px;border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;background:var(--ember);color:#fff;font-weight:600;font-size:13px;vertical-align:middle;margin-right:8px;flex-shrink:0"><img src="${esc(iconSrc)}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='${esc(initials)}'"></div>`;
-        return `<tr onclick="openUsuarioModal('${u._id}')">
-          <td style="display:flex;align-items:center">${avatar}<b>${esc(u.nombre||'—')}</b></td>
-          <td style="font-family:monospace;font-size:12px">@${esc(u.username)}</td>
-          <td><span class="pill ${u.role==='admin'?'pill-blue':'pill-green'}">${roles[u.role]||u.role}</span></td>
-          <td>${u.creado?fmtFecha(u.creado):'—'}</td>
-          <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openUsuarioModal('${u._id}')">Editar</button></td>
-        </tr>`;
-      }).join('')
-    : '<tr><td colspan="5" class="empty">No hay usuarios</td></tr>';
+  const n=allUsuarios.length, a=allUsuarios.filter(u=>u.role==='admin').length;
+  document.getElementById('us-sub').textContent=`${n} cuenta${n===1?'':'s'} · ${a} administrador${a===1?'':'es'}`;
+  const el=document.getElementById('usuarios-tbody');
+  el.innerHTML=allUsuarios.map((u,i)=>{
+    const admin=u.role==='admin', cc=admin?'var(--pf-marca)':'var(--pf-exito)';
+    const ma=mesAnioDeFecha(u.creado||''); const desde=ma?`${PX_MES_C[ma.mes]} ${ma.anio}`:'—';
+    return `<div class="us-colg px-in" style="--i:${i};--cc:${cc}"><div class="us-cinta"></div><div class="us-broche"></div>
+      <div class="us-tarj" onclick="this.classList.toggle('vuelta')">
+        <div class="us-cara us-frente"><span class="ranura"></span>
+          <span class="us-foto"><em>${esc(usIniciales(u.nombre||u.username))}</em>${u.foto?`<img src="${esc(u.foto)}" alt="" onerror="this.remove()">`:''}</span>
+          <h4>${esc(u.nombre||u.username)}</h4><span class="rol">${admin?'ADMIN':'EDITOR'}</span><span class="marca"><i></i>nokta studio</span></div>
+        <div class="us-cara us-atras"><div><small>USUARIO</small><b style="font-family:ui-monospace,Menlo,monospace">@${esc(u.username)}</b></div>
+          <div><small>ACCESO</small><b>${admin?'Total':'Normal'}</b></div><div><small>DESDE</small><b>${desde}</b></div>
+          <div class="bt"><button onclick="event.stopPropagation();openUsuarioModal('${escJs(u._id)}')">Editar</button><button onclick="event.stopPropagation();openUsuarioModal('${escJs(u._id)}');setTimeout(()=>document.getElementById('u-password').focus(),200)">Cambiar contraseña</button>
+            ${admin?'':`<button class="rojo" onclick="event.stopPropagation();usQuitar('${escJs(u._id)}')">Quitar acceso</button>`}</div></div></div></div>`;
+  }).join('')+`<button class="us-nuevo px-in" style="--i:${n}" onclick="openUsuarioModal()"><b>＋</b>Nueva cuenta</button>`;
+}
+async function usQuitar(id){
+  const u=allUsuarios.find(x=>x._id===id); if(!u) return;
+  if(!confirm(`¿Quitarle el acceso a ${u.nombre||u.username}? Se borra la cuenta y ya no podrá entrar al panel.`)) return;
+  try{ await api('/api/usuarios/'+id,{method:'DELETE'}); toast('Acceso quitado'); await loadUsuarios(); }
+  catch(e){ toast('No se pudo quitar el acceso: '+e.message,'err'); }
 }
 
 function openUsuarioModal(id){

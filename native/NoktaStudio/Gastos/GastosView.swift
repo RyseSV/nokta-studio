@@ -372,6 +372,7 @@ struct GastosView: View {
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 8) { filtrosLista; Spacer(); contadorLista }
                 VStack(alignment: .leading, spacing: 8) { HStack(spacing: 8) { filtrosLista }; contadorLista }
+                VStack(alignment: .leading, spacing: 8) { filtrosLista; contadorLista }
             }
             if vm.filtrados.isEmpty {
                 NoktaVacio(icono: "creditcard", titulo: vm.isLoading ? "Cargando…" : (vm.gastos.isEmpty ? "Aún no hay gastos" : "Nada con esos filtros"),
@@ -431,8 +432,8 @@ struct GastosView: View {
             // iPhone: categorías en su propia fila y lo demás debajo.
             VStack(alignment: .leading, spacing: 8) {
                 campoConcepto
-                categoriasRapidas
-                HStack(spacing: 8) { campoMonto; campoFecha; Spacer(minLength: 0); botonRegistrar }
+                HStack(spacing: 8) { campoMonto; campoFecha; Spacer(minLength: 0) }
+                HStack(spacing: 8) { categoriasRapidas; Spacer(minLength: 0); botonRegistrar }
             }
         }
         .padding(8)

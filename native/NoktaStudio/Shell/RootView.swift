@@ -174,7 +174,7 @@ struct RootView: View {
         #if os(macOS)
         macSelection = item
         #else
-        iosSeleccion = item
+        irIOS(item)
         #endif
         onSelect(item)
     }
@@ -385,138 +385,126 @@ struct RootView: View {
         .help("Apariencia: \(appearance.selection.label) — clic para cambiar")
     }
 
-    // MARK: - iOS: same sidebar as the Mac, as a drawer that slides in from
-    // the left over the current section. The app opens straight on the
-    // Dashboard; each section keeps its own header, so there's no system
-    // navigation bar (it overlapped the content on scroll).
+    // MARK: - iOS: barra de pestañas nativa (vidrio de iOS) con lo más usado
+    // a un toque, y "Más" con el resto de secciones agrupadas como en el menú
+    // de la Mac. Cada pestaña es su propio NavigationStack, así que regresar
+    // desliza desde la orilla como cualquier app del iPhone.
     #if os(iOS)
+    private static let pestanas: [NoktaSection] = [.dashboard, .calendario, .trabajos, .clientes]
     #if DEBUG
     // Solo para revisar pantallas en el simulador: NOKTA_SECCION=trabajos
-    @State private var iosSeleccion: NoktaSection = ProcessInfo.processInfo.environment["NOKTA_SECCION"].flatMap(NoktaSection.init(rawValue:)) ?? .dashboard
+    private static let seccionInicial = ProcessInfo.processInfo.environment["NOKTA_SECCION"].flatMap(NoktaSection.init(rawValue:))
+    @State private var pestana: PestanaIOS = seccionInicial.map { pestanas.contains($0) ? .seccion($0) : .mas } ?? .seccion(.dashboard)
+    @State private var rutaMas: [NoktaSection] = seccionInicial.map { pestanas.contains($0) ? [] : [$0] } ?? []
     #else
-    @State private var iosSeleccion: NoktaSection = .dashboard
+    @State private var pestana: PestanaIOS = .seccion(.dashboard)
+    @State private var rutaMas: [NoktaSection] = []
     #endif
-    @State private var menuAbierto = false
-    @State private var arrastreMenu: CGFloat = 0
-    private let anchoMenu: CGFloat = 300
+
+    enum PestanaIOS: Hashable { case seccion(NoktaSection), mas }
 
     private var iOSShell: some View {
-        ZStack(alignment: .leading) {
-            VStack(spacing: 0) {
-                barraSuperior
-                NavigationStack {
-                    detailView(for: iosSeleccion)
+        TabView(selection: $pestana) {
+            ForEach(Self.pestanas) { item in
+                Tab(item == .dashboard ? "Inicio" : item.label, systemImage: item.icon, value: PestanaIOS.seccion(item)) {
+                    NavigationStack {
+                        detailView(for: item)
+                            .toolbar(.hidden, for: .navigationBar)
+                    }
+                }
+            }
+            Tab("Más", systemImage: "square.grid.2x2.fill", value: PestanaIOS.mas) {
+                NavigationStack(path: $rutaMas) {
+                    pantallaMas
                         .toolbar(.hidden, for: .navigationBar)
+                        .navigationDestination(for: NoktaSection.self) { item in
+                            detailView(for: item)
+                                .navigationTitle("")
+                                .navigationBarTitleDisplayMode(.inline)
+                                .onAppear { onSelect(item) }
+                        }
                 }
             }
-            .background(NoktaTheme.fondo)
+            .badge(unreadAlertas)
+        }
+        .tint(NoktaTheme.marca)
+        .onChange(of: pestana) { _, _ in trabajoAbrir = nil }
+    }
 
-            // Borde izquierdo: deslizar para abrir el menú.
-            Color.clear
-                .frame(width: 18)
-                .contentShape(Rectangle())
-                .gesture(DragGesture(minimumDistance: 12).onEnded { v in
-                    if v.translation.width > 50 { abrirMenu(true) }
-                })
-                .ignoresSafeArea()
-
-            if menuAbierto {
-                Color.black.opacity(0.5)
-                    .ignoresSafeArea()
-                    .onTapGesture { abrirMenu(false) }
-                    .transition(.opacity)
-                menuLateral
-                    .frame(width: anchoMenu)
-                    .background(NoktaTheme.fondo.ignoresSafeArea())
-                    .overlay(alignment: .trailing) { Rectangle().fill(NoktaTheme.borde).frame(width: 1).ignoresSafeArea() }
-                    .offset(x: min(0, arrastreMenu))
-                    .gesture(DragGesture(minimumDistance: 10)
-                        .onChanged { arrastreMenu = $0.translation.width }
-                        .onEnded { v in
-                            if v.translation.width < -80 { abrirMenu(false) }
-                            withAnimation(.spring(duration: 0.3)) { arrastreMenu = 0 }
-                        })
-                    .transition(.move(edge: .leading))
-                    .zIndex(1)
-            }
+    private func irIOS(_ item: NoktaSection) {
+        if Self.pestanas.contains(item) {
+            pestana = .seccion(item)
+        } else {
+            rutaMas = [item]
+            pestana = .mas
         }
     }
 
-    private func abrirMenu(_ abrir: Bool) {
-        withAnimation(.spring(duration: 0.38, bounce: 0.08)) { menuAbierto = abrir }
-    }
-
-    /// Botón de menú + logo + foto. Lo demás (título, buscador, botones) lo
-    /// pone cada sección en su propio encabezado, igual que en la Mac.
-    private var barraSuperior: some View {
-        HStack(spacing: 12) {
-            Button { abrirMenu(true) } label: {
-                Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 16, weight: .light))
-                    .foregroundStyle(NoktaTheme.texto)
-                    .frame(width: 38, height: 38)
-                    .background(NoktaTheme.superficie, in: Circle())
-                    .overlay(Circle().strokeBorder(NoktaTheme.borde))
-                    .overlay(alignment: .topTrailing) {
-                        if unreadAlertas > 0 {
-                            Circle().fill(NoktaTheme.marca).frame(width: 9, height: 9).offset(x: -1, y: 1)
-                        }
-                    }
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Menú")
-            HStack(spacing: 7) {
-                Circle().fill(NoktaTheme.marca).frame(width: 6, height: 6)
-                Text("nokta").font(NoktaFont.poppins(16, .medium)).foregroundStyle(NoktaTheme.texto)
-                Text(iosSeleccion.label).font(NoktaFont.poppins(16, .light)).foregroundStyle(NoktaTheme.textoTenue)
-                    .lineLimit(1)
-                    .contentTransition(.opacity)
-            }
-            .tracking(-0.4)
-            Spacer(minLength: 0)
-            Button { abrirMenu(true) } label: { fotoUsuario(34) }
-                .buttonStyle(.plain)
+    /// Las demás secciones, agrupadas igual que el menú lateral de la Mac,
+    /// con tu foto arriba y apariencia / cerrar sesión abajo.
+    private var pantallaMas: some View {
+        let resto = visibleGroups.compactMap { g -> SidebarGroup? in
+            let items = g.items.filter { !Self.pestanas.contains($0) }
+            return items.isEmpty ? nil : SidebarGroup(title: g.title, items: items)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 4)
-        .padding(.bottom, 8)
-        .background(NoktaTheme.fondo)
-    }
-
-    private var menuLateral: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    logoRow
-                    ForEach(visibleGroups, id: \.title) { group in
-                        if !group.title.isEmpty {
-                            Text(group.title)
-                                .font(NoktaFont.poppins(10, .medium))
-                                .tracking(1.4)
-                                .foregroundStyle(NoktaTheme.textoTenue)
-                                .padding(.horizontal, 12)
-                                .padding(.top, 18)
-                                .padding(.bottom, 6)
-                        }
-                        ForEach(group.items) { item in
-                            Button {
-                                trabajoAbrir = nil
-                                iosSeleccion = item
-                                onSelect(item)
-                                abrirMenu(false)
-                            } label: {
-                                sidebarRowLabel(item, isActive: iosSeleccion == item)
-                                    .padding(.vertical, 2)
-                            }
-                            .buttonStyle(.plain)
-                        }
+        return ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                HStack(spacing: 14) {
+                    fotoUsuario(52)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(currentUserNombre ?? "—")
+                            .font(NoktaFont.poppins(20, .light)).tracking(-0.4)
+                            .foregroundStyle(NoktaTheme.texto)
+                        Text(currentUserRole == "admin" ? "Administrador" : "Editor")
+                            .font(NoktaFont.poppins(12)).foregroundStyle(NoktaTheme.textoTenue)
                     }
+                    Spacer(minLength: 0)
+                    aparienciaMenu
                 }
-                .padding(.horizontal, 12)
                 .padding(.top, 8)
+
+                ForEach(resto, id: \.title) { group in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(group.title)
+                            .font(NoktaFont.poppins(10, .medium))
+                            .tracking(1.4)
+                            .foregroundStyle(NoktaTheme.textoTenue)
+                            .padding(.leading, 4)
+                        VStack(spacing: 2) {
+                            ForEach(group.items) { item in
+                                NavigationLink(value: item) {
+                                    HStack(spacing: 0) {
+                                        sidebarRowLabel(item, isActive: false)
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 11, weight: .medium))
+                                            .foregroundStyle(NoktaTheme.textoTenue)
+                                            .padding(.trailing, 6)
+                                    }
+                                    .padding(.vertical, 3)
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .noktaCard(padding: 8)
+                    }
+                }
+
+                Button(role: .destructive) { Task { await logout() } } label: {
+                    Label("Cerrar sesión", systemImage: "power")
+                        .font(NoktaFont.poppins(13))
+                        .foregroundStyle(NoktaTheme.error)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(NoktaTheme.error.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .disabled(isLoggingOut)
             }
-            sidebarFooter
+            .padding(.horizontal, 20)
+            .padding(.bottom, 24)
         }
+        .background(NoktaTheme.fondo)
     }
     #endif
 

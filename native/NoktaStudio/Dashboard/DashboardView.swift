@@ -171,10 +171,6 @@ struct DashboardView: View {
         }
         .background(NoktaTheme.fondo)
         .scrollContentBackground(.hidden)
-        #if os(iOS)
-        .navigationTitle("Dashboard")
-        .navigationBarTitleDisplayMode(.inline)
-        #endif
         .task {
             // No skeleton/placeholder flash: with cached data (returning visit)
             // the entrance animation starts immediately and the refresh runs
@@ -551,43 +547,65 @@ struct DashboardView: View {
     // MARK: - Indicadores
 
     private var indicadores: some View {
-        let items = VStack(spacing: compacto ? 10 : 16) {
+        let ganancia = { (vertical: Bool) in
             indicador(
                 icono: "chart.line.uptrend.xyaxis", titulo: "Ganancia neta",
-                valor: vm.ganancia, detalle: "\(vm.margen)% de margen"
+                valor: vm.ganancia, detalle: "\(vm.margen)% de margen", vertical: vertical
             )
+        }
+        let porCobrar = { (vertical: Bool) in
             indicador(
                 icono: "clock", titulo: "Por cobrar", valor: vm.pendiente.monto,
                 detalle: "\(vm.pendiente.count) trabajo\(vm.pendiente.count == 1 ? "" : "s") pendiente\(vm.pendiente.count == 1 ? "" : "s")",
-                acento: vm.pendiente.monto > 0
-            )
-            indicador(
-                icono: "calendar", titulo: "Mes pasado", valor: vm.ingresosPrev,
-                detalle: vm.ingresosPrev > 0 ? "Cobrado en \(vm.nombreMesPrev.lowercased())" : "Sin ingresos en \(vm.nombreMesPrev.lowercased())"
+                acento: vm.pendiente.monto > 0, vertical: vertical
             )
         }
-        return items
+        let mesPasado = indicador(
+            icono: "calendar", titulo: "Mes pasado", valor: vm.ingresosPrev,
+            detalle: vm.ingresosPrev > 0 ? "Cobrado en \(vm.nombreMesPrev.lowercased())" : "Sin ingresos en \(vm.nombreMesPrev.lowercased())"
+        )
+        // En iPhone, ganancia y por cobrar van lado a lado para no hacer
+        // tres tarjetas a todo lo ancho.
+        return VStack(spacing: compacto ? 10 : 16) {
+            if compacto {
+                HStack(alignment: .top, spacing: 10) {
+                    ganancia(true)
+                    porCobrar(true)
+                }
+                .fixedSize(horizontal: false, vertical: true)
+            } else {
+                ganancia(false)
+                porCobrar(false)
+            }
+            mesPasado
+        }
     }
 
-    private func indicador(icono: String, titulo: String, valor: Double, detalle: String, acento: Bool = false) -> some View {
-        HStack(spacing: 14) {
-            Image(systemName: icono)
-                .font(.system(size: 15, weight: .light))
-                .foregroundStyle(acento ? NoktaTheme.aviso : NoktaTheme.textoSuave)
-                .frame(width: 40, height: 40)
-                .background(acento ? NoktaTheme.avisoSuave : NoktaTheme.superficie2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            VStack(alignment: .leading, spacing: 1) {
-                Text(titulo).font(NoktaFont.poppins(12)).foregroundStyle(NoktaTheme.textoSuave)
-                Text(dinero(valor))
-                    .font(NoktaFont.poppins(22))
-                    .tracking(-0.6)
-                    .foregroundStyle(acento ? NoktaTheme.aviso : NoktaTheme.texto)
-                    .contentTransition(.numericText(value: valor))
-                    .animation(.snappy, value: valor)
-                Text(detalle).font(NoktaFont.poppins(11))
-                    .foregroundStyle(acento ? NoktaTheme.aviso.opacity(0.85) : NoktaTheme.textoTenue)
+    private func indicador(icono: String, titulo: String, valor: Double, detalle: String, acento: Bool = false, vertical: Bool = false) -> some View {
+        let icon = Image(systemName: icono)
+            .font(.system(size: vertical ? 13 : 15, weight: .light))
+            .foregroundStyle(acento ? NoktaTheme.aviso : NoktaTheme.textoSuave)
+            .frame(width: vertical ? 32 : 40, height: vertical ? 32 : 40)
+            .background(acento ? NoktaTheme.avisoSuave : NoktaTheme.superficie2, in: RoundedRectangle(cornerRadius: vertical ? 10 : 12, style: .continuous))
+        let textos = VStack(alignment: .leading, spacing: 1) {
+            Text(titulo).font(NoktaFont.poppins(12)).foregroundStyle(NoktaTheme.textoSuave)
+            Text(dinero(valor))
+                .font(NoktaFont.poppins(22))
+                .tracking(-0.6)
+                .foregroundStyle(acento ? NoktaTheme.aviso : NoktaTheme.texto)
+                .lineLimit(1).minimumScaleFactor(0.7)
+                .contentTransition(.numericText(value: valor))
+                .animation(.snappy, value: valor)
+            Text(detalle).font(NoktaFont.poppins(11))
+                .foregroundStyle(acento ? NoktaTheme.aviso.opacity(0.85) : NoktaTheme.textoTenue)
+                .lineLimit(2)
+        }
+        return Group {
+            if vertical {
+                VStack(alignment: .leading, spacing: 12) { icon; textos }
+            } else {
+                HStack(spacing: 14) { icon; textos; Spacer(minLength: 0) }
             }
-            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .noktaCard(padding: compacto ? 16 : 20)

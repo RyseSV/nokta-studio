@@ -157,7 +157,7 @@ struct UsuariosView: View {
                     RoundedRectangle(cornerRadius: 16, style: .continuous).fill(NoktaTheme.superficie)
                         .frame(width: 210, height: 300).modifier(NoktaBrillo())
                 } else {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 210, maximum: 240), spacing: 34)], alignment: .leading, spacing: 30) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 210, maximum: ancho < 600 ? .infinity : 240), spacing: 34)], alignment: ancho < 600 ? .center : .leading, spacing: 30) {
                         ForEach(Array(vm.usuarios.enumerated()), id: \.element.id) { i, u in
                             Gafete(usuario: u, indice: i, volteado: volteados.contains(u.id),
                                    voltear: { withAnimation(.spring(duration: 0.7, bounce: 0.15)) { if volteados.contains(u.id) { volteados.remove(u.id) } else { volteados.insert(u.id) } } },

@@ -178,7 +178,7 @@ struct AnaliticasView: View {
                 .font(NoktaFont.poppins(46, .light)).tracking(-2.2)
                 .foregroundStyle(NoktaTheme.texto)
                 .contentTransition(.numericText(value: crecer ? vm.totalAnio : 0))
-            Text(vm.mesesConIngreso == 0 ? "Sin ingresos registrados este año" : "\(vm.mesesConIngreso) mes\(vm.mesesConIngreso == 1 ? "" : "es") con ingresos · pasa el cursor por una barra")
+            Text(vm.mesesConIngreso == 0 ? "Sin ingresos registrados este año" : "\(vm.mesesConIngreso) mes\(vm.mesesConIngreso == 1 ? "" : "es") con ingresos · \(NoktaPlataforma.esTactil ? "toca" : "pasa el cursor por") una barra")
                 .font(NoktaFont.poppins(12)).foregroundStyle(NoktaTheme.textoSuave)
             Chart(datos) { d in
                 BarMark(x: .value("Mes", d.mes), y: .value("Ingreso", crecer ? d.monto : 0), width: .ratio(0.62))

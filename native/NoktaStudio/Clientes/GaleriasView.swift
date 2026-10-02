@@ -341,7 +341,7 @@ struct GaleriasView: View {
                 }
                 .padding(.top, vm.urgentes.isEmpty ? 0 : 8)
                 .noktaEntrada(aparecio, 3)
-                NoktaChips(opciones: galFiltros, seleccion: $vm.filtro).noktaEntrada(aparecio, 3)
+                ScrollView(.horizontal, showsIndicators: false) { NoktaChips(opciones: galFiltros, seleccion: $vm.filtro) }.noktaEntrada(aparecio, 3)
                 if vm.demas.isEmpty {
                     NoktaVacio(icono: "photo.on.rectangle", titulo: vm.galClientes.isEmpty ? "Aún no hay galerías" : "Nada por aquí",
                                detalle: vm.galClientes.isEmpty ? "Crea una galería y mándale el link a tu cliente." : "Prueba con otro filtro o búsqueda.")

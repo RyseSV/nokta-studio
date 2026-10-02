@@ -93,7 +93,10 @@ struct AssistantView: View {
             if nombre == nil, let me: NoktaUsuario = try? await NoktaAPI.get("/api/admin/me") {
                 nombre = me.nombre?.split(separator: " ").first.map(String.init)
             }
+            // En iPhone no se abre el teclado solo: tapaba media pantalla.
+            #if os(macOS)
             inputFocused = true
+            #endif
         }
     }
 
@@ -271,9 +274,11 @@ struct AssistantView: View {
             .shadow(color: .black.opacity(0.18), radius: 16, y: 8)
             .animation(.easeOut(duration: 0.2), value: inputFocused)
 
+            #if os(macOS)
             Text("Enter para enviar · Shift + Enter para una línea nueva")
                 .font(NoktaFont.poppins(10))
                 .foregroundStyle(NoktaTheme.textoTenue)
+            #endif
         }
         .padding(.horizontal, 24)
         .padding(.top, 8)

@@ -640,11 +640,14 @@ struct CalendarioView: View {
                         }
                         ForEach(resto) { chip($0) }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, 6)
                 .overlay(alignment: .bottom) { Rectangle().fill(NoktaTheme.borde).frame(height: 1) }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .noktaCard(padding: 16)
     }
 }

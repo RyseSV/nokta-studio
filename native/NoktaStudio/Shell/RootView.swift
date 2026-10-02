@@ -174,7 +174,7 @@ struct RootView: View {
         #if os(macOS)
         macSelection = item
         #else
-        iosPath.append(item)
+        iosSeleccion = item
         #endif
         onSelect(item)
     }
@@ -360,7 +360,7 @@ struct RootView: View {
     }
 
     private var avatarInitial: some View {
-        Text(String((currentUserNombre ?? "?").prefix(1)).uppercased())
+        Text(inicialesNombreApellido(currentUserNombre))
             .font(NoktaFont.poppins(12, .medium)).foregroundStyle(NoktaTheme.texto)
     }
 
@@ -385,75 +385,159 @@ struct RootView: View {
         .help("Apariencia: \(appearance.selection.label) — clic para cambiar")
     }
 
-    // MARK: - iOS: plain NavigationStack + real NavigationLink push. A
-    // pushed-and-popped row doesn't retain a persistent "selected" system
-    // look the way a split-view sidebar List does, so this doesn't need the
-    // same workaround as macOS.
+    // MARK: - iOS: same sidebar as the Mac, as a drawer that slides in from
+    // the left over the current section. The app opens straight on the
+    // Dashboard; each section keeps its own header, so there's no system
+    // navigation bar (it overlapped the content on scroll).
     #if os(iOS)
-    @State private var iosPath: [NoktaSection] = []
+    #if DEBUG
+    // Solo para revisar pantallas en el simulador: NOKTA_SECCION=trabajos
+    @State private var iosSeleccion: NoktaSection = ProcessInfo.processInfo.environment["NOKTA_SECCION"].flatMap(NoktaSection.init(rawValue:)) ?? .dashboard
+    #else
+    @State private var iosSeleccion: NoktaSection = .dashboard
+    #endif
+    @State private var menuAbierto = false
+    @State private var arrastreMenu: CGFloat = 0
+    private let anchoMenu: CGFloat = 300
 
     private var iOSShell: some View {
-        NavigationStack(path: $iosPath) {
-            List {
-                logoRow
-                ForEach(visibleGroups, id: \.title) { group in
-                    Section {
-                        ForEach(group.items) { item in
-                            NavigationLink(value: item) {
-                                sidebarRowLabel(item, isActive: false)
-                            }
-                            .listRowBackground(NoktaTheme.fondo)
-                            .listRowSeparator(.hidden)
+        ZStack(alignment: .leading) {
+            VStack(spacing: 0) {
+                barraSuperior
+                NavigationStack {
+                    detailView(for: iosSeleccion)
+                        .toolbar(.hidden, for: .navigationBar)
+                }
+            }
+            .background(NoktaTheme.fondo)
+
+            // Borde izquierdo: deslizar para abrir el menú.
+            Color.clear
+                .frame(width: 18)
+                .contentShape(Rectangle())
+                .gesture(DragGesture(minimumDistance: 12).onEnded { v in
+                    if v.translation.width > 50 { abrirMenu(true) }
+                })
+                .ignoresSafeArea()
+
+            if menuAbierto {
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+                    .onTapGesture { abrirMenu(false) }
+                    .transition(.opacity)
+                menuLateral
+                    .frame(width: anchoMenu)
+                    .background(NoktaTheme.fondo.ignoresSafeArea())
+                    .overlay(alignment: .trailing) { Rectangle().fill(NoktaTheme.borde).frame(width: 1).ignoresSafeArea() }
+                    .offset(x: min(0, arrastreMenu))
+                    .gesture(DragGesture(minimumDistance: 10)
+                        .onChanged { arrastreMenu = $0.translation.width }
+                        .onEnded { v in
+                            if v.translation.width < -80 { abrirMenu(false) }
+                            withAnimation(.spring(duration: 0.3)) { arrastreMenu = 0 }
+                        })
+                    .transition(.move(edge: .leading))
+                    .zIndex(1)
+            }
+        }
+    }
+
+    private func abrirMenu(_ abrir: Bool) {
+        withAnimation(.spring(duration: 0.38, bounce: 0.08)) { menuAbierto = abrir }
+    }
+
+    /// Botón de menú + logo + foto. Lo demás (título, buscador, botones) lo
+    /// pone cada sección en su propio encabezado, igual que en la Mac.
+    private var barraSuperior: some View {
+        HStack(spacing: 12) {
+            Button { abrirMenu(true) } label: {
+                Image(systemName: "line.3.horizontal")
+                    .font(.system(size: 16, weight: .light))
+                    .foregroundStyle(NoktaTheme.texto)
+                    .frame(width: 38, height: 38)
+                    .background(NoktaTheme.superficie, in: Circle())
+                    .overlay(Circle().strokeBorder(NoktaTheme.borde))
+                    .overlay(alignment: .topTrailing) {
+                        if unreadAlertas > 0 {
+                            Circle().fill(NoktaTheme.marca).frame(width: 9, height: 9).offset(x: -1, y: 1)
                         }
-                    } header: {
+                    }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Menú")
+            HStack(spacing: 7) {
+                Circle().fill(NoktaTheme.marca).frame(width: 6, height: 6)
+                Text("nokta").font(NoktaFont.poppins(16, .medium)).foregroundStyle(NoktaTheme.texto)
+                Text(iosSeleccion.label).font(NoktaFont.poppins(16, .light)).foregroundStyle(NoktaTheme.textoTenue)
+                    .lineLimit(1)
+                    .contentTransition(.opacity)
+            }
+            .tracking(-0.4)
+            Spacer(minLength: 0)
+            Button { abrirMenu(true) } label: { fotoUsuario(34) }
+                .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 4)
+        .padding(.bottom, 8)
+        .background(NoktaTheme.fondo)
+    }
+
+    private var menuLateral: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    logoRow
+                    ForEach(visibleGroups, id: \.title) { group in
                         if !group.title.isEmpty {
                             Text(group.title)
                                 .font(NoktaFont.poppins(10, .medium))
                                 .tracking(1.4)
                                 .foregroundStyle(NoktaTheme.textoTenue)
+                                .padding(.horizontal, 12)
+                                .padding(.top, 18)
+                                .padding(.bottom, 6)
+                        }
+                        ForEach(group.items) { item in
+                            Button {
+                                trabajoAbrir = nil
+                                iosSeleccion = item
+                                onSelect(item)
+                                abrirMenu(false)
+                            } label: {
+                                sidebarRowLabel(item, isActive: iosSeleccion == item)
+                                    .padding(.vertical, 2)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
-                Section {
-                    Picker(selection: $appearance.selection) {
-                        ForEach(NoktaApariencia.allCases) { a in
-                            Label(a.label, systemImage: a.icon).tag(a)
-                        }
-                    } label: {
-                        Label("Apariencia", systemImage: appearance.selection.icon)
-                            .font(NoktaFont.poppins(13))
-                            .foregroundStyle(NoktaTheme.texto)
-                    }
-                    .tint(NoktaTheme.textoSuave)
-                    .listRowBackground(NoktaTheme.fondo)
-                    .listRowSeparator(.hidden)
-                    Button(role: .destructive) { Task { await logout() } } label: {
-                        HStack {
-                            Text("Cerrar sesión (\(currentUserNombre ?? "—"))")
-                            Spacer()
-                            Image(systemName: "power")
-                        }
-                    }
-                    .disabled(isLoggingOut)
-                    .listRowBackground(NoktaTheme.fondo)
-                    .listRowSeparator(.hidden)
-                }
+                .padding(.horizontal, 12)
+                .padding(.top, 8)
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .background(NoktaTheme.fondo)
-            .navigationDestination(for: NoktaSection.self) { item in
-                detailView(for: item)
-                    .onAppear { onSelect(item) }
-            }
-            // Back at the root list: a later tap on "Trabajos" should show
-            // the list, not the trabajo last opened from the Dashboard search.
-            .onChange(of: iosPath) { _, path in
-                if path.isEmpty { trabajoAbrir = nil }
-            }
+            sidebarFooter
         }
     }
     #endif
+
+    private func fotoUsuario(_ lado: CGFloat) -> some View {
+        ZStack {
+            Circle().fill(NoktaTheme.superficie2)
+            if let fotoURL = currentUserFoto.flatMap(URL.init) {
+                AsyncImage(url: fotoURL) { image in
+                    image.resizable().scaledToFill()
+                } placeholder: {
+                    avatarInitial
+                }
+            } else {
+                avatarInitial
+            }
+        }
+        .frame(width: lado, height: lado)
+        .clipShape(Circle())
+        .overlay(Circle().strokeBorder(NoktaTheme.marca, lineWidth: 1.5).padding(-3))
+        .padding(3)
+    }
 
     private var logoRow: some View {
         HStack(spacing: 8) {

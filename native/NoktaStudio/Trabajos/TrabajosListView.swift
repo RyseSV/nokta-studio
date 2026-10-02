@@ -143,7 +143,8 @@ struct TrabajosListView: View {
                          color: NoktaTheme.marca)
         }
         return Group {
-            if compacto { VStack(spacing: 10) { items } } else { HStack(spacing: 14) { items } }
+            // iPhone: las tres en una fila, en versión compacta.
+            if compacto { HStack(spacing: 8) { items }.environment(\.noktaTotalCompacto, true).fixedSize(horizontal: false, vertical: true) } else { HStack(spacing: 14) { items } }
         }
     }
 
@@ -291,32 +292,64 @@ private struct TarjetaTrabajo: View {
 }
 
 /// Total de arriba con el mismo "foco que sigue al cursor" que las tarjetas.
+private struct TotalCompactoKey: EnvironmentKey { static let defaultValue = false }
+extension EnvironmentValues {
+    var noktaTotalCompacto: Bool {
+        get { self[TotalCompactoKey.self] }
+        set { self[TotalCompactoKey.self] = newValue }
+    }
+}
+
 private struct TarjetaTotal: View {
     let icono: String
     let titulo: String
     let valor: String
     let detalle: String
     let color: Color
+    @Environment(\.noktaTotalCompacto) private var compacta
 
     var body: some View {
-        HStack(alignment: .center, spacing: 14) {
-            Image(systemName: icono)
-                .font(.system(size: 15, weight: .light))
-                .foregroundStyle(color)
-                .frame(width: 38, height: 38)
-                .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(titulo).font(NoktaFont.poppins(12)).foregroundStyle(NoktaTheme.textoSuave)
-                Text(valor)
-                    .font(NoktaFont.poppins(26, .light)).tracking(-1)
-                    .foregroundStyle(NoktaTheme.texto)
-                    .contentTransition(.numericText())
-                Text(detalle).font(NoktaFont.poppins(11)).foregroundStyle(NoktaTheme.textoTenue).lineLimit(1)
+        if compacta {
+            VStack(alignment: .leading, spacing: 10) {
+                Image(systemName: icono)
+                    .font(.system(size: 13, weight: .light))
+                    .foregroundStyle(color)
+                    .frame(width: 30, height: 30)
+                    .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(titulo).font(NoktaFont.poppins(11)).foregroundStyle(NoktaTheme.textoSuave).lineLimit(1)
+                    Text(valor)
+                        .font(NoktaFont.poppins(20, .light)).tracking(-0.8)
+                        .foregroundStyle(NoktaTheme.texto)
+                        .lineLimit(1).minimumScaleFactor(0.6)
+                        .contentTransition(.numericText())
+                    Text(detalle).font(NoktaFont.poppins(9.5)).foregroundStyle(NoktaTheme.textoTenue).lineLimit(2)
+                }
+                Spacer(minLength: 0)
             }
-            Spacer(minLength: 0)
+            .padding(13)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .noktaFoco(color, radio: 18)
+        } else {
+            HStack(alignment: .center, spacing: 14) {
+                Image(systemName: icono)
+                    .font(.system(size: 15, weight: .light))
+                    .foregroundStyle(color)
+                    .frame(width: 38, height: 38)
+                    .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(titulo).font(NoktaFont.poppins(12)).foregroundStyle(NoktaTheme.textoSuave)
+                    Text(valor)
+                        .font(NoktaFont.poppins(26, .light)).tracking(-1)
+                        .foregroundStyle(NoktaTheme.texto)
+                        .contentTransition(.numericText())
+                    Text(detalle).font(NoktaFont.poppins(11)).foregroundStyle(NoktaTheme.textoTenue).lineLimit(1)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .noktaFoco(color, radio: 18)
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .noktaFoco(color, radio: 18)
     }
 }

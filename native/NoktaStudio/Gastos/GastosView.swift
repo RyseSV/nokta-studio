@@ -187,7 +187,7 @@ struct GastosView: View {
                 leyenda("Ingresos", NoktaTheme.exito)
                 leyenda("Gastos", NoktaTheme.error)
                 Spacer()
-                Text("Pasa el cursor por un mes").font(NoktaFont.poppins(10.5)).foregroundStyle(NoktaTheme.textoTenue)
+                Text(NoktaPlataforma.esTactil ? "Toca un mes" : "Pasa el cursor por un mes").font(NoktaFont.poppins(10.5)).foregroundStyle(NoktaTheme.textoTenue)
             }
             Chart {
                 ForEach(puntos.filter { $0.serie == "Ingresos" }) { p in
@@ -369,19 +369,9 @@ struct GastosView: View {
             if let e = errorLocal ?? vm.errorMessage {
                 Label(e, systemImage: "exclamationmark.circle").font(NoktaFont.poppins(11.5)).foregroundStyle(NoktaTheme.error)
             }
-            HStack(spacing: 8) {
-                Menu {
-                    Button("Todos los meses") { vm.filtroMes = "" }
-                    ForEach(vm.mesesDisponibles, id: \.self) { p in Button(etiquetaMesLargo(p)) { vm.filtroMes = p } }
-                } label: { filtroEtiqueta(vm.filtroMes.isEmpty ? "Todos los meses" : etiquetaMesLargo(vm.filtroMes)) }
-                .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
-                Menu {
-                    Button("Todas las categorías") { vm.filtroCategoria = "" }
-                    ForEach(gastoCategorias, id: \.self) { c in Button(c) { vm.filtroCategoria = c } }
-                } label: { filtroEtiqueta(vm.filtroCategoria.isEmpty ? "Todas las categorías" : vm.filtroCategoria) }
-                .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
-                Spacer()
-                Text("\(vm.filtrados.count) gasto\(vm.filtrados.count == 1 ? "" : "s")").font(NoktaFont.poppins(11)).foregroundStyle(NoktaTheme.textoTenue)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) { filtrosLista; Spacer(); contadorLista }
+                VStack(alignment: .leading, spacing: 8) { HStack(spacing: 8) { filtrosLista }; contadorLista }
             }
             if vm.filtrados.isEmpty {
                 NoktaVacio(icono: "creditcard", titulo: vm.isLoading ? "Cargando…" : (vm.gastos.isEmpty ? "Aún no hay gastos" : "Nada con esos filtros"),
@@ -402,6 +392,23 @@ struct GastosView: View {
         .noktaCard()
     }
 
+    @ViewBuilder private var filtrosLista: some View {
+                Menu {
+                    Button("Todos los meses") { vm.filtroMes = "" }
+                    ForEach(vm.mesesDisponibles, id: \.self) { p in Button(etiquetaMesLargo(p)) { vm.filtroMes = p } }
+                } label: { filtroEtiqueta(vm.filtroMes.isEmpty ? "Todos los meses" : etiquetaMesLargo(vm.filtroMes)) }
+                .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+                Menu {
+                    Button("Todas las categorías") { vm.filtroCategoria = "" }
+                    ForEach(gastoCategorias, id: \.self) { c in Button(c) { vm.filtroCategoria = c } }
+                } label: { filtroEtiqueta(vm.filtroCategoria.isEmpty ? "Todas las categorías" : vm.filtroCategoria) }
+                .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+    }
+
+    private var contadorLista: some View {
+        Text("\(vm.filtrados.count) gasto\(vm.filtrados.count == 1 ? "" : "s")").font(NoktaFont.poppins(11)).foregroundStyle(NoktaTheme.textoTenue)
+    }
+
     private func filtroEtiqueta(_ t: String) -> some View {
         HStack(spacing: 6) {
             Text(t)
@@ -420,6 +427,12 @@ struct GastosView: View {
             VStack(alignment: .leading, spacing: 8) {
                 campoConcepto
                 HStack(spacing: 8) { categoriasRapidas; campoMonto; campoFecha; botonRegistrar }
+            }
+            // iPhone: categorías en su propia fila y lo demás debajo.
+            VStack(alignment: .leading, spacing: 8) {
+                campoConcepto
+                categoriasRapidas
+                HStack(spacing: 8) { campoMonto; campoFecha; Spacer(minLength: 0); botonRegistrar }
             }
         }
         .padding(8)
@@ -446,7 +459,7 @@ struct GastosView: View {
                 .focused($focoConcepto)
                 .onSubmit { Task { await guardar() } }
         }
-        .frame(minWidth: 180, maxWidth: .infinity)
+        .frame(minWidth: 150, maxWidth: .infinity)
     }
 
     private var categoriasRapidas: some View {

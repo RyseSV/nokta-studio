@@ -474,3 +474,12 @@ enum NoktaEstadoTrabajo {
         return t.estado == "pagado" ? ("Pagado", NoktaTheme.exito) : ("Pendiente", NoktaTheme.aviso)
     }
 }
+
+/// En iPhone/iPad no hay cursor: los textos de ayuda dicen "toca" en vez de "pasa el cursor".
+enum NoktaPlataforma {
+    #if os(iOS)
+    static let esTactil = true
+    #else
+    static let esTactil = false
+    #endif
+}

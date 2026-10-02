@@ -2608,9 +2608,10 @@ function ntPreview(){
   const col=contrato?(ec==='activo'?'var(--pf-exito)':ec==='pausado'?'var(--pf-aviso)':'var(--pf-error)'):'var(--pf-aviso)';
   const etq=contrato?ESTADO_CLIENTE_LABEL[ec]:'Pendiente';
   const det=(svc||'Servicio')+' · '+(contrato?'Mensual':(fecha?ptDia(fecha):'sin fecha'));
-  const de=contrato?'al mes':'anticipo '+pdDinero(ant);
-  const sig=contrato?['Cobro','mensual']:(monto>0&&saldo<=0?['Cobrado','completo ✓']:['Falta cobrar',pdDinero(saldo)]);
-  card.innerHTML=`<div class="foco pt-card" style="--c:${col}" onpointermove="ptFoco(event,this)" onpointerleave="ptFocoFuera(this)"><span class="pt-pill">${etq}</span><div class="n"${cli?'':' style="color:var(--pf-tenue)"'}>${esc(cli||'Cliente')}</div><div class="d">${esc(det)}</div><div class="m"><b${monto>0?'':' style="color:var(--pf-tenue)"'}>${pdDinero(monto)}</b><small>${de}</small></div><div class="s">${sig[0]} · <em>${sig[1]}</em></div></div>`;
+  const cob=contrato?0:Math.min(ant,monto);
+  const de=contrato?'cobrado · '+pdDinero(monto)+' al mes':'de '+pdDinero(monto);
+  const sig=contrato?(ec!=='activo'?['Contrato',ec==='pausado'?'en pausa':'cancelado']:['Por cobrar este mes',pdDinero(monto)]):(monto>0&&saldo<=0?['Cobrado','completo ✓']:['Falta cobrar',pdDinero(saldo)+(fecha?' · '+ptDia(fecha):'')]);
+  card.innerHTML=`<div class="foco pt-card" style="--c:${col}" onpointermove="ptFoco(event,this)" onpointerleave="ptFocoFuera(this)"><span class="pt-pill">${etq}</span><div class="n"${cli?'':' style="color:var(--pf-tenue)"'}>${esc(cli||'Cliente')}</div><div class="d">${esc(det)}</div><div class="m"><b${monto>0?'':' style="color:var(--pf-tenue)"'}>${pdDinero(cob)}</b><small>${de}</small></div><div class="s">${sig[0]} · <em>${sig[1]}</em></div></div>`;
   const filas=g==='B'?[['Pago mensual',pdDinero(monto)],['Día de cobro',document.getElementById('tB-dia-cobro').value?'Día '+document.getElementById('tB-dia-cobro').value:'—'],['Contrato',ESTADO_CLIENTE_LABEL[ec]]]:[['Total',pdDinero(monto)],['Anticipo',pdDinero(ant)],['Falta cobrar',pdDinero(saldo),saldo>0]];
   document.getElementById('nt-filas').innerHTML=filas.map(([a,b,w])=>`<div class="nt-fila"><span>${a}</span><b${w?' class="w"':''}>${b}</b></div>`).join('');
   document.getElementById('nt-guardar').classList.toggle('listo',!!(cli&&svc&&monto>0));

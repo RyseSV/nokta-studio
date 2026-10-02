@@ -846,22 +846,11 @@ private struct Flujo: Layout {
     }
 }
 
-/// Réplica de la tarjeta de la lista de Trabajos, alimentada por el formulario.
+/// Réplica de la tarjeta de la lista de Trabajos (estilo "foco que sigue al
+/// cursor"), alimentada por el formulario: lo cobrado (el anticipo) "de" el
+/// total y, abajo, lo que sigue con ese trabajo.
 private struct TarjetaPrevia: View {
     let vm: NuevoTrabajoViewModel
-    @Environment(\.colorScheme) private var scheme
-
-    private var icono: String {
-        let s = vm.servicio.lowercased()
-        if s.isEmpty { return tiposTrabajo.first { $0.id == vm.tipo }?.icono ?? "briefcase" }
-        if s.contains("video") || s.contains("edición") { return "video" }
-        if s.contains("redes") || s.contains("social") || s.contains("community") { return "iphone" }
-        if s.contains("foto") || s.contains("retrato") { return "camera" }
-        if s.contains("evento") { return "party.popper" }
-        if s.contains("brand") || s.contains("identidad") || s.contains("diseño") { return "sparkles" }
-        if s.contains("clase") { return "graduationcap" }
-        return "briefcase"
-    }
 
     private var estado: (texto: String, color: Color) {
         if vm.esContrato {
@@ -872,79 +861,64 @@ private struct TarjetaPrevia: View {
         return ("Pendiente", NoktaTheme.aviso)
     }
 
-    private var cobrado: Double { vm.monto > 0 ? min(1, vm.anticipo / vm.monto) : 0 }
+    private var cobrado: Double { vm.esContrato ? 0 : min(vm.anticipo, vm.monto) }
+
+    private var deCuanto: String {
+        vm.esContrato ? "cobrado · " + NoktaFormato.dinero(vm.monto) + " al mes" : "de " + NoktaFormato.dinero(vm.monto)
+    }
+
+    private var siguiente: (String, String) {
+        if vm.esContrato {
+            let er = vm.grupo == "B" ? vm.estadoContrato : "activo"
+            if er != "activo" { return ("Contrato", er == "pausado" ? "en pausa" : "cancelado") }
+            return ("Por cobrar este mes", NoktaFormato.dinero(vm.monto))
+        }
+        if vm.monto > 0 && vm.saldo <= 0 { return ("Cobrado", "completo ✓") }
+        return ("Falta cobrar", NoktaFormato.dinero(vm.saldo) + " · " + fechaCorta(vm.fechaPrincipal))
+    }
 
     var body: some View {
-        let forma = RoundedRectangle(cornerRadius: 20, style: .continuous)
         let c = estado.color
+        let sig = siguiente
         let nombre = vm.cliente.trimmingCharacters(in: .whitespaces)
         let servicio = vm.servicio.isEmpty ? "Servicio" : vm.servicio
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Image(systemName: icono)
-                    .font(.system(size: 15, weight: .light))
-                    .foregroundStyle(NoktaTheme.textoSuave)
-                    .contentTransition(.symbolEffect(.replace))
-                    .frame(width: 38, height: 38)
-                    .background(NoktaTheme.superficie2, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                Spacer()
-                NoktaEstado(texto: estado.texto, color: c, tamano: 11)
-                    .padding(.horizontal, 9).padding(.vertical, 4)
-                    .background(c.opacity(0.1), in: Capsule())
-            }
+            NoktaEstado(texto: estado.texto, color: c, tamano: 11)
+                .padding(.horizontal, 10).padding(.vertical, 4)
+                .background(c.opacity(0.12), in: Capsule())
+            Spacer(minLength: 26)
             Text(nombre.isEmpty ? "Cliente" : nombre)
                 .font(NoktaFont.poppins(15, .medium))
                 .foregroundStyle(nombre.isEmpty ? NoktaTheme.textoTenue : NoktaTheme.texto)
-                .lineLimit(1).padding(.top, 16)
+                .lineLimit(1)
             Text(vm.esContrato ? "\(servicio) · Mensual" : "\(servicio) · \(fechaCorta(vm.fechaPrincipal))")
                 .font(NoktaFont.poppins(11)).foregroundStyle(NoktaTheme.textoTenue).lineLimit(1).padding(.top, 2)
-            Text(NoktaFormato.dinero(vm.monto))
-                .font(NoktaFont.poppins(30, .light)).tracking(-1.2)
-                .foregroundStyle(vm.monto > 0 ? NoktaTheme.texto : NoktaTheme.textoTenue)
-                .contentTransition(.numericText(value: vm.monto))
-                .padding(.top, 14)
-            if vm.esContrato {
-                Text("por mes").font(NoktaFont.poppins(11)).foregroundStyle(NoktaTheme.textoTenue)
-            } else {
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(NoktaTheme.texto.opacity(0.07))
-                        Capsule()
-                            .fill(LinearGradient(colors: [c, c.opacity(0.6)], startPoint: .leading, endPoint: .trailing))
-                            .frame(width: geo.size.width * cobrado)
-                    }
-                }
-                .frame(height: 5)
-                .padding(.top, 12)
-                HStack {
-                    Text("Cobrado \(Int((cobrado * 100).rounded()))%")
-                    Spacer()
-                    Text("Saldo " + NoktaFormato.dinero(vm.saldo))
-                }
-                .font(NoktaFont.poppins(10)).foregroundStyle(NoktaTheme.textoTenue)
-                .contentTransition(.numericText())
-                .padding(.top, 6)
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(NoktaFormato.dinero(cobrado))
+                    .font(NoktaFont.poppins(34, .light)).tracking(-1.6)
+                    .foregroundStyle(vm.monto > 0 ? NoktaTheme.texto : NoktaTheme.textoTenue)
+                    .contentTransition(.numericText(value: cobrado))
+                Text(deCuanto)
+                    .font(NoktaFont.poppins(11)).foregroundStyle(NoktaTheme.textoTenue).lineLimit(1)
+                    .contentTransition(.numericText())
             }
+            .padding(.top, 12)
+            (Text(sig.0 + " · ").foregroundStyle(NoktaTheme.textoSuave) + Text(sig.1).foregroundStyle(c))
+                .font(NoktaFont.poppins(11))
+                .lineLimit(1)
+                .contentTransition(.numericText())
+                .padding(.top, 8)
         }
         .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            ZStack(alignment: .bottomTrailing) {
-                forma.fill(NoktaTheme.superficie)
-                Circle()
-                    .fill(c.opacity(scheme == .dark ? 0.14 : 0.09))
-                    .frame(width: 200, height: 200)
-                    .blur(radius: 60)
-                    .offset(x: 70, y: 90)
-            }
-            .clipShape(forma)
-        }
+        .frame(maxWidth: .infinity, minHeight: 200, alignment: .leading)
+        .noktaFoco(c, radio: 20)
         // Se enciende con el color del estado cuando ya se puede guardar.
-        .overlay(forma.strokeBorder(vm.listo ? c.opacity(0.55) : NoktaTheme.borde, lineWidth: vm.listo ? 1.5 : 1))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
+            .strokeBorder(c.opacity(vm.listo ? 0.55 : 0), lineWidth: 1.5))
         .shadow(color: c.opacity(vm.listo ? 0.2 : 0), radius: 18, y: 8)
         .animation(.spring(duration: 0.5), value: vm.listo)
-        .animation(.spring(duration: 0.7, bounce: 0.1), value: cobrado)
         .animation(.spring(duration: 0.4), value: vm.monto)
+        .animation(.spring(duration: 0.4), value: vm.anticipo)
         .animation(.easeOut(duration: 0.2), value: vm.servicio)
     }
 
@@ -952,7 +926,7 @@ private struct TarjetaPrevia: View {
         let f = DateFormatter()
         f.locale = Locale(identifier: "es")
         f.dateFormat = "EEE d MMM"
-        return f.string(from: d).replacingOccurrences(of: ".", with: "").capitalized
+        return f.string(from: d).replacingOccurrences(of: ".", with: "")
     }
 }
 

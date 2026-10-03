@@ -47,6 +47,7 @@ const botChatSchema = new mongoose.Schema({
   pausaHasta: Date,      // mientras esté en el futuro, el bot no contesta
   ultimaBienvenida: Date,
   ultimoTelegram: Date,
+  conocido: Boolean,     // ya hablaba con Nokta antes del bot → lo atiende Gabriel, el bot no saluda
   actualizado: Date,
 });
 // Meta reintenta el mismo mensaje si el servidor tardó en despertar: se
@@ -196,6 +197,11 @@ function crearBot({ addAlert, Alerta, fetchImpl = globalThis.fetch, log = consol
       return;
     }
 
+    // Cliente de antes del bot (sincronizado desde la app del móvil): lo
+    // atiende Gabriel desde su WhatsApp Business; el bot solo responde si
+    // el cliente pide expresamente el menú.
+    if (chat.conocido && !(id === 'menu' || /^(menu|menú)$/i.test(escrito))) return;
+
     // En pausa: Gabriel está atendiendo. Se le reenvía lo que escriba el
     // cliente, salvo que pida el menú explícitamente.
     const pideMenu = id === 'menu' || /^(menu|menú)$/i.test(escrito);
@@ -273,6 +279,25 @@ function crearBot({ addAlert, Alerta, fetchImpl = globalThis.fetch, log = consol
       for (const change of entry.changes || []) {
         const value = change.value || {};
         const perfiles = Object.fromEntries((value.contacts || []).map((c) => [c.wa_id, c.profile?.name]));
+        // Coexistencia: Gabriel contestó desde la app WhatsApp Business del
+        // móvil → el bot se calla con ese cliente para no hablar a la vez.
+        for (const eco of value.message_echoes || []) {
+          const tel = String(eco.to || '');
+          if (!/^\d{6,16}$/.test(tel)) continue;
+          try {
+            await BotChat.updateOne({ telefono: tel }, { $set: { pausaHasta: new Date(Date.now() + PAUSA_HUMANO_MS), paso: null } }, { upsert: true });
+          } catch (e) { log.error('[WHATSAPP] No se pudo pausar el bot tras respuesta desde el móvil:', e.message); }
+        }
+        // Coexistencia: contactos e historial que ya existían en la app del
+        // móvil. Esas personas ya hablaban con Gabriel: el bot no las saluda.
+        const conocidos = new Set();
+        for (const h of value.history || []) for (const t of h.threads || []) conocidos.add(String(t.id || ''));
+        for (const st of value.state_sync || []) if (st.action !== 'remove') conocidos.add(String(st.contact?.phone_number || '').replace(/\D/g, ''));
+        for (const tel of conocidos) {
+          if (!/^\d{6,16}$/.test(tel)) continue;
+          try { await BotChat.updateOne({ telefono: tel }, { $set: { conocido: true } }, { upsert: true }); }
+          catch (e) { log.error('[WHATSAPP] No se pudo marcar un contacto existente:', e.message); }
+        }
         for (const m of value.messages || []) {
           try { await atender(m, perfiles[m.from], base); }
           catch (e) {
@@ -308,27 +333,31 @@ async function asegurarSuscripcion(fetchImpl = globalThis.fetch, log = console) 
   } catch (e) { log.error('[WHATSAPP] No se pudo suscribir la cuenta:', e.message); }
 }
 
-// Soltar un número de la API para poder volver a usarlo en la app de WhatsApp
-// del móvil: se pone su id en WHATSAPP_DESREGISTRAR y al arrancar se
-// desregistra una vez (el resultado queda en el log). Reversible: el número se
-// puede volver a registrar en Meta cuando se quiera.
-async function desregistrarNumero(fetchImpl = globalThis.fetch, log = console) {
-  const { WHATSAPP_TOKEN: token, WHATSAPP_DESREGISTRAR: id } = process.env;
+// Coexistencia (bot + app WhatsApp Business en el mismo número): tras conectar
+// el número con /whatsapp/conectar, Meta da 24 h para pedir la sincronización
+// de contactos y del historial. Se pone el id del número en
+// WHATSAPP_SINCRONIZAR y al arrancar se piden ambas (resultado en el log).
+async function sincronizarCoexistencia(fetchImpl = globalThis.fetch, log = console) {
+  const { WHATSAPP_TOKEN: token, WHATSAPP_SINCRONIZAR: id } = process.env;
   if (!token || !/^\d+$/.test(id || '')) return;
-  try {
-    const res = await fetchImpl(`https://graph.facebook.com/${GRAPH_VERSION}/${id}/deregister`, {
-      method: 'POST', headers: { Authorization: `Bearer ${token}` },
-    });
-    const cuerpo = await res.text().catch(() => '');
-    if (res.ok) log.log(`[WHATSAPP] Número ${id} desconectado de la API ✓ (ya se puede usar en la app del móvil)`);
-    else log.error(`[WHATSAPP] No se pudo desconectar el número ${id} (${res.status}): ${cuerpo.slice(0, 300)}`);
-  } catch (e) { log.error('[WHATSAPP] No se pudo desconectar el número:', e.message); }
+  for (const sync_type of ['smb_app_state_sync', 'history']) {
+    try {
+      const res = await fetchImpl(`https://graph.facebook.com/${GRAPH_VERSION}/${id}/smb_app_data`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messaging_product: 'whatsapp', sync_type }),
+      });
+      const cuerpo = await res.text().catch(() => '');
+      if (res.ok) log.log(`[WHATSAPP] Sincronización ${sync_type} pedida ✓`);
+      else log.error(`[WHATSAPP] Sincronización ${sync_type} falló (${res.status}): ${cuerpo.slice(0, 300)}`);
+    } catch (e) { log.error(`[WHATSAPP] Sincronización ${sync_type} falló:`, e.message); }
+  }
 }
 
 function montarWhatsAppBot(app, deps) {
   const bot = crearBot(deps);
   asegurarSuscripcion(deps?.fetchImpl, deps?.log);
-  desregistrarNumero(deps?.fetchImpl, deps?.log);
+  sincronizarCoexistencia(deps?.fetchImpl, deps?.log);
 
   // Meta comprueba la dirección una sola vez al guardar el webhook.
   app.get('/webhook/whatsapp', (req, res) => {
@@ -355,4 +384,60 @@ function montarWhatsAppBot(app, deps) {
   });
 }
 
-module.exports = { montarWhatsAppBot, asegurarSuscripcion, desregistrarNumero, crearBot, firmaValida, leerEntrada, PLANES, BotChat, BotMensaje };
+// ── Página "Conectar mi WhatsApp Business" (Embedded Signup de Meta) ──
+// Solo para usuarios de Nokta con sesión. Meta devuelve los ids de la cuenta
+// y del número conectados; quedan en el log para configurar el bot.
+const CSP_CONECTAR = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://connect.facebook.net",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: https://*.facebook.com https://*.fbcdn.net",
+  "frame-src https://*.facebook.com",
+  "connect-src 'self' https://*.facebook.com https://graph.facebook.com",
+  "object-src 'none'", "base-uri 'self'", "frame-ancestors 'none'",
+].join('; ');
+
+function montarConexionWhatsApp(app, { requireAdmin, log = console, fetchImpl = globalThis.fetch }) {
+  app.get('/whatsapp/conectar', (req, res) => {
+    if (!req.session?.userId) return res.redirect('/admin');
+    // El popup de Facebook necesita hablar con esta ventana (window.opener).
+    res.setHeader('Content-Security-Policy', CSP_CONECTAR);
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.sendFile(require('path').join(__dirname, 'views', 'conectar-whatsapp.html'));
+  });
+
+  app.get('/api/whatsapp/config', requireAdmin, (req, res) => {
+    const { WHATSAPP_APP_ID: appId, WHATSAPP_CONFIG_ID: configId } = process.env;
+    if (!appId || !configId) return res.status(503).json({ error: 'Falta configurar WHATSAPP_APP_ID y WHATSAPP_CONFIG_ID en el servidor' });
+    res.json({ appId, configId, version: GRAPH_VERSION });
+  });
+
+  app.post('/api/whatsapp/coexistencia', requireAdmin, (req, res) => {
+    const ids = {};
+    for (const k of ['waba_id', 'phone_number_id']) {
+      const v = req.body?.[k];
+      if (v != null && !/^\d{5,25}$/.test(String(v))) return res.status(400).json({ error: `${k} inválido` });
+      if (v != null) ids[k] = String(v);
+    }
+    if (!ids.waba_id) return res.status(400).json({ error: 'Falta waba_id' });
+    const evento = String(req.body?.event || '').slice(0, 60).replace(/[^A-Z_]/g, '');
+    log.log(`[WHATSAPP] Coexistencia conectada (${evento || 'sin evento'}): waba=${ids.waba_id} phone=${ids.phone_number_id || '?'} por ${req.authUser?.username || '?'}`);
+    res.json({ ok: true });
+    // Meta a veces no manda el id del número: se consulta con el token del bot
+    // (si el robot nokta-bot ya tiene acceso a esa cuenta) y queda en el log.
+    const token = process.env.WHATSAPP_TOKEN;
+    if (token) {
+      fetchImpl(`https://graph.facebook.com/${GRAPH_VERSION}/${ids.waba_id}/phone_numbers?fields=id,display_phone_number,verified_name,platform_type`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then(async (r) => {
+        const t = await r.text().catch(() => '');
+        if (r.ok) log.log(`[WHATSAPP] Números de la cuenta ${ids.waba_id}: ${t.slice(0, 500)}`);
+        else log.error(`[WHATSAPP] No se pudieron leer los números de ${ids.waba_id} (${r.status}): ${t.slice(0, 300)}`);
+      }).catch((e) => log.error('[WHATSAPP] No se pudieron leer los números:', e.message));
+    }
+  });
+}
+
+module.exports = { montarWhatsAppBot, montarConexionWhatsApp, asegurarSuscripcion, sincronizarCoexistencia, crearBot, firmaValida, leerEntrada, PLANES, BotChat, BotMensaje };

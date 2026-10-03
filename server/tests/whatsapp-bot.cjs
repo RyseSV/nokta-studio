@@ -175,15 +175,40 @@ const limpiar = () => { enviados = []; telegram = []; alertas = []; };
   assert.match(out[1], /403/); assert.ok(!out.join('').includes('Bearer'));
   process.env.WHATSAPP_TOKEN = 'tok'; // (el caso 10 lo dejó igual)
 
-  // 13. Desregistrar: solo con WHATSAPP_DESREGISTRAR numérico, POST correcto
-  const llam = []; const salida = [];
-  const fx = async (u, o) => { llam.push({ u, o }); return { ok: true, text: async () => '{"success":true}' }; };
-  const lg = { log: (m) => salida.push(m), error: (m) => salida.push(m) };
-  delete process.env.WHATSAPP_DESREGISTRAR; await bot.desregistrarNumero(fx, lg); assert.equal(llam.length, 0);
-  process.env.WHATSAPP_DESREGISTRAR = '12/../x'; await bot.desregistrarNumero(fx, lg); assert.equal(llam.length, 0);
-  process.env.WHATSAPP_DESREGISTRAR = '1277562512115316'; await bot.desregistrarNumero(fx, lg);
-  assert.match(llam[0].u, /\/1277562512115316\/deregister$/); assert.equal(llam[0].o.method, 'POST'); assert.match(salida[0], /desconectado/);
-  delete process.env.WHATSAPP_DESREGISTRAR;
+  const lg = { log: () => {}, error: () => {} };
+
+  // 14. Coexistencia: si Gabriel contesta desde la app del móvil (eco), el bot se calla
+  chats.clear(); limpiar();
+  await procesar({ entry: [{ changes: [{ field: 'smb_message_echoes', value: { message_echoes: [{ from: '50374539315', to: '50370000000', id: 'eco1', type: 'text', text: { body: 'Hola, soy Gabriel' } }] } }] }] }, BASE);
+  assert.ok(chats.get('50370000000').pausaHasta > new Date()); assert.equal(enviados.length, 0);
+  await procesar({ entry: [{ changes: [{ value: { message_echoes: [{ to: 'x;drop' }] } }] }] }, BASE); // ignorado
+  limpiar(); await procesar(texto('¿Y el precio?'), BASE);
+  assert.equal(enviados.length, 0, 'en pausa no contesta');
+  // Historial/contactos sincronizados no disparan respuestas
+  limpiar(); chats.clear();
+  await procesar({ entry: [{ changes: [{ field: 'history', value: { history: [{ threads: [{ id: '50370000000', messages: [{ from: '50370000000', id: 'h1', type: 'text', text: { body: 'viejo' } }] }] }] } }] }] }, BASE);
+  assert.equal(enviados.length, 0);
+  assert.equal(chats.get('50370000000').conocido, true);
+  // …y a ese contacto de antes el bot no lo saluda; si pide "menú", sí
+  limpiar(); await procesar(texto('Hola Gabriel, ¿cómo va mi pedido?'), BASE);
+  assert.equal(enviados.length, 0); assert.equal(alertas.length, 0);
+  limpiar(); await procesar(texto('menú'), BASE);
+  assert.equal(enviados.length, 1, 'si pide el menú, el bot sí responde');
+  // Contactos sincronizados (state_sync) también cuentan como conocidos
+  await procesar({ entry: [{ changes: [{ value: { state_sync: [{ type: 'contact', action: 'add', contact: { full_name: 'Eva', phone_number: '+503 7111-2222' } }] } }] }] }, BASE);
+  assert.equal(chats.get('50371112222').conocido, true);
+  // Un número nuevo sí recibe la bienvenida
+  limpiar(); await procesar(msg({ from: '50379990000', type: 'text', text: { body: 'Hola' } }), BASE);
+  assert.ok(enviados.some((e) => e.to === '50379990000'));
+
+  // 15. Sincronización tras conectar: contactos y luego historial, solo con id numérico
+  const sincr = [];
+  const fs2 = async (u, o) => { sincr.push({ u, b: JSON.parse(o.body) }); return { ok: true, text: async () => '{"success":true}' }; };
+  delete process.env.WHATSAPP_SINCRONIZAR; await bot.sincronizarCoexistencia(fs2, lg); assert.equal(sincr.length, 0);
+  process.env.WHATSAPP_SINCRONIZAR = '1234567890'; await bot.sincronizarCoexistencia(fs2, lg);
+  assert.deepEqual(sincr.map((x) => x.b.sync_type), ['smb_app_state_sync', 'history']);
+  assert.match(sincr[0].u, /\/1234567890\/smb_app_data$/); assert.equal(sincr[0].b.messaging_product, 'whatsapp');
+  delete process.env.WHATSAPP_SINCRONIZAR;
 
   // ── Rutas HTTP reales ──────────────────────────────────────
   const app = express();
@@ -212,6 +237,40 @@ const limpiar = () => { enviados = []; telegram = []; alertas = []; };
     r = await fetch(`${url}?hub.mode=subscribe&hub.verify_token=&hub.challenge=abc`);
     assert.equal(r.status, 403);
   } finally { server.close(); }
+
+  // ── Página de conexión (rutas reales con sesión simulada) ──
+  const app3 = express(); let sesion = null; const vistos3 = []; const llam3 = [];
+  app3.use(express.json()); app3.use((req, res, next) => { req.session = sesion; next(); });
+  const reqAdmin = (req, res, next) => (req.session?.userId ? ((req.authUser = { username: 'gabo' }), next()) : res.status(401).json({ error: 'No autorizado' }));
+  bot.montarConexionWhatsApp(app3, { requireAdmin: reqAdmin, log: { log: (m) => vistos3.push(m), error: (m) => vistos3.push(m) },
+    fetchImpl: async (u) => { llam3.push(u); return { ok: true, text: async () => '{"data":[{"id":"999"}]}' }; } });
+  const srv3 = app3.listen(0); const B3 = `http://127.0.0.1:${srv3.address().port}`;
+  try {
+    let r = await fetch(`${B3}/whatsapp/conectar`, { redirect: 'manual' });
+    assert.equal(r.status, 302); assert.equal(r.headers.get('location'), '/admin');
+    sesion = { userId: 'u1' };
+    r = await fetch(`${B3}/whatsapp/conectar`);
+    assert.equal(r.status, 200);
+    assert.match(r.headers.get('content-security-policy'), /connect\.facebook\.net/);
+    assert.equal(r.headers.get('cross-origin-opener-policy'), 'same-origin-allow-popups');
+    assert.match(await r.text(), /whatsapp_business_app_onboarding/);
+    delete process.env.WHATSAPP_APP_ID; delete process.env.WHATSAPP_CONFIG_ID;
+    assert.equal((await fetch(`${B3}/api/whatsapp/config`)).status, 503);
+    process.env.WHATSAPP_APP_ID = '111'; process.env.WHATSAPP_CONFIG_ID = '222';
+    const cfg = await (await fetch(`${B3}/api/whatsapp/config`)).json();
+    assert.equal(cfg.appId, '111'); assert.equal(cfg.configId, '222');
+    const pj3 = (body) => fetch(`${B3}/api/whatsapp/coexistencia`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    assert.equal((await pj3({ waba_id: 'abc' })).status, 400);
+    assert.equal((await pj3({})).status, 400);
+    process.env.WHATSAPP_TOKEN = 'tok';
+    r = await pj3({ event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING<script>', waba_id: '945936821410540' });
+    assert.equal(r.status, 200);
+    await new Promise((ok) => setTimeout(ok, 30));
+    assert.ok(vistos3.some((m) => /Coexistencia conectada \(FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING\): waba=945936821410540/.test(m)));
+    assert.match(llam3[0], /\/945936821410540\/phone_numbers/); assert.ok(vistos3.some((m) => /"id":"999"/.test(m)));
+    sesion = null; assert.equal((await pj3({ waba_id: '945936821410540' })).status, 401);
+    assert.equal((await fetch(`${B3}/api/whatsapp/config`)).status, 401);
+  } finally { srv3.close(); }
 
   console.log('PASS whatsapp-bot: bienvenida, menú, planes, interés, pausa, cotización, humano, reintentos, límites de WhatsApp, HTML seguro, errores, firma y verificación');
 })().catch((e) => { console.error(e); process.exitCode = 1; });

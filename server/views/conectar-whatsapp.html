@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conectar WhatsApp · Nokta Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --fondo:#F4F1EA; --sup:#FFFFFF; --texto:#161616; --suave:#5E5A52; --marca:#D0673A; --borde:rgba(0,0,0,.08); --wa:#25D366; --error:#C0392B; }
+  @media (prefers-color-scheme: dark) { :root { --fondo:#0C0C0B; --sup:#141413; --texto:#F4F1EA; --suave:#A8A399; --borde:rgba(255,255,255,.08); --error:#E8706A; } }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; display:grid; place-items:center; background:var(--fondo); color:var(--texto); font:400 15px/1.6 'Poppins',system-ui,sans-serif; padding:24px 16px; }
+  .card { width:100%; max-width:520px; background:var(--sup); border:1px solid var(--borde); border-radius:22px; padding:32px 28px; }
+  .marca { font-weight:600; font-size:20px; } .marca span { color:var(--marca); }
+  h1 { font-size:26px; font-weight:500; letter-spacing:-.5px; margin:18px 0 6px; }
+  p, li { color:var(--suave); font-size:14px; }
+  ol { padding-left:20px; margin:16px 0 22px; } li { margin:6px 0; }
+  .aviso { font-size:12px; padding:12px 14px; border-radius:12px; background:rgba(208,103,58,.1); color:var(--texto); margin-bottom:22px; }
+  button { width:100%; height:48px; border:0; border-radius:14px; background:var(--wa); color:#fff; font:600 14px 'Poppins',sans-serif; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:default; }
+  #estado { margin-top:16px; font-size:13px; min-height:20px; }
+  #estado.ok { color:#2E8B5A; } #estado.err { color:var(--error); }
+  a { color:var(--marca); }
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="marca">nokta<span>.</span></div>
+  <h1>Conectar mi WhatsApp Business</h1>
+  <p>Conecta el WhatsApp Business de Nokta al bot <strong>sin borrar tu cuenta ni tus chats</strong>.</p>
+  <ol>
+    <li>Pulsa el botón verde y entra con tu Facebook.</li>
+    <li>Elige el porfolio <strong>Nokta Studio</strong>.</li>
+    <li>Cuando pregunte por el número, elige <strong>conectar tu app WhatsApp Business existente</strong>.</li>
+    <li>Escanea el código QR con la app WhatsApp Business del móvil.</li>
+  </ol>
+  <div class="aviso">Al conectarla, WhatsApp desactiva en la app las listas de difusión, los mensajes temporales, los de "ver una vez" y la ubicación en tiempo real. Tus chats, contactos y catálogo se quedan.</div>
+  <button id="btn" disabled>Cargando…</button>
+  <div id="estado" role="status"></div>
+  <p style="margin-top:22px"><a href="/admin">← Volver a Nokta</a></p>
+</main>
+<script>
+(function () {
+  const btn = document.getElementById('btn');
+  const estado = document.getElementById('estado');
+  const decir = (t, tipo) => { estado.textContent = t; estado.className = tipo || ''; };
+  let enviado = false;
+
+  // Solo se aceptan mensajes que vengan de facebook.com (no de "otrofacebook.com").
+  function deFacebook(origin) {
+    try { const h = new URL(origin).hostname; return h === 'facebook.com' || h.endsWith('.facebook.com'); }
+    catch { return false; }
+  }
+
+  window.addEventListener('message', async (ev) => {
+    if (!deFacebook(ev.origin)) return;
+    let d; try { d = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data; } catch { return; }
+    if (!d || d.type !== 'WA_EMBEDDED_SIGNUP') return;
+    if (String(d.event || '').startsWith('FINISH')) {
+      if (enviado) return; enviado = true;
+      // Meta manda este aviso una sola vez: los ids quedan a la vista por si
+      // falla el guardado y hay que pasárselos a mano a Claude.
+      const ids = 'Cuenta: ' + (d.data?.waba_id || '?') + ' · Número: ' + (d.data?.phone_number_id || '?');
+      try {
+        const r = await fetch('/api/whatsapp/coexistencia', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ event: d.event, waba_id: d.data?.waba_id, phone_number_id: d.data?.phone_number_id }),
+        });
+        if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Error ' + r.status);
+        decir('✅ ¡Conectado! Avísale a Claude para terminar de activar el bot. (' + ids + ')', 'ok');
+        btn.textContent = 'Conectado'; btn.disabled = true;
+      } catch (e) { decir('Se conectó en Meta, pero no se pudo avisar al servidor (' + e.message + '). Mándale a Claude una captura de esto: ' + ids, 'err'); }
+    } else if (d.event === 'CANCEL') {
+      decir('Se cerró antes de terminar' + (d.data?.current_step ? ' (paso: ' + d.data.current_step + ')' : '') + '. Puedes intentarlo otra vez.', 'err');
+    } else if (d.event === 'ERROR') {
+      decir('Meta dio un error: ' + (d.data?.error_message || 'sin detalle') + '. Mándale una captura a Claude.', 'err');
+    }
+  });
+
+  fetch('/api/whatsapp/config').then(async (r) => {
+    const cfg = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(cfg.error || 'Error ' + r.status);
+    window.fbAsyncInit = function () {
+      FB.init({ appId: cfg.appId, autoLogAppEvents: true, xfbml: false, version: cfg.version });
+      btn.disabled = false; btn.textContent = 'Conectar mi WhatsApp Business';
+    };
+    const s = document.createElement('script');
+    s.src = 'https://connect.facebook.net/es_LA/sdk.js'; s.async = true; s.crossOrigin = 'anonymous';
+    s.onerror = () => decir('No se pudo cargar Facebook. Desactiva bloqueadores de anuncios y recarga.', 'err');
+    document.head.appendChild(s);
+    btn.onclick = () => {
+      decir('Se abrió una ventana de Facebook. Sigue los pasos ahí…');
+      FB.login(() => {}, {
+        config_id: cfg.configId,
+        response_type: 'code',
+        override_default_response_type: true,
+        extras: { setup: {}, featureType: 'whatsapp_business_app_onboarding', sessionInfoVersion: '3' },
+      });
+    };
+  }).catch((e) => { btn.textContent = 'No disponible'; decir(e.message, 'err'); });
+})();
+</script>
+</body>
+</html>

@@ -425,6 +425,9 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
+// Conectar el número de la app WhatsApp Business al bot (coexistencia).
+require('./whatsapp-bot').montarConexionWhatsApp(app, { requireAdmin });
+
 // Página pública que Meta exige para publicar la app del bot de WhatsApp.
 app.get('/privacidad', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'privacidad.html'));

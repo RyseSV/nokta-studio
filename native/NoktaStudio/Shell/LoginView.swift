@@ -48,6 +48,8 @@ final class LoginViewModel {
 struct LoginView: View {
     @State private var vm = LoginViewModel()
     let onSuccess: () -> Void
+    /// Mensaje al llegar aquí sin haberlo pedido (p. ej. sesión cerrada por inactividad).
+    var aviso: String? = nil
 
     private enum Campo { case usuario, password }
     @FocusState private var foco: Campo?
@@ -71,6 +73,7 @@ struct LoginView: View {
             }
         }
         .onAppear {
+            if let aviso, vm.errorMessage == nil { vm.errorMessage = aviso }
             withAnimation(reduceMotion ? nil : .spring(duration: 0.8, bounce: 0.15)) { aparecio = true }
             #if os(macOS)
             // Mac: cursor ready in the first field. iPhone: don't pop the

@@ -1,4 +1,5 @@
 import SwiftUI
+import Security
 
 /// The app never had its own login screen — it always relied on the WKWebView
 /// showing admin.html's real login form once, then a since-removed CookieSync
@@ -19,6 +20,13 @@ final class LoginViewModel {
     var isLoading = false
     var errorMessage: String?
 
+    init() {
+        if let d = DatosGuardados.leer() {
+            username = d.usuario
+            password = d.contrasena
+        }
+    }
+
     func login() async -> Bool {
         errorMessage = nil
         let user = username.trimmingCharacters(in: .whitespaces)
@@ -32,7 +40,12 @@ final class LoginViewModel {
         struct Resp: Decodable { let ok: Bool? }
         do {
             let resp: Resp = try await NoktaAPI.post("/api/admin/login", body: Body(username: user, password: password, remember: remember))
-            if resp.ok == true { return true }
+            if resp.ok == true {
+                // "Recordar mis datos": quedan en el llavero cifrado del
+                // dispositivo para que la próxima vez solo toques Ingresar.
+                if remember { DatosGuardados.guardar(usuario: user, contrasena: password) } else { DatosGuardados.borrar() }
+                return true
+            }
             errorMessage = "Usuario o contraseña incorrectos"
             return false
         } catch NoktaAPIError.http(_, let msg) {
@@ -220,11 +233,11 @@ struct LoginView: View {
             }
 
             HStack(spacing: 12) {
-                Text("Recordar sesión en este dispositivo")
+                Text("Recordar mis datos en este dispositivo")
                     .font(NoktaFont.poppins(12))
                     .foregroundStyle(NoktaTheme.textoSuave)
                 Spacer(minLength: 0)
-                Toggle("Recordar sesión en este dispositivo", isOn: $vm.remember)
+                Toggle("Recordar mis datos en este dispositivo", isOn: $vm.remember)
                     .labelsHidden()
                     .toggleStyle(.switch)
                     .tint(NoktaTheme.marca)
@@ -454,5 +467,49 @@ private struct SeededRandom {
     mutating func next() -> UInt64 {
         state = state &* 6364136223846793005 &+ 1442695040888963407
         return state >> 33
+    }
+}
+
+/// Usuario y contraseña guardados en el llavero (Keychain) de este
+/// dispositivo, cifrados por el sistema. Solo los lee esta app, para
+/// llenarlos en la pantalla de entrada; nunca se mandan a ningún otro lado.
+enum DatosGuardados {
+    private static let servicio = "com.noktastudio.login"
+    private static let claveUsuario = "noktaUsuarioGuardado"
+
+    static func guardar(usuario: String, contrasena: String) {
+        borrar()
+        guard let datos = contrasena.data(using: .utf8) else { return }
+        let item: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: servicio,
+            kSecAttrAccount as String: usuario,
+            kSecValueData as String: datos,
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+        ]
+        if SecItemAdd(item as CFDictionary, nil) == errSecSuccess {
+            UserDefaults.standard.set(usuario, forKey: claveUsuario)
+        }
+    }
+
+    static func leer() -> (usuario: String, contrasena: String)? {
+        guard let usuario = UserDefaults.standard.string(forKey: claveUsuario) else { return nil }
+        let consulta: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: servicio,
+            kSecAttrAccount as String: usuario,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+        var resultado: AnyObject?
+        guard SecItemCopyMatching(consulta as CFDictionary, &resultado) == errSecSuccess,
+              let datos = resultado as? Data, let contrasena = String(data: datos, encoding: .utf8)
+        else { return (usuario, "") }
+        return (usuario, contrasena)
+    }
+
+    static func borrar() {
+        SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: servicio] as CFDictionary)
+        UserDefaults.standard.removeObject(forKey: claveUsuario)
     }
 }

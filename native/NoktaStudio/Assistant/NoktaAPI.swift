@@ -329,6 +329,12 @@ enum NoktaAPI {
         try await request(path, method: "GET", body: Data?.none)
     }
 
+    /// Consulta automática (p. ej. revisar alertas cada 30 s): el servidor no
+    /// la cuenta como uso, así que no evita el cierre por inactividad.
+    static func getSegundoPlano<T: Decodable>(_ path: String) async throws -> T {
+        try await request(path, method: "GET", body: Data?.none, segundoPlano: true)
+    }
+
     static func post<T: Decodable>(_ path: String, body: Encodable) async throws -> T {
         try await request(path, method: "POST", body: try JSONEncoder().encode(AnyEncodable(body)))
     }
@@ -363,7 +369,7 @@ enum NoktaAPI {
         }
     }
 
-    private static func request<T: Decodable>(_ path: String, method: String, body: Data?) async throws -> T {
+    private static func request<T: Decodable>(_ path: String, method: String, body: Data?, segundoPlano: Bool = false) async throws -> T {
         // Callers encode individual path components; preserve those escapes.
         guard let url = URL(string: path, relativeTo: baseURL)?.absoluteURL else {
             throw NoktaAPIError.invalidURL
@@ -371,6 +377,7 @@ enum NoktaAPI {
         var req = URLRequest(url: url)
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Accept")
+        if segundoPlano { req.setValue("1", forHTTPHeaderField: "X-Nokta-Segundo-Plano") }
         if let body {
             req.httpBody = body
             req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -378,6 +385,11 @@ enum NoktaAPI {
         let (data, response) = try await session.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw NoktaAPIError.invalidURL }
         guard (200...299).contains(http.statusCode) else {
+            // El servidor cerró la sesión (p. ej. por inactividad): la app
+            // vuelve a la pantalla de entrada en vez de mostrar datos vacíos.
+            if http.statusCode == 401, !path.hasPrefix("/api/admin/login"), !path.hasPrefix("/api/admin/me") {
+                await MainActor.run { NotificationCenter.default.post(name: .noktaSesionVencida, object: nil) }
+            }
             let msg = (try? JSONDecoder().decode([String: String].self, from: data))?["error"] ?? "—"
             throw NoktaAPIError.http(http.statusCode, msg)
         }
@@ -392,3 +404,8 @@ private struct AnyEncodable: Encodable {
 }
 
 struct OKResponse: Decodable { let ok: Bool? }
+
+extension Notification.Name {
+    /// El servidor respondió 401: la sesión ya no es válida.
+    static let noktaSesionVencida = Notification.Name("noktaSesionVencida")
+}

@@ -211,9 +211,31 @@ app.use(session({
   }
 }));
 
+// ── Inactividad ─────────────────────────────────────────────
+// Como las apps del banco: si pasan 12 minutos sin que la persona haga nada,
+// la sesión se cierra en el servidor (web, Mac e iPhone por igual). La app
+// cierra sola a los 10; los 2 de más son margen para que el servidor nunca
+// la saque antes que la propia app. Las consultas automáticas (p. ej. revisar
+// alertas cada 30 s) mandan X-Nokta-Segundo-Plano y NO cuentan como uso.
+const INACTIVIDAD_MS = 12 * 60 * 1000;
+const esSegundoPlano = req => req.get('X-Nokta-Segundo-Plano') === '1';
+function sesionVencida(req) {
+  const u = req.session.ultimaActividad;
+  return !!u && Date.now() - u > INACTIVIDAD_MS;
+}
+
 // ── Auth middleware ─────────────────────────────────────────
 async function requireAdmin(req, res, next) {
   if (!req.session.userId) return res.status(401).json({ error: 'No autorizado' });
+  if (sesionVencida(req)) {
+    logSecurity('sesión cerrada por inactividad', req, { username: req.session.username });
+    return req.session.destroy(err => {
+      if (err) return handleError(res, err);
+      res.clearCookie('connect.sid', { path: '/', secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
+      res.status(401).json({ error: 'Cerramos tu sesión por inactividad', inactividad: true });
+    });
+  }
+  if (!esSegundoPlano(req)) req.session.ultimaActividad = Date.now();
   try {
     // Sessions identify a user; current database state determines access.
     const user = await Usuario.findById(req.session.userId, '-password').lean();
@@ -422,6 +444,9 @@ async function checkAlerts() {
 app.get('/admin', (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (!req.session.userId) return res.sendFile(path.join(__dirname, 'views', 'login-admin.html'));
+  if (sesionVencida(req)) {
+    return req.session.destroy(() => res.sendFile(path.join(__dirname, 'views', 'login-admin.html')));
+  }
   res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
@@ -449,15 +474,25 @@ app.post('/api/admin/login', loginLimiter, async (req, res) => {
       logSecurity('intento de login fallido', req, { username: username?.trim().toLowerCase() || '(vacío)' });
       return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
     }
-    if (remember) req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 días
-    req.session.userId = user._id.toString();
-    req.session.username = user.username;
-    req.session.nombre = user.nombre;
-    req.session.role = user.role;
-    logSecurity('login exitoso', req, { username: user.username, role: user.role });
-    res.json({ ok: true, role: user.role, nombre: user.nombre });
+    // Sesión nueva en cada login: si alguien hubiera plantado una cookie de
+    // sesión de antemano, no sirve para colarse en la tuya.
+    req.session.regenerate(err => {
+      if (err) return handleError(res, err);
+      if (remember) req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 días
+      req.session.userId = user._id.toString();
+      req.session.username = user.username;
+      req.session.nombre = user.nombre;
+      req.session.role = user.role;
+      req.session.ultimaActividad = Date.now();
+      logSecurity('login exitoso', req, { username: user.username, role: user.role });
+      res.json({ ok: true, role: user.role, nombre: user.nombre });
+    });
   } catch (err) { handleError(res, err); }
 });
+
+// La app y la web avisan aquí (como mucho cada 2 min) que la persona sigue
+// usando Nokta aunque no esté cargando datos (leyendo, desplazándose…).
+app.post('/api/admin/actividad', requireAdmin, (req, res) => res.json({ ok: true }));
 
 app.post('/api/admin/logout', (req, res) => {
   req.session.destroy(err => {
@@ -532,7 +567,10 @@ app.post('/api/usuarios/:id/foto', requireAdmin, async (req, res) => {
       return res.status(403).json({ error: 'Acceso denegado' });
     }
     const { base64 } = req.body;
-    if (!base64) return res.status(400).json({ error: 'No image' });
+    // Solo una imagen subida desde el dispositivo (no links ni otros archivos).
+    if (typeof base64 !== 'string' || !/^data:image\/(png|jpe?g|webp|gif|heic|heif);base64,/i.test(base64)) {
+      return res.status(400).json({ error: 'Sube una imagen (JPG, PNG, WEBP o HEIC)' });
+    }
     const result = await cloudinary.uploader.upload(base64, {
       folder: 'nokta-usuarios',
       public_id: `user_${req.params.id}`,

@@ -139,7 +139,7 @@ struct RootView: View {
     }
 
     private func refreshUnreadAlertas() async {
-        if let alertas: [NoktaAlerta] = try? await NoktaAPI.get("/api/alertas") {
+        if let alertas: [NoktaAlerta] = try? await NoktaAPI.getSegundoPlano("/api/alertas") {
             unreadAlertas = alertas.filter { !$0.leida }.count
         }
     }

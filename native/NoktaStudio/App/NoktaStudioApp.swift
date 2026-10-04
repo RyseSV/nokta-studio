@@ -53,6 +53,10 @@ private struct SessionGateView: View {
         .onChange(of: scenePhase) { _, fase in
             if fase == .active, state == .loggedIn, inactividad.vencida { cerrarPorInactividad() }
         }
+        // El servidor ya cerró la sesión (también vence a los 12 min sin uso).
+        .onReceive(NotificationCenter.default.publisher(for: .noktaSesionVencida)) { _ in
+            if state == .loggedIn { cerrarPorInactividad() }
+        }
     }
 
     private func checkSession() async {
@@ -113,6 +117,7 @@ final class Inactividad {
 
     private var ultima: TimeInterval = UserDefaults.standard.double(forKey: Inactividad.clave)
     private var ultimaGuardada: TimeInterval = 0
+    private var ultimoAviso: TimeInterval = 0
     private var reloj: Timer?
     private var alVencer: (() -> Void)?
     private var observadores: [NSObjectProtocol] = []
@@ -128,6 +133,7 @@ final class Inactividad {
     func iniciar(alVencer: @escaping () -> Void) {
         detener()
         self.alVencer = alVencer
+        ultimoAviso = Date().timeIntervalSince1970
         marcar(forzar: true)
         reloj = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
             Task { @MainActor in
@@ -177,6 +183,16 @@ final class Inactividad {
         if forzar || ahora - ultimaGuardada >= 5 {
             ultimaGuardada = ahora
             UserDefaults.standard.set(ahora, forKey: Self.clave)
+        }
+        // Como mucho cada 2 min se le avisa al servidor que sigues usando la
+        // app (leer o desplazarte no carga datos, y el servidor no lo vería).
+        if !forzar, ahora - ultimoAviso >= 120 {
+            ultimoAviso = ahora
+            Task {
+                struct Vacio: Encodable {}
+                struct Ok: Decodable { let ok: Bool? }
+                let _: Ok? = try? await NoktaAPI.post("/api/admin/actividad", body: Vacio())
+            }
         }
     }
 }

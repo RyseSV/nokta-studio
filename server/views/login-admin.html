@@ -193,6 +193,12 @@ function mostrarError(msg) {
   err.classList.remove('tiembla'); void err.offsetWidth; err.classList.add('tiembla');
   pw.focus();
 }
+// Llegó aquí porque el servidor cerró la sesión por inactividad.
+if (new URLSearchParams(location.search).get('salida') === 'inactividad') {
+  errtxt.textContent = 'Cerramos tu sesión por inactividad. Vuelve a entrar.';
+  err.classList.add('si');
+  history.replaceState(null, '', '/admin');
+}
 
 document.getElementById('f').onsubmit = async e => {
   e.preventDefault();

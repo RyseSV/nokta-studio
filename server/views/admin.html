@@ -1967,7 +1967,7 @@ initSession();
 // ═══════════════════════════════════════════════════════════
 async function api(url,opts={}){
   const r=await fetch(url,{headers:{'Content-Type':'application/json'},...opts});
-  if(r.status===401){ location.href='/admin'; return new Promise(()=>{}); } // session expired — bounce to login instead of letting every caller crash on the {error} shape
+  if(r.status===401){ const d=await r.json().catch(()=>({})); location.href=d.inactividad?'/admin?salida=inactividad':'/admin'; return new Promise(()=>{}); } // session expired — bounce to login instead of letting every caller crash on the {error} shape
   const data = await r.json().catch(()=>({}));
   if(!r.ok) throw new Error(data.error || ('Error del servidor ('+r.status+')'));
   return data;
@@ -4950,7 +4950,15 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 loadDashboard();
 // Badge refresh — keep only unread, same as loadAlertas (the Alertas page
 // renders from allAlertas, so read ones must never slip back in).
-setInterval(async()=>{ const a=await api('/api/alertas').catch(()=>null); if(Array.isArray(a)){ allAlertas=a.filter(x=>!x.leida); updateBadge(allAlertas); } }, 30000);
+// Mientras uses el panel (mouse, teclado, toques, desplazarte), se le avisa al
+// servidor como mucho cada 2 min para que no cierre la sesión por inactividad.
+let ntUltimoAviso=Date.now();
+['pointerdown','pointermove','keydown','wheel','touchstart','scroll'].forEach(ev=>addEventListener(ev,()=>{
+  if(Date.now()-ntUltimoAviso<120000) return;
+  ntUltimoAviso=Date.now();
+  fetch('/api/admin/actividad',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).catch(()=>{});
+},{passive:true,capture:true}));
+setInterval(async()=>{ const a=await api('/api/alertas',{headers:{'Content-Type':'application/json','X-Nokta-Segundo-Plano':'1'}}).catch(()=>null); if(Array.isArray(a)){ allAlertas=a.filter(x=>!x.leida); updateBadge(allAlertas); } }, 30000);
 </script>
 </body>
 </html>

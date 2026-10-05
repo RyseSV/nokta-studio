@@ -304,7 +304,7 @@ async function checkAlerts() {
   // Alerta.findOne() per candidate item below (a grupo B contract alone can
   // check up to ~48 quincena periods) — checked in memory from here on, and
   // kept in sync as addAlert() creates new ones within this same run.
-  const alertasExistentes = await Alerta.find({}, 'tipo datos').lean();
+  const alertasExistentes = await Alerta.find({}, 'id tipo datos').lean();
   const existeAlerta = (tipo, campo, valor) => alertasExistentes.some(a => a.tipo === tipo && a.datos?.[campo] === valor);
   async function addAlertTracked(tipo, datos) {
     await addAlert(tipo, datos);
@@ -435,6 +435,29 @@ async function checkAlerts() {
       await addAlertTracked('evento_proximo', { key, id: e.id, cliente: String(e.titulo || '').split(' — ')[0] || e.tipo || 'Evento', tipo: e.tipo || 'Evento', hora: e.horaInicio || '', fecha: e.fecha });
     }
   }
+
+  // Limpieza: avisos que ya no aplican porque se borró (o canceló) lo que los
+  // originó — una clase quitada, un evento borrado del calendario o un
+  // trabajo eliminado. Antes se quedaban para siempre ("Clase el 3 oct"
+  // seguía saliendo aunque esa clase ya no existía).
+  const sesionesVigentes = new Set();
+  for (const t of trabajosPlanos) {
+    for (const s of t.sesiones || []) {
+      if (s.estado !== 'oculta' && s.estado !== 'cancelado') sesionesVigentes.add(`${t.id}-ses-${s.id}`);
+    }
+  }
+  const eventosVigentes = new Set(eventos.map(e => `ev-${e.id}`));
+  const deTrabajo = new Set(['pago_pendiente', 'quincena_vencida', 'evento_proximo']);
+  // Se decide con la lista leída al INICIO de esta revisión (no una nueva):
+  // si otra revisión creó un aviso mientras tanto, este no lo toca. Las que
+  // se crearon en esta misma corrida no tienen _id y se saltan.
+  const obsoletas = alertasExistentes.filter(a => a._id).filter(a => {
+    const key = String(a.datos?.key || '');
+    if (a.tipo === 'evento_proximo' && key.includes('-ses-')) return !sesionesVigentes.has(key);
+    if (a.tipo === 'evento_proximo' && key.startsWith('ev-')) return !eventosVigentes.has(key);
+    return deTrabajo.has(a.tipo) && !!a.datos?.id && !idsTrabajo.has(a.datos.id);
+  });
+  if (obsoletas.length) await Alerta.deleteMany({ _id: { $in: obsoletas.map(a => a._id) } });
 }
 
 // ══════════════════════════════════════════════════════════════

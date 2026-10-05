@@ -271,6 +271,38 @@ const daysFromNow = (n, base) => new Date(base.getTime() + n * 86400000);
     assert.equal(proximos(ctx).length, 1);
   });
 
+  await test('al borrar o cancelar una clase, su aviso desaparece; las demás clases conservan el suyo', async () => {
+    const ctx = newWorld({
+      trabajos: [{ id: 'tf', cliente: 'Clases de IA Fátima', servicio: 'Clases', sesiones: [
+        { id: 's10', fecha: '2026-10-10', estado: 'pendiente' },
+        { id: 's17', fecha: '2026-10-17', estado: 'cancelado' },
+      ] }],
+      alertas: [
+        { _id: 'oid-a-borrada', id: 'a-borrada', tipo: 'evento_proximo', leida: false, datos: { key: 'tf-ses-s03', id: 'tf', fecha: '2026-10-03' } },
+        { _id: 'oid-a-cancelada', id: 'a-cancelada', tipo: 'evento_proximo', leida: false, datos: { key: 'tf-ses-s17', id: 'tf', fecha: '2026-10-17' } },
+        { _id: 'oid-a-vigente', id: 'a-vigente', tipo: 'evento_proximo', leida: true, datos: { key: 'tf-ses-s10', id: 'tf', fecha: '2026-10-10' } },
+        { _id: 'oid-a-evento-borrado', id: 'a-evento-borrado', tipo: 'evento_proximo', leida: false, datos: { key: 'ev-e99', id: 'e99' } },
+        { _id: 'oid-a-trabajo-borrado', id: 'a-trabajo-borrado', tipo: 'pago_pendiente', leida: false, datos: { id: 'ya-no-existe', cliente: 'X' } },
+        { _id: 'oid-a-link', id: 'a-link', tipo: 'link_venciendo', leida: false, datos: { codigo: 'NK-1' } },
+      ],
+    }, new Date('2026-10-05T12:00:00Z'));
+    await ctx.__checkAlerts();
+    const ids = ctx.Alerta._docs().map(a => a.id).sort();
+    assert.deepEqual(ids, ['a-link', 'a-vigente']);
+  });
+
+  await test('un aviso sin campo id viejo nunca se borra por accidente junto con los obsoletos', async () => {
+    const ctx = newWorld({
+      trabajos: [{ id: 'tf', cliente: 'Ana', servicio: 'Clases', sesiones: [] }],
+      alertas: [
+        { _id: 'oid-1', id: 'a1', tipo: 'evento_proximo', datos: { key: 'tf-ses-borrada', id: 'tf' } },
+        { _id: 'oid-2', tipo: 'link_venciendo', datos: { codigo: 'NK-9' } },
+      ],
+    }, new Date('2026-10-05T12:00:00Z'));
+    await ctx.__checkAlerts();
+    assert.deepEqual(ctx.Alerta._docs().map(a => a._id), ['oid-2']);
+  });
+
   console.log(`\n${pass} pasaron, ${fail} fallaron`);
   process.exitCode = fail ? 1 : 0;
 })();

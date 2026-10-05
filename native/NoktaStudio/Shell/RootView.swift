@@ -403,6 +403,16 @@ struct RootView: View {
 
     enum PestanaIOS: Hashable { case seccion(NoktaSection), mas }
 
+    /// Cada pestaña recuerda dónde te quedaste, pero si algo cambió en otra
+    /// (p. ej. borraste una clase) se recarga al volver a abrirla.
+    @State private var versionDatos = 0
+    /// Versión de datos que ya vio cada pestaña, y la identidad con que se
+    /// dibuja: solo cambia (y recarga) al ENTRAR a una pestaña con datos viejos.
+    @State private var vistoEn: [PestanaIOS: Int] = [:]
+    @State private var identidad: [PestanaIOS: Int] = [:]
+    /// Cada "abrir este trabajo" desde Inicio redibuja Trabajos para abrirlo.
+    @State private var aperturasTrabajo = 0
+
     private var iOSShell: some View {
         TabView(selection: $pestana) {
             ForEach(Self.pestanas) { item in
@@ -411,6 +421,7 @@ struct RootView: View {
                         detailView(for: item)
                             .toolbar(.hidden, for: .navigationBar)
                     }
+                    .id("\(item.rawValue)-\(identidad[.seccion(item), default: 0])-\(item == .trabajos ? aperturasTrabajo : 0)")
                 }
             }
             Tab("Más", systemImage: "square.grid.2x2.fill", value: PestanaIOS.mas) {
@@ -424,14 +435,30 @@ struct RootView: View {
                                 .onAppear { onSelect(item) }
                         }
                 }
+                .id("mas-\(identidad[.mas, default: 0])")
             }
             .badge(unreadAlertas)
         }
         .tint(NoktaTheme.marca)
-        .onChange(of: pestana) { _, _ in trabajoAbrir = nil }
+        .onChange(of: pestana) { vieja, nueva in
+            // Al salir de Trabajos se olvida el "abrir este trabajo" de Inicio,
+            // para que no vuelva a abrirse solo cuando la pestaña se recargue.
+            if vieja == .seccion(.trabajos) { trabajoAbrir = nil }
+            if vistoEn[nueva, default: 0] != versionDatos {
+                vistoEn[nueva] = versionDatos
+                identidad[nueva, default: 0] += 1
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .noktaDatosCambiaron)) { _ in
+            versionDatos += 1
+            // La pestaña que tienes abierta ya muestra el cambio que acabas de
+            // hacer: se marca como al día sin redibujarla en tu cara.
+            vistoEn[pestana] = versionDatos
+        }
     }
 
     private func irIOS(_ item: NoktaSection) {
+        if item == .trabajos, trabajoAbrir != nil { aperturasTrabajo += 1 }
         if Self.pestanas.contains(item) {
             pestana = .seccion(item)
         } else {

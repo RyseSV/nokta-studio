@@ -8,6 +8,10 @@ final class TrabajoDetailViewModel {
     var isLoading = true
     var errorMessage: String?
     var didDelete = false
+    /// Un cambio (pago, clase, quincena) que no se pudo guardar: se avisa en
+    /// vez de quedarse callado con los datos viejos en pantalla.
+    var errorGuardar: String?
+    private let mensajeGuardar = "No se pudo guardar el cambio. Revisa tu internet e intenta de nuevo."
 
     init(trabajoId: String) { self.trabajoId = trabajoId }
 
@@ -32,7 +36,9 @@ final class TrabajoDetailViewModel {
             if t.grupoResuelto == "B", (t.quincenas ?? []).isEmpty {
                 t = try await bootstrapQuincenas(t)
             }
-            if t.servicio == "Clases", (t.sesiones ?? []).isEmpty {
+            // Solo si el trabajo nunca tuvo clases (nil). Una lista vacía es
+            // porque las borraste todas: no hay que volver a crear una.
+            if t.servicio == "Clases", t.sesiones == nil {
                 t = try await bootstrapSesiones(t)
             }
             trabajo = t
@@ -89,8 +95,13 @@ final class TrabajoDetailViewModel {
         guard let t = trabajo else { return }
         struct Body: Encodable { let quincenas: [NoktaQuincena] }
         struct Resp: Decodable { let ok: Bool?; let quincenas: [NoktaQuincena]? }
-        if let resp: Resp = try? await NoktaAPI.patch("/api/trabajos/\(t.id)/quincenas", body: Body(quincenas: qs)) {
+        do {
+            let resp: Resp = try await NoktaAPI.patch("/api/trabajos/\(t.id)/quincenas", body: Body(quincenas: qs))
             trabajo?.quincenas = resp.quincenas ?? qs
+        } catch is DecodingError {
+            await load()
+        } catch {
+            errorGuardar = mensajeGuardar
         }
     }
 
@@ -144,8 +155,14 @@ final class TrabajoDetailViewModel {
         guard let t = trabajo else { return }
         struct Body: Encodable { let sesiones: [NoktaSesion] }
         struct Resp: Decodable { let ok: Bool?; let trabajo: NoktaTrabajo? }
-        if let resp: Resp = try? await NoktaAPI.patch("/api/trabajos/\(t.id)/sesiones", body: Body(sesiones: sesiones)) {
-            trabajo = resp.trabajo ?? t
+        do {
+            let resp: Resp = try await NoktaAPI.patch("/api/trabajos/\(t.id)/sesiones", body: Body(sesiones: sesiones))
+            if let nuevo = resp.trabajo { trabajo = nuevo } else { await load() }
+        } catch is DecodingError {
+            await load() // se guardó, solo no se pudo leer la respuesta
+        } catch {
+            errorGuardar = mensajeGuardar
+            await load() // muestra lo que de verdad quedó guardado
         }
     }
 
@@ -290,6 +307,11 @@ struct TrabajoDetailView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(facturaErrorMessage ?? "")
+        }
+        .alert("No se guardó", isPresented: Binding(get: { vm.errorGuardar != nil }, set: { if !$0 { vm.errorGuardar = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(vm.errorGuardar ?? "")
         }
         .alert("¿Eliminar este trabajo?", isPresented: $eliminarTrabajoConfirm) {
             Button("Cancelar", role: .cancel) {}

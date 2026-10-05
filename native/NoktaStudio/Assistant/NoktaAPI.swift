@@ -393,6 +393,11 @@ enum NoktaAPI {
             let msg = (try? JSONDecoder().decode([String: String].self, from: data))?["error"] ?? "—"
             throw NoktaAPIError.http(http.statusCode, msg)
         }
+        // Algo cambió en el servidor: las pestañas del iPhone que muestran
+        // datos viejos se recargan la próxima vez que las abras.
+        if method != "GET", !path.hasPrefix("/api/admin/") {
+            await MainActor.run { NotificationCenter.default.post(name: .noktaDatosCambiaron, object: nil) }
+        }
         return try JSONDecoder().decode(T.self, from: data)
     }
 }
@@ -408,4 +413,6 @@ struct OKResponse: Decodable { let ok: Bool? }
 extension Notification.Name {
     /// El servidor respondió 401: la sesión ya no es válida.
     static let noktaSesionVencida = Notification.Name("noktaSesionVencida")
+    /// Se guardó un cambio (crear, editar, pagar, borrar).
+    static let noktaDatosCambiaron = Notification.Name("noktaDatosCambiaron")
 }

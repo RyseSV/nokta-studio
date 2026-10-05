@@ -28,6 +28,13 @@ function makeModel(seed = []) {
     findOne(filter = {}) { return Promise.resolve(docs.find(d => matches(d, filter)) || null); },
     countDocuments(filter = {}) { return Promise.resolve(docs.filter(d => matches(d, filter)).length); },
     create(doc) { const d = { ...doc }; docs.push(d); return Promise.resolve(d); },
+    deleteMany(filter = {}) {
+      const [campo, cond] = Object.entries(filter)[0] || [];
+      const lista = cond?.$in;
+      const antes = docs.length;
+      docs = lista ? docs.filter(d => !lista.includes(d[campo])) : docs.filter(d => !matches(d, filter));
+      return Promise.resolve({ deletedCount: antes - docs.length });
+    },
     updateOne(filter, update) {
       const doc = docs.find(d => matches(d, filter));
       if (!doc) return Promise.resolve({ matchedCount: 0 });

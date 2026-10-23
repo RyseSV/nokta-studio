@@ -108,6 +108,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:90;opa
 .scroll-cta{color:var(--tinta);display:flex;align-items:center;gap:12px}
 .scroll-cta i{display:block;width:44px;height:1px;background:var(--tinta)}
 .fill{position:absolute;inset:0;background:var(--terracota);opacity:0;z-index:6}
+@media (max-height:560px){.hero-top{top:84px}.word{--ws:clamp(80px,min(26vw,42vh),500px);top:max(42%, calc(104px + var(--ws) / 2))}#lead{font-size:clamp(18px,2vw,26px)}}
 @media (max-width:720px){.word{top:max(36%, calc(130px + var(--ws) / 2))}.hero-bottom{flex-direction:column;align-items:flex-start}#ensoWrap{--ew:72vw}}
 
 /* ---------- Secciones (scroll normal) ---------- */

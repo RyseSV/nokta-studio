@@ -486,7 +486,7 @@ intro.to('#intro img', { opacity:1, scale:1, duration:1.1, ease:'power2.out' })
      .to('#intro', { opacity:0, duration:.7, ease:E }, '-=.2');
 
 // ---------- 1 · Hero (igual) ----------
-const ORIGIN = '53% 36.8%';
+const DOT_X = .53, DOT_Y = .368, ORIGIN = (DOT_X*100)+'% '+(DOT_Y*100)+'%';
 gsap.set('#ensoWrap', { transformOrigin:ORIGIN, yPercent:115, scale:.9, rotate:-10 });
 gsap.set('#word', { opacity:0, x:0, y:0, xPercent:-50, yPercent:-40 });
 gsap.set(['#lead','.scroll-cta','#heroTop'], { opacity:0, y:16 });
@@ -500,15 +500,17 @@ t1.to(['#topWrap','#heroBottom'], { opacity:0, y:-20, duration:.8, ease:E }, 0)
   .to('#wordWrap', { opacity:0, yPercent:-10, scale:1.06, filter:'blur(14px)', duration:1.8, ease:E }, .2)
   .fromTo('#mont', { scale:1.12 }, { scale:1, ease:'none', duration:6.5 }, 0)
   .to('#ensoWrap', { yPercent:-6, scale:1.04, rotate:4, ease:'power2.out', duration:3.6 }, 1.6)
-  .to('#ensoWrap', { rotate:9, scale:1.08, ease:'none', duration:1.3 }, 5.2)
+  // antes del zoom: lleva el punto naranja exactamente al centro de la pantalla
+  .to('#ensoWrap', { rotate:9, scale:1.08, yPercent:0, ease:'power2.inOut', duration:1.3,
+      x:()=>{ const w=document.getElementById('ensoWrap'); return innerWidth/2 - (w.offsetLeft + w.offsetWidth*DOT_X); },
+      y:()=>{ const w=document.getElementById('ensoWrap'); return innerHeight/2 - (w.offsetTop + w.offsetHeight*DOT_Y); } }, 5.2)
   .to('.rise', { '--m':'120%', duration:.5, ease:'none' }, 5.9)
   .set('.rise', { webkitMaskImage:'none', maskImage:'none' }, 6.45)
   .set('#enso', { filter:'none' }, 6.45)
   .to('.nav', { autoAlpha:0, duration:.5 }, 6.5)
   .to('.mist', { opacity:0, duration:.8 }, 6.6)
-  .to('#ensoWrap', { scale:34, rotate:16, ease:'power3.in', duration:2.8,
-      x:(i,el)=>{ const r=document.getElementById('dotMark').getBoundingClientRect(); return (gsap.getProperty(el,'x')||0) + innerWidth/2 - r.left; },
-      y:(i,el)=>{ const r=document.getElementById('dotMark').getBoundingClientRect(); return (gsap.getProperty(el,'y')||0) + innerHeight/2 - r.top; } }, 6.5)
+  // zoom alrededor del punto (el origen de la transformación es el punto, así no se mueve del centro)
+  .to('#ensoWrap', { scale:34, rotate:16, ease:'power3.in', duration:2.8 }, 6.5)
   .to('#mont', { opacity:0, duration:1.4 }, 6.9)
   .to('#fill', { opacity:1, duration:.5, ease:'none' }, 8.8)
   .to('#fill', { backgroundColor:'#F4EFE8', duration:.8, ease:'none' }, 9.3)

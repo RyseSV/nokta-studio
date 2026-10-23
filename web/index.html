@@ -87,7 +87,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:90;opa
 .bgwrap{position:absolute;inset:0}
 .bgwrap img{width:100%;height:100%;object-fit:cover;object-position:50% 62%;transform:scale(1.12);will-change:transform}
 .wordwrap{position:absolute;inset:0;z-index:1;will-change:transform,opacity,filter}
-.word{position:absolute;left:50%;top:max(33%, calc(130px + clamp(55px,13vw,250px)));transform:translate(-50%,-50%);font-size:clamp(110px,26vw,500px);font-weight:300;
+.word{--ws:clamp(96px,min(26vw,50vh),500px);position:absolute;left:50%;top:max(42%, calc(130px + var(--ws) / 2));transform:translate(-50%,-50%);font-size:var(--ws);font-weight:300;
   letter-spacing:-.045em;line-height:1;color:var(--tinta);white-space:nowrap;will-change:transform}
 .rise{--m:61%;position:absolute;inset:0;z-index:2;display:flex;justify-content:center;align-items:flex-end;padding-bottom:24vh;pointer-events:none;
   -webkit-mask-image:linear-gradient(to bottom,#000 var(--m),transparent calc(var(--m) + 15%));mask-image:linear-gradient(to bottom,#000 var(--m),transparent calc(var(--m) + 15%))}
@@ -105,7 +105,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:90;opa
 .scroll-cta{color:var(--tinta);display:flex;align-items:center;gap:12px}
 .scroll-cta i{display:block;width:44px;height:1px;background:var(--tinta)}
 .fill{position:absolute;inset:0;background:var(--terracota);opacity:0;z-index:6}
-@media (max-width:720px){.word{top:max(30%, calc(130px + clamp(55px,13vw,250px)))}.hero-bottom{flex-direction:column;align-items:flex-start}#ensoWrap{--ew:72vw}}
+@media (max-width:720px){.word{top:max(36%, calc(130px + var(--ws) / 2))}.hero-bottom{flex-direction:column;align-items:flex-start}#ensoWrap{--ew:72vw}}
 
 /* ---------- Secciones (scroll normal) ---------- */
 section.s{position:relative;padding:clamp(96px,16vh,180px) var(--gut)}
@@ -484,10 +484,10 @@ intro.to('#intro img', { opacity:1, scale:1, duration:1.1, ease:'power2.out' })
 // ---------- 1 · Hero (igual) ----------
 const ORIGIN = '53% 36.8%';
 gsap.set('#ensoWrap', { transformOrigin:ORIGIN, yPercent:115, scale:.9, rotate:-10 });
-gsap.set('#word', { opacity:0, yPercent:10 });
+gsap.set('#word', { opacity:0, x:0, y:0, xPercent:-50, yPercent:-40 });
 gsap.set(['#lead','.scroll-cta','#heroTop'], { opacity:0, y:16 });
 const heroIn = gsap.timeline({ paused:true });
-heroIn.to('#word', { opacity:.95, yPercent:0, duration:1.8, ease:'power3.out' }, 0)
+heroIn.to('#word', { opacity:.95, yPercent:-50, duration:1.8, ease:'power3.out' }, 0)
       .to(['#heroTop','#lead','.scroll-cta'], { opacity:1, y:0, stagger:.12, duration:1, ease:'power2.out' }, .8);
 intro.eventCallback('onComplete', () => { document.getElementById('intro').remove(); heroIn.play(); lenis && lenis.start(); });
 

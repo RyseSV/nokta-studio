@@ -36,7 +36,7 @@ body{background:var(--papel);color:var(--tinta);font-family:var(--font);font-wei
 .orbe svg{position:absolute;inset:4%;width:92%;height:92%;overflow:visible}
 .orbe .arco{stroke-dasharray:1194;stroke-dashoffset:1194;animation:dibuja 2.6s cubic-bezier(.65,0,.35,1) .5s forwards}
 @keyframes dibuja{to{stroke-dashoffset:260}}
-.orbe img{position:absolute;left:9%;top:12%;width:84%;filter:drop-shadow(0 34px 34px rgba(60,35,20,.28));animation:aparece 1.8s cubic-bezier(.22,.61,.36,1) both,flota 9s ease-in-out 1.8s infinite}
+.orbe img{position:absolute;left:8.25%;top:21.35%;width:84%;transform-origin:49.7% 39.2%;filter:drop-shadow(0 34px 34px rgba(60,35,20,.28));animation:aparece 1.8s cubic-bezier(.22,.61,.36,1) both,flota 9s ease-in-out 1.8s infinite}
 @keyframes aparece{from{opacity:0;transform:scale(.93) rotate(-12deg)}}
 @keyframes flota{50%{transform:translateY(-10px) rotate(2.5deg)}}
 .lema{grid-column:1;grid-row:3;align-self:end;justify-self:start;font-size:15px;color:var(--tinta);background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.9);padding:9px 16px;border-radius:999px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}

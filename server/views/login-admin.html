@@ -3,123 +3,134 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="light">
 <title>Nokta — Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="/public/luz/enso-negro-3d.webp">
 <style>
-/* Same look as the native app's login (Trazo vivo + borde de luz). */
+/* Entrada "Luz" — igual que la entrada de la app rediseñada: papel, montañas claras,
+   enso negro 3D con su anillo de luz y formulario de vidrio blanco. */
 :root{
-  --fondo:#0C0C0B; --texto:#F4F1EA; --suave:rgba(244,241,234,.55); --tenue:rgba(244,241,234,.3);
-  --borde:rgba(255,255,255,.08); --campo:rgba(28,28,26,.6); --marca:#D0673A; --error:#E8706A;
-  --font:'Poppins',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --papel:#F7F2EA; --tinta:#0E0D0C; --suave:rgba(14,13,12,.6); --tenue:rgba(14,13,12,.42);
+  --borde:rgba(14,13,12,.14); --marca:#B75023; --error:#B0412A;
+  --font:"Fraunces",Georgia,serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
-body{background:var(--fondo);color:var(--texto);font-family:var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-#trazo{position:fixed;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+body{background:var(--papel);color:var(--tinta);font-family:var(--font);font-weight:400;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.fondo{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.fondo .luz{position:absolute;left:8%;top:-30vh;width:85vh;height:85vh;border-radius:50%;background:radial-gradient(circle,rgba(217,140,95,.34),rgba(217,162,126,.12) 45%,rgba(217,162,126,0) 70%);animation:respira 9s ease-in-out infinite}
+.fondo .montes{position:absolute;left:-2%;right:-2%;bottom:0;height:62vh;background:url(/public/luz/montanas-claras.webp) center 80%/cover;opacity:.9;
+  -webkit-mask-image:linear-gradient(transparent,#000 35%);mask-image:linear-gradient(transparent,#000 35%);animation:deriva 40s ease-in-out infinite alternate}
+@keyframes deriva{to{transform:translateX(-1.5%)}}
+@keyframes respira{50%{transform:scale(1.06);opacity:.85}}
 
-.logo{display:flex;align-items:center;gap:8px;letter-spacing:-.03em;font-size:20px}
-.logo i{width:8px;height:8px;border-radius:50%;background:var(--marca)}
-.logo b{font-weight:500} .logo span{font-weight:300;color:var(--tenue)}
+.escena{position:relative;min-height:100%;display:grid;grid-template-columns:1fr minmax(360px,420px);grid-template-rows:auto 1fr auto;padding:44px 7vw 40px 56px;gap:24px}
+.marca{grid-column:1;grid-row:1}
+.marca img{height:38px;width:auto;display:block}
+.orbe{grid-column:1;grid-row:1/4;align-self:center;justify-self:center;position:relative;width:min(40vw,62vh);aspect-ratio:1;pointer-events:none}
+.orbe .aro{position:absolute;border-radius:50%;border:1px solid rgba(14,13,12,.07)}
+.orbe .aro.a1{inset:-6%}.orbe .aro.a2{inset:-18%;border-color:rgba(14,13,12,.045)}.orbe .aro.a3{inset:-32%;border-color:rgba(14,13,12,.03)}
+.orbe svg{position:absolute;inset:4%;width:92%;height:92%;overflow:visible}
+.orbe .arco{stroke-dasharray:1194;stroke-dashoffset:1194;animation:dibuja 2.6s cubic-bezier(.65,0,.35,1) .5s forwards}
+@keyframes dibuja{to{stroke-dashoffset:260}}
+.orbe img{position:absolute;left:9%;top:12%;width:84%;filter:drop-shadow(0 34px 34px rgba(60,35,20,.28));animation:aparece 1.8s cubic-bezier(.22,.61,.36,1) both,flota 9s ease-in-out 1.8s infinite}
+@keyframes aparece{from{opacity:0;transform:scale(.93) rotate(-12deg)}}
+@keyframes flota{50%{transform:translateY(-10px) rotate(2.5deg)}}
+.lema{grid-column:1;grid-row:3;align-self:end;justify-self:start;font-size:15px;color:var(--tinta);background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.9);padding:9px 16px;border-radius:999px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.lema em{color:var(--marca)}
+.tarjeta{grid-column:2;grid-row:1/4;align-self:center;width:100%;position:relative;z-index:2}
 
-.escena{position:relative;min-height:100%;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto 1fr auto;padding:52px 96px 64px 64px;gap:24px}
-.escena .logo{grid-column:1;grid-row:1}
-.lema{grid-column:1;grid-row:3;align-self:end}
-.lema small{display:block;font-size:11px;font-weight:500;letter-spacing:.25em;color:var(--tenue);margin-bottom:14px}
-.lema h1{font-weight:300;font-size:46px;line-height:1.08;letter-spacing:-.04em}
-.tarjeta{grid-column:2;grid-row:1/4;align-self:center;width:380px}
+.cabeza{display:none;text-align:center;margin-bottom:22px}
+.cabeza img{height:30px;margin:0 auto}
 
-.cabeza{display:none;text-align:center;margin-bottom:28px}
-.cabeza .logo{justify-content:center;font-size:22px;margin-bottom:22px}
+.vidrio{position:relative;padding:36px 34px 30px;border-radius:24px;background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.95);
+  backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);box-shadow:0 34px 70px -34px rgba(80,50,30,.4);display:grid;gap:16px}
+.titulo small{display:flex;align-items:center;gap:10px;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--marca)}
+.titulo small i{width:6px;height:6px;border-radius:50%;background:var(--marca);box-shadow:0 0 10px 2px rgba(183,80,35,.45)}
+.titulo h2{font-weight:300;font-size:40px;line-height:1.02;letter-spacing:-.025em;margin-top:14px}
+.titulo h2 em{color:var(--marca)}
+.titulo p{font-size:14px;color:var(--suave);margin-top:8px}
 
-/* Glass form with the travelling light border */
-@property --a{syntax:'<angle>';inherits:false;initial-value:0deg}
-@keyframes vuelta{to{--a:360deg}}
-.vidrio{position:relative;padding:28px;border-radius:22px;background:rgba(12,12,11,.62);backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);display:grid;gap:18px}
-.vidrio::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;pointer-events:none;
-  background:conic-gradient(from var(--a),transparent 0 70%,var(--marca) 82%,rgba(244,241,234,.6) 88%,transparent 96%),linear-gradient(var(--borde),var(--borde));
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:vuelta 7s linear infinite}
-.titulo h2{font-weight:300;font-size:24px;letter-spacing:-.035em}
-.titulo p{font-size:12px;color:var(--suave);margin-top:4px}
-
-.campo{display:grid;gap:7px}
-.campo label{font-size:12px;font-weight:500;color:var(--suave)}
-.caja{height:46px;display:flex;align-items:center;gap:10px;padding:0 14px;border-radius:12px;background:var(--campo);border:1px solid var(--borde);transition:border-color .15s}
-.caja:focus-within{border-color:rgba(208,103,58,.7)}
-.caja svg{width:15px;height:15px;flex:none;stroke:var(--tenue);fill:none;stroke-width:1.5;transition:stroke .15s}
+.campo{display:grid;gap:4px}
+.campo label{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--tenue)}
+.caja{height:44px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--borde);transition:border-color .2s}
+.caja:focus-within{border-bottom-color:var(--marca)}
+.caja svg{width:15px;height:15px;flex:none;stroke:var(--tenue);fill:none;stroke-width:1.5;transition:stroke .2s}
 .caja:focus-within>svg{stroke:var(--marca)}
-.caja input{flex:1;min-width:0;height:100%;background:none;border:0;outline:0;color:var(--texto);font:400 14px var(--font)}
-.caja input::placeholder{color:var(--tenue)}
-.ojo{background:none;border:0;cursor:pointer;width:26px;height:26px;display:grid;place-items:center;border-radius:6px}
+.caja input{flex:1;min-width:0;height:100%;background:none;border:0;outline:0;color:var(--tinta);font:400 17px var(--font)}
+.caja input::placeholder{color:rgba(14,13,12,.32)}
+.ojo{background:none;border:0;cursor:pointer;width:28px;height:28px;display:grid;place-items:center;border-radius:6px}
 .ojo:focus-visible{outline:2px solid var(--marca);outline-offset:2px}
 .ojo svg{stroke:var(--tenue)}
 
-.recordar{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:var(--suave);cursor:pointer;user-select:none}
+.recordar{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:var(--suave);cursor:pointer;user-select:none;margin-top:4px}
 .recordar input{position:absolute;opacity:0;pointer-events:none}
-.switch{width:38px;height:22px;border-radius:99px;background:rgba(255,255,255,.12);position:relative;flex:none;transition:background .2s}
-.switch::after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.switch{width:38px;height:22px;border-radius:99px;background:rgba(14,13,12,.14);position:relative;flex:none;transition:background .2s}
+.switch::after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .2s}
 .recordar input:checked+.switch{background:var(--marca)}
 .recordar input:checked+.switch::after{transform:translateX(16px)}
 .recordar input:focus-visible+.switch{outline:2px solid var(--marca);outline-offset:2px}
 
-.error{display:none;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:rgba(232,112,106,.1);color:var(--error);font-size:12px}
+.error{display:none;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(176,65,42,.08);color:var(--error);font-size:13px}
 .error.si{display:flex}
 .error.tiembla{animation:tiembla .4s}
 @keyframes tiembla{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 
-.boton{height:46px;border:0;border-radius:12px;background:var(--texto);color:var(--fondo);font:500 14px var(--font);display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;margin-top:4px;transition:opacity .15s}
-.boton:hover{opacity:.92}
+.boton{height:52px;border:0;border-radius:999px;background:var(--tinta);color:#F8F4EE;font:400 16px var(--font);display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:8px;cursor:pointer;margin-top:6px;transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s}
+.boton::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--marca);box-shadow:0 0 10px 2px rgba(183,80,35,.5)}
+.boton:hover{transform:translateY(-1px);box-shadow:0 14px 28px -14px rgba(14,13,12,.5)}
 .boton:focus-visible{outline:2px solid var(--marca);outline-offset:3px}
-.boton:disabled{opacity:.8;cursor:default}
-.boton svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8}
-.rueda{width:14px;height:14px;border-radius:50%;border:2px solid rgba(12,12,11,.25);border-top-color:var(--fondo);animation:gira .7s linear infinite}
+.boton:disabled{opacity:.8;cursor:default;transform:none}
+.boton svg{display:none}
+.rueda{width:14px;height:14px;border-radius:50%;border:2px solid rgba(248,244,238,.3);border-top-color:#F8F4EE;animation:gira .7s linear infinite}
 @keyframes gira{to{transform:rotate(360deg)}}
 
-.pie{display:none;text-align:center;font-size:11px;color:var(--tenue);margin-top:28px}
+.pie{display:none;text-align:center;font-size:12px;color:var(--tenue);margin-top:22px}
 
-.entra{animation:entra .8s cubic-bezier(.2,.8,.2,1) both}
-.entra.d2{animation-delay:.08s}
+.entra{animation:entra 1s cubic-bezier(.2,.8,.2,1) both}
+.entra.d2{animation-delay:.12s}
 @keyframes entra{from{opacity:0;transform:translateY(16px)}}
 
-/* Narrow (phone): one centered column */
+/* Celular: el enso arriba y el formulario abajo */
 @media (max-width:859px){
-  .escena{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:48px 20px}
-  .escena>.logo,.lema{display:none}
-  .tarjeta{width:100%;max-width:360px}
+  .escena{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 20px 28px;gap:8px}
+  .marca,.lema{display:none}
+  .orbe{width:min(58vw,240px);margin-bottom:10px}
+  .tarjeta{max-width:400px}
   .cabeza,.pie{display:block}
-  .titulo{display:none}
-  .cabeza h2{font-weight:300;font-size:28px;letter-spacing:-.035em}
-  .cabeza p{font-size:13px;color:var(--suave);margin-top:8px}
+  .titulo h2{font-size:34px}
 }
 @media (prefers-reduced-motion:reduce){
-  .vidrio::before,.entra,.error.tiembla{animation:none}
+  .entra,.error.tiembla,.orbe img,.orbe .arco,.fondo .luz,.fondo .montes{animation:none}
+  .orbe .arco{stroke-dashoffset:260}
 }
 </style>
 </head>
 <body>
-<canvas id="trazo" aria-hidden="true"></canvas>
+<div class="fondo" aria-hidden="true"><div class="luz"></div><div class="montes"></div></div>
 
 <main class="escena">
-  <div class="logo entra"><i></i><b>nokta</b><span>studio</span></div>
+  <div class="marca entra"><img src="/public/luz/logo-color.webp" alt="Nokta"></div>
 
-  <div class="lema entra">
-    <small>AGENCIA CREATIVA</small>
-    <h1>Las ideas<br>toman forma.</h1>
+  <div class="orbe" aria-hidden="true">
+    <span class="aro a1"></span><span class="aro a2"></span><span class="aro a3"></span>
+    <svg viewBox="0 0 400 400"><circle cx="200" cy="200" r="190" fill="none" stroke="rgba(14,13,12,.08)" stroke-width="1.5"/><circle class="arco" cx="200" cy="200" r="190" fill="none" stroke="#B75023" stroke-width="2" stroke-linecap="round" transform="rotate(-90 200 200)"/></svg>
+    <img src="/public/luz/enso-negro-3d.webp" alt="">
   </div>
 
+  <p class="lema entra">Cada momento tiene su <em>punto exacto.</em></p>
+
   <div class="tarjeta">
-    <div class="cabeza entra">
-      <div class="logo"><i></i><b>nokta</b><span>studio</span></div>
-      <h2>Bienvenido de vuelta</h2>
-      <p>Ingresa a tu panel de administración</p>
-    </div>
+    <div class="cabeza entra"><img src="/public/luz/logo-color.webp" alt="Nokta"></div>
 
     <form id="f" class="vidrio entra d2" novalidate>
       <div class="titulo">
-        <h2>Bienvenido de vuelta</h2>
-        <p>Ingresa a tu panel de administración</p>
+        <small><i></i>Nokta Studio · Panel</small>
+        <h2>Bienvenido<br>de <em>vuelta.</em></h2>
+        <p>Entra para ver cómo va el estudio hoy.</p>
       </div>
 
       <div class="campo">
@@ -158,7 +169,7 @@ body{background:var(--fondo);color:var(--texto);font-family:var(--font);-webkit-
       </button>
     </form>
 
-    <p class="pie">Agencia creativa · © <span id="anio"></span></p>
+    <p class="pie">Nokta Studio · © <span id="anio"></span></p>
   </div>
 </main>
 
@@ -226,48 +237,6 @@ document.getElementById('f').onsubmit = async e => {
   }
 };
 
-// The ribbon, drawn live — same math as the native app's TrazoVivo.
-(() => {
-  const c = document.getElementById('trazo'), g = c.getContext('2d');
-  const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let d = 1;
-  function ajustar() { d = Math.min(devicePixelRatio || 1, 2); c.width = innerWidth * d; c.height = innerHeight * d; }
-  ajustar(); addEventListener('resize', ajustar);
-  const punto = (u, t, W, H) => [
-    W * (0.5 + 0.47 * Math.sin(u + t * 0.00011) * Math.cos(u * 0.37)),
-    H * (0.5 + 0.36 * Math.sin(u * 1.9 + t * 0.00017))
-  ];
-  const N = 14, pasos = 220, largo = 5.2;
-  function cuadro(now) {
-    const t = quieto ? 20000 : now, W = c.width, H = c.height;
-    g.clearRect(0, 0, W, H);
-    const cab = (t * 0.00035) % (Math.PI * 6);
-    for (let k = 0; k < N; k++) {
-      const off = (k - N / 2) * 2.2 * d;
-      g.beginPath();
-      for (let i = 0; i <= pasos; i++) {
-        const u = cab - largo + (largo * i) / pasos;
-        const [x, y] = punto(u, t, W, H), [x2, y2] = punto(u + 0.01, t, W, H);
-        let nx = -(y2 - y), ny = x2 - x; const nl = Math.hypot(nx, ny) || 1; nx /= nl; ny /= nl;
-        const giro = Math.sin(u * 1.3 + t * 0.0004);
-        const px = x + nx * off * giro, py = y + ny * off * giro;
-        i ? g.lineTo(px, py) : g.moveTo(px, py);
-      }
-      const centro = 1 - Math.abs(k - N / 2) / (N / 2);
-      const grad = g.createLinearGradient(...punto(cab - largo, t, W, H), ...punto(cab, t, W, H));
-      grad.addColorStop(0, 'rgba(244,241,234,0)');
-      grad.addColorStop(1, `rgba(244,241,234,${0.10 + 0.22 * centro})`);
-      g.strokeStyle = grad; g.lineWidth = d; g.stroke();
-    }
-    const [hx, hy] = punto(cab, t, W, H), R = 26 * d;
-    const halo = g.createRadialGradient(hx, hy, 0, hx, hy, R);
-    halo.addColorStop(0, 'rgba(208,103,58,.55)'); halo.addColorStop(1, 'rgba(208,103,58,0)');
-    g.fillStyle = halo; g.beginPath(); g.arc(hx, hy, R, 0, 7); g.fill();
-    g.fillStyle = '#D0673A'; g.beginPath(); g.arc(hx, hy, 4.5 * d, 0, 7); g.fill();
-    if (!quieto) requestAnimationFrame(cuadro);
-  }
-  requestAnimationFrame(cuadro);
-})();
 </script>
 </body>
 </html>

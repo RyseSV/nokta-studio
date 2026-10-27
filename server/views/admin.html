@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nokta Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
+<script>(function(){var t='claro';try{t=localStorage.getItem('noktaApariencia')||'claro';}catch(e){}var c=t==='claro'||(t==='sistema'&&matchMedia('(prefers-color-scheme: light)').matches);document.documentElement.dataset.tema=c?'claro':'oscuro';})();</script>
 <script src="/public/chart.umd.min.js"></script>
 <style>
 :root{--bg:#1C1C1A;--sb:#111110;--card:#2E2E2B;--ember:#B85228;--cream:#F0ECE4;--muted:#7A7A72;--green:#4CAF7D;--yellow:#E6A817;--red:#E05A5A;--border:#3a3a37}
@@ -1049,6 +1050,64 @@ html[data-tema="claro"] .modal input[type=date],html[data-tema="claro"] .modal i
 .us-nuevo{width:200px;height:280px;margin:108px auto 0;border-radius:16px;border:1.5px dashed var(--pf-borde);background:none;display:grid;place-content:center;gap:6px;color:var(--pf-tenue);font:400 12px 'Poppins',sans-serif;cursor:pointer}
 .us-nuevo b{font-size:28px;font-weight:200}
 .us-pista{text-align:center;font-size:11.5px;color:var(--pf-tenue);margin-top:4px}
+
+/* ═══ LUZ (2026-10) — modo claro con el estilo de la app rediseñada "A · Luz":
+   papel cálido, luz terracota, montañas claras, vidrio blanco y Fraunces ═══ */
+html[data-tema="claro"]{--pf-fondo:#F7F2EA;--pf-sup:rgba(255,255,255,.66);--pf-sup2:#F0E9DF;--pf-borde:rgba(14,13,12,.08);--pf-texto:#0E0D0C;--pf-suave:rgba(14,13,12,.58);--pf-tenue:rgba(14,13,12,.48);--pf-marca:#B75023;--pf-marca-s:rgba(183,80,35,.10);--pf-exito:#4E7D5B;--pf-aviso:#A86B12;--pf-aviso-s:rgba(168,107,18,.10);--pf-error:#B0412A;--pf-sombra:0 24px 50px -30px rgba(80,50,30,.32);
+  --bg:#F7F2EA;--sb:#F0E9DF;--card:rgba(255,255,255,.66);--ember:#B75023;--cream:#0E0D0C;--muted:rgba(14,13,12,.55);--border:rgba(14,13,12,.08);--green:#4E7D5B;--yellow:#A86B12;--red:#B0412A;
+  --luz-vidrio:rgba(255,255,255,.62);--luz-borde:rgba(255,255,255,.95);--luz-opaco:#FFFDF9}
+html[data-tema="claro"] body{background:#F7F2EA;color:#0E0D0C}
+html[data-tema="claro"] body,html[data-tema="claro"] body *:not(svg):not(svg *){font-family:"Fraunces",Georgia,serif!important}
+html[data-tema="claro"] body{font-weight:400}
+/* ambiente: luz cálida arriba y montañas claras abajo, fijas detrás de todo */
+html[data-tema="claro"] body::before{content:"";position:fixed;right:-12vw;top:-38vh;width:70vw;height:70vw;max-width:1200px;max-height:1200px;border-radius:50%;pointer-events:none;z-index:0;
+  background:radial-gradient(circle,rgba(217,140,95,.30),rgba(217,162,126,.11) 45%,rgba(217,162,126,0) 70%)}
+html[data-tema="claro"] body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:42vh;pointer-events:none;z-index:0;opacity:.38;
+  background:url(/public/luz/montanas-claras.webp) center 85%/cover;-webkit-mask-image:linear-gradient(transparent,#000 45%);mask-image:linear-gradient(transparent,#000 45%)}
+html[data-tema="claro"] .main{position:relative;z-index:1}
+/* menú lateral flotante de vidrio */
+@media(min-width:769px){
+  html[data-tema="claro"] .sb{top:14px;left:14px;bottom:14px;border-radius:22px;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.9);
+    -webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2);box-shadow:0 30px 60px -30px rgba(80,50,30,.28)}
+  html[data-tema="claro"] .main{margin-left:268px}
+}
+html[data-tema="claro"] .sb-logo b{font-weight:400;letter-spacing:-.02em}
+html[data-tema="claro"] .sb-logo i{box-shadow:0 0 10px 2px rgba(183,80,35,.45)}
+html[data-tema="claro"] .sb-section{font-size:10px;letter-spacing:.24em;color:rgba(14,13,12,.5)}
+html[data-tema="claro"] .sb-link{position:relative;font-size:14px;color:rgba(14,13,12,.6)}
+html[data-tema="claro"] .sb-link:hover{background:rgba(255,255,255,.7)}
+html[data-tema="claro"] .sb-link.active{color:#0E0D0C;background:linear-gradient(90deg,rgba(183,80,35,.14),rgba(183,80,35,0));font-weight:500}
+html[data-tema="claro"] .sb-link.active::before{content:"";position:absolute;left:-6px;top:50%;margin-top:-3.5px;width:7px;height:7px;border-radius:50%;background:#B75023;box-shadow:0 0 10px 2px rgba(183,80,35,.45)}
+html[data-tema="claro"] .sb-bottom{border-top-color:rgba(14,13,12,.08)}
+html[data-tema="claro"] .avatar{box-shadow:0 0 0 1.5px #fff,0 0 0 3px #B75023}
+/* tarjetas y paneles: vidrio blanco con sombra cálida */
+html[data-tema="claro"] .card,html[data-tema="claro"] .chart-card,html[data-tema="claro"] .table-card,html[data-tema="claro"] .section-card,
+html[data-tema="claro"] .alert-item,html[data-tema="claro"] .gal-card,html[data-tema="claro"] .team-card,html[data-tema="claro"] .report-card{
+  background:var(--luz-vidrio);border:1px solid var(--luz-borde);border-radius:20px;box-shadow:0 24px 50px -30px rgba(80,50,30,.3)}
+html[data-tema="claro"] .cl-row,html[data-tema="claro"] .ct-s{border-radius:16px}
+/* ventanas y menús flotantes: opacos para que se lean bien */
+html[data-tema="claro"] .modal,html[data-tema="claro"] .side-panel,html[data-tema="claro"] .gp,html[data-tema="claro"] .pd-res{background:var(--luz-opaco)!important;border:1px solid rgba(14,13,12,.08);box-shadow:0 40px 80px -30px rgba(60,35,20,.4)}
+html[data-tema="claro"] .modal-overlay,html[data-tema="claro"] .panel-overlay{background:rgba(60,45,35,.28);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+/* botones */
+html[data-tema="claro"] .btn{border-radius:999px;font-weight:400}
+html[data-tema="claro"] .btn-primary{background:#0E0D0C;color:#F8F4EE}
+html[data-tema="claro"] .btn-primary::after{content:"";width:7px;height:7px;border-radius:50%;background:#B75023;margin-left:4px}
+html[data-tema="claro"] .btn-outline{border-color:rgba(14,13,12,.2);color:#0E0D0C;background:rgba(255,255,255,.5)}
+html[data-tema="claro"] .btn-ghost{background:rgba(255,255,255,.6);color:#0E0D0C;border:1px solid rgba(14,13,12,.1)}
+/* campos */
+html[data-tema="claro"] .form-group input,html[data-tema="claro"] .form-group select,html[data-tema="claro"] .form-group textarea,html[data-tema="claro"] .filters select,html[data-tema="claro"] .filters input,html[data-tema="claro"] .svc-row input{
+  background:rgba(255,255,255,.75);border-color:rgba(14,13,12,.12);color:#0E0D0C;border-radius:12px}
+html[data-tema="claro"] .form-group select option{background:#fff}
+html[data-tema="claro"] .tabs{background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.9)}
+html[data-tema="claro"] .tab.active{background:#0E0D0C;color:#F8F4EE}
+/* títulos y cifras con la tipografía de la marca */
+html[data-tema="claro"] .page-title{font-weight:300;font-size:30px;letter-spacing:-.02em}
+html[data-tema="claro"] .card-value{font-weight:300;font-size:32px;letter-spacing:-.03em}
+html[data-tema="claro"] .toast{background:#FFFDF9;color:#0E0D0C;border-color:#B75023;border-radius:14px}
+html[data-tema="claro"] .sb-toggle{background:var(--luz-opaco)}
+html[data-tema="claro"] .gal-card-code,html[data-tema="claro"] .link-box,html[data-tema="claro"] [style*="monospace"]{font-family:ui-monospace,Menlo,monospace!important}
+@media print{html[data-tema="claro"] .main{margin-left:0}html[data-tema="claro"] body::before,html[data-tema="claro"] body::after{display:none}}
+html[data-tema="claro"] .cal-cell{background:var(--luz-vidrio);border:1px solid var(--luz-borde)}
 </style>
 </head>
 <body class="en-dash">
@@ -2257,7 +2316,7 @@ function pdSaludo(){
 
 // Appearance: Oscuro / Claro / Automático — same choice as the app, per browser.
 const TEMAS=['oscuro','claro','sistema'], TEMA_TXT={oscuro:'Oscuro',claro:'Claro',sistema:'Automático'}, TEMA_IC={oscuro:'luna',claro:'sol',sistema:'auto'};
-function temaGuardado(){ try{ return localStorage.getItem('noktaApariencia')||'oscuro'; }catch{ return 'oscuro'; } }
+function temaGuardado(){ try{ return localStorage.getItem('noktaApariencia')||'claro'; }catch{ return 'claro'; } }
 function aplicarTema(){
   const t=temaGuardado();
   const claro=t==='claro'||(t==='sistema'&&matchMedia('(prefers-color-scheme: light)').matches);
